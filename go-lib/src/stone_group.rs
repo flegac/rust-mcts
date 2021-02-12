@@ -1,18 +1,20 @@
-use std::collections::HashSet;
+use bit_set::BitSet;
 
-use crate::cell::GoCell;
+use crate::board::GoCell;
+use crate::constants::GOBAN_SIZE;
 use crate::stone::Stone;
 
 pub(crate) struct StoneGroup {
-    stone: Option<Stone>,
-    cells: HashSet<GoCell>,
+    pub(crate) stone: Option<Stone>,
+    pub(crate) cells: BitSet,
 }
+
 
 impl StoneGroup {
     pub(crate) fn new(stone: Option<Stone>) -> StoneGroup {
         StoneGroup {
             stone,
-            cells: HashSet::new(),
+            cells: BitSet::with_capacity(GOBAN_SIZE * GOBAN_SIZE),
         }
     }
 }

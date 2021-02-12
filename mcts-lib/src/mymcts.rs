@@ -1,12 +1,10 @@
-use core::fmt;
-
 use indextree::{Arena, NodeId};
-use rand::seq::SliceRandom;
-use rand::thread_rng;
 
 use crate::mcts::Mcts;
 use crate::state::State;
 use crate::stats::MctsStats;
+use rand::thread_rng;
+use rand::prelude::SliceRandom;
 
 pub struct MyMcts<A, S>
     where S: State<A> {

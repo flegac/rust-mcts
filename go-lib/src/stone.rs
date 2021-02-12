@@ -1,4 +1,4 @@
-use core::fmt;
+use std::fmt;
 use std::fmt::Formatter;
 
 #[derive(Copy, Clone, Eq, PartialEq)]

@@ -1,3 +1,6 @@
+extern crate indextree;
+extern crate rand;
+
 pub mod mcts;
 pub mod state;
 pub mod mymcts;

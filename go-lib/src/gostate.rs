@@ -10,7 +10,7 @@ use crate::stone::Stone;
 pub struct GoState {
     board: GoBoard,
     stone: Stone,
-    history: Vec<GoAction>,
+    pub history: Vec<GoAction>,
 }
 
 impl GoState {}
@@ -26,10 +26,9 @@ impl State<GoAction> for GoState {
     }
 
     fn result(&self) -> Option<GameResult> {
-        let blacks = self.board.count_stones(Stone::Black);
-        let whites = self.board.count_stones(Stone::White);
-
-        if 2 * (whites + blacks) > GOBAN_SIZE * GOBAN_SIZE {
+        let blacks = self.board.count_stones(Some(Stone::Black));
+        let whites = self.board.count_stones(Some(Stone::White));
+        if 4 * (whites + blacks) > 3*GOBAN_SIZE * GOBAN_SIZE {
             Some(GameResult::Victory)
         } else {
             None

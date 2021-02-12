@@ -1,15 +1,16 @@
-use crate::cell::GoCell;
+use crate::board::GoCell;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct GoAction {
     pub cell: Option<GoCell>
 }
 
 
 impl GoAction {
-    pub(crate) fn play_at(x: usize, y: usize) -> GoAction {
-        GoAction { cell: Some(GoCell { x, y }) }
+    pub(crate) fn play_at(cell: GoCell) -> GoAction {
+        GoAction { cell: Some(cell) }
     }
+
     fn pass() -> GoAction {
         GoAction { cell: None }
     }
