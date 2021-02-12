@@ -1,4 +1,5 @@
 use core::fmt;
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::iter::Map;
@@ -17,17 +18,29 @@ use crate::stone_group::StoneGroup;
 pub type GoCell = usize;
 
 pub(crate) struct GoBoard<> {
-    board: HashMap<GoCell, Rc<StoneGroup>>,
+    board: HashMap<GoCell, Rc<RefCell<StoneGroup>>>,
     groups: HashSet<StoneGroup>,
 }
 
 
 impl GoBoard {
     pub(crate) fn new() -> Self {
-        GoBoard {
+        let mut board = GoBoard {
             board: HashMap::new(),
             groups: HashSet::new(),
+        };
+
+        let g = StoneGroup::new(None);
+        let gg = Rc::new(RefCell::new(g));
+        for c in board.cells() {
+            gg.borrow_mut().cells.insert(c);
         }
+        for c in gg.borrow().cells.iter() {
+            board.board.insert(c, Rc::clone(&gg));
+        }
+
+
+        board
     }
 
     pub(crate) fn lines(&self) -> Vec<Vec<usize>> {
@@ -56,18 +69,18 @@ impl GoBoard {
     }
 
     pub(crate) fn update(&mut self, cell: GoCell, value: Option<Stone>) {
-        // let old = self.board.get(&cell).unwrap();
-        // old.cells.remove(cell);
+        let mut old = self.board.get(&cell);
+        old.map(|rc| rc.borrow_mut().cells.remove(cell));
 
-        let mut gg = StoneGroup::new(value);
-        gg.cells.insert(cell);
 
-        let g = Rc::new(gg);
-        let group = Rc::clone(&g);
-        let cells = group.cells.iter().collect_vec();
+        let gg = RefCell::new(StoneGroup::new(value));
+        gg.borrow_mut().cells.insert(cell);
+
+        let rc = Rc::new(gg);
+        let cells = rc.borrow().cells.iter().collect_vec();
 
         for c in cells.iter() {
-            self.board.insert(cell, Rc::clone(&g));
+            self.board.insert(cell, Rc::clone(&rc));
         }
     }
 
@@ -78,7 +91,7 @@ impl GoBoard {
         //     .map(|g| g.cells.len())
         //     .sum()
         self.board.iter()
-            .filter(|(c, g)| g.stone == stone)
+            .filter(|(c, g)| g.borrow().stone == stone)
             .count()
     }
 
@@ -90,7 +103,7 @@ impl GoBoard {
         //     .collect_vec()
         self.cells()
             .iter()
-            .filter(|&c| self.board.get(c).is_none() || self.board.get(c).unwrap().stone.is_none())
+            .filter(|&c| self.board.get(c).is_none() || self.board.get(c).unwrap().borrow().stone.is_none())
             .map(|&c| GoAction::play_at(c))
             .collect_vec()
     }
@@ -108,7 +121,7 @@ impl fmt::Display for GoBoard {
                         res.push_str(".");
                     }
                     Some(g) => {
-                        match g.stone {
+                        match g.borrow().stone {
                             None => {
                                 res.push_str(".");
                             }
