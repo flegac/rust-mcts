@@ -1,5 +1,5 @@
 use core::fmt;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::iter::Map;
 use std::ops::Range;
@@ -17,7 +17,7 @@ use crate::stone_group::StoneGroup;
 pub type GoCell = usize;
 
 pub(crate) struct GoBoard<> {
-    board: [Option<Stone>; GOBAN_SIZE * GOBAN_SIZE],
+    board: HashMap<GoCell, Rc<StoneGroup>>,
     groups: HashSet<StoneGroup>,
 }
 
@@ -25,7 +25,7 @@ pub(crate) struct GoBoard<> {
 impl GoBoard {
     pub(crate) fn new() -> Self {
         GoBoard {
-            board: [None; GOBAN_SIZE * GOBAN_SIZE],
+            board: HashMap::new(),
             groups: HashSet::new(),
         }
     }
@@ -56,7 +56,19 @@ impl GoBoard {
     }
 
     pub(crate) fn update(&mut self, cell: GoCell, value: Option<Stone>) {
-        self.board[cell] = value;
+        // let old = self.board.get(&cell).unwrap();
+        // old.cells.remove(cell);
+
+        let mut gg = StoneGroup::new(value);
+        gg.cells.insert(cell);
+
+        let g = Rc::new(gg);
+        let group = Rc::clone(&g);
+        let cells = group.cells.iter().collect_vec();
+
+        for c in cells.iter() {
+            self.board.insert(cell, Rc::clone(&g));
+        }
     }
 
 
@@ -66,7 +78,7 @@ impl GoBoard {
         //     .map(|g| g.cells.len())
         //     .sum()
         self.board.iter()
-            .filter(|&&s| s == stone)
+            .filter(|(c, g)| g.stone == stone)
             .count()
     }
 
@@ -78,7 +90,7 @@ impl GoBoard {
         //     .collect_vec()
         self.cells()
             .iter()
-            .filter(|&&c| self.board[c].is_none())
+            .filter(|&c| self.board.get(c).is_none() || self.board.get(c).unwrap().stone.is_none())
             .map(|&c| GoAction::play_at(c))
             .collect_vec()
     }
@@ -91,14 +103,23 @@ impl fmt::Display for GoBoard {
 
         for x in 0..GOBAN_SIZE {
             for y in 0..GOBAN_SIZE {
-                match self.board[self.cell(x, y)] {
+                match self.board.get(&self.cell(x, y)) {
                     None => {
                         res.push_str(".");
                     }
-                    Some(s) => {
-                        res.push_str(&s.to_string());
+                    Some(g) => {
+                        match g.stone {
+                            None => {
+                                res.push_str(".");
+                            }
+                            Some(s) => {
+                                res.push_str(&s.to_string());
+                            }
+                        };
                     }
-                };
+                }
+
+
                 res.push_str(" ");
             }
             res.push_str("\n");
