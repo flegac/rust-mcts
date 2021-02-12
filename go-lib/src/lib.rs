@@ -13,10 +13,21 @@ pub mod constants;
 #[cfg(test)]
 mod tests {
     use board::GoBoard;
+    use stone_group::StoneGroup;
 
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn stone_groups() {
+        let board = GoBoard::new();
+
+
+        let mut empty = StoneGroup::new(None);
+        empty.cells.insert(board.cell(0, 0));
+        empty.cells.insert(board.cell(0, 3));
+        empty.cells.insert(board.cell(3, 0));
+
+        assert_eq!(empty.cells.len(), 3);
+
+
     }
 
     #[test]
