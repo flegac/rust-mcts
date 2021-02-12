@@ -69,17 +69,21 @@ impl GoBoard {
     }
 
     pub(crate) fn update(&mut self, cell: GoCell, value: Option<Stone>) {
+        // removing cells from old group
         let mut old = self.board.get(&cell);
         old.map(|rc| rc.borrow_mut().cells.remove(cell));
+        old.map(|rc| println!("{:?}", rc.borrow().cells));
+        //TODO: check if old group connectivity & split it if needed
 
 
-        let gg = RefCell::new(StoneGroup::new(value));
-        gg.borrow_mut().cells.insert(cell);
+        // adding stone to new group
+        // TODO: find adjacent groups (on adjacent cells) & fusion them together if appropriate
+        let mut group = StoneGroup::new(value);
+        group.cells.insert(cell);
 
-        let rc = Rc::new(gg);
-        let cells = rc.borrow().cells.iter().collect_vec();
-
-        for c in cells.iter() {
+        // // updating cells with new group
+        let rc = Rc::new(RefCell::new(group));
+        for c in rc.borrow().cells.iter() {
             self.board.insert(cell, Rc::clone(&rc));
         }
     }
