@@ -13,20 +13,19 @@ pub mod board;
 mod tests {
     use board::GoBoard;
     use group::GoGroup;
+    use stones::group::GoGroup;
 
     #[test]
     fn stone_groups() {
         let board = GoBoard::new();
 
 
-        let mut empty = GoGroup::new(None);
+        let mut empty = GoGroup::new(GoStone::None);
         empty.cells.insert(board.cell(0, 0));
         empty.cells.insert(board.cell(0, 3));
         empty.cells.insert(board.cell(3, 0));
 
         assert_eq!(empty.cells.len(), 3);
-
-
     }
 
     #[test]

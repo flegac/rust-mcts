@@ -9,7 +9,7 @@ use std::rc::Rc;
 use itertools::{iproduct, Itertools, Product};
 
 use mcts_lib::mymcts::MyMcts;
-use stones::group::GoGroupRc;
+use stones::group::{GoGroup, GoGroupRc};
 use stones::stone::Stone;
 
 use crate::action::GoAction;
@@ -42,7 +42,6 @@ impl GoBoard {
         for c in stones.borrow().cells.iter() {
             self.board.insert(c, stones.clone());
         }
-        // self.groups.insert(stones.clone());
     }
 
     pub(crate) fn lines(&self) -> Vec<Vec<usize>> {
@@ -71,23 +70,23 @@ impl GoBoard {
     }
 
     pub(crate) fn update(&mut self, cell: GoCell, value: Stone) {
-        // removing cells from old group
-        let mut old = self.board.get(&cell);
-        old.map(|rc| rc.borrow_mut().cells.remove(cell));
-        old.map(|rc| println!("{:?}", rc.borrow().cells));
-        //TODO: check if old group connectivity & split it if needed
-
-
         // adding stone to new group
         // TODO: find adjacent groups (on adjacent cells) & fusion them together if appropriate
         let cells = vec![cell];
-
-        // // updating cells with new group
-        let stones = GoGroupRc::new(value)
+        let gg = GoGroupRc::new(value)
             .with_cells(cells.as_slice());
-        for c in stones.borrow().cells.iter() {
-            self.board.insert(c, stones.clone());
-        }
+
+        // updating board with new group
+        self.on_board(
+            GoGroupRc::new(value)
+                .with_cells(cells.as_slice()));
+
+        // removing cells from old group
+        let mut old = self.board.get(&cell).unwrap();
+        old.borrow_mut().remove_group(&gg.borrow());
+        println!("{}", old.borrow());
+
+        //TODO: check if old group connectivity & split it if needed
     }
 
 

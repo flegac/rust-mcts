@@ -20,6 +20,11 @@ impl fmt::Display for GoGroup {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut res = String::new();
         res.push_str(&self.stone.to_string());
+        res.push_str(": ");
+        for c in self.cells.iter() {
+            res.push_str(&c.to_string());
+            res.push_str(" ");
+        }
         write!(f, "{}", res)
     }
 }
@@ -32,6 +37,24 @@ impl GoGroup {
         }
     }
 
+    pub(crate) fn map<F: Fn(GoCell) -> ()>(&self, closure: F) {
+        for c in self.cells.iter() {
+            closure(c)
+        }
+    }
+
+
+    pub(crate) fn add_group(&mut self, other: &GoGroup) {
+        self.cells.union_with(&other.cells);
+    }
+
+    pub(crate) fn remove_group(&mut self, other: &GoGroup) {
+        self.cells.difference_with(&other.cells);
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.cells.is_empty()
+    }
 
     pub(crate) fn set_stone(&mut self, stone: Stone) {
         self.stone = stone;
@@ -40,6 +63,12 @@ impl GoGroup {
     pub(crate) fn add_cells(&mut self, cells: &[GoCell]) {
         for &c in cells {
             self.cells.insert(c);
+        }
+    }
+
+    pub(crate) fn remove_cells(&mut self, cells: &[GoCell]) {
+        for &c in cells {
+            self.cells.remove(c);
         }
     }
 }
@@ -53,7 +82,9 @@ impl GoGroupRc {
     }
 
     pub(crate) fn with_cells(self, cells: &[GoCell]) -> Self {
-        self.borrow_mut().add_cells(cells);
+        for &c in cells {
+            self.borrow_mut().cells.insert(c);
+        }
         self
     }
 
