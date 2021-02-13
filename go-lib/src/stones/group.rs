@@ -12,28 +12,20 @@ use crate::constants::GOBAN_SIZE;
 
 #[derive(Eq, PartialEq)]
 pub(crate) struct GoGroup {
-    pub(crate) stone: Option<Stone>,
+    pub(crate) stone: Stone,
     pub(crate) cells: BitSet,
 }
 
 impl fmt::Display for GoGroup {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut res = String::new();
-        match self.stone {
-            None => {
-                res.push_str(".");
-            }
-            Some(s) => {
-                res.push_str(&s.to_string());
-            }
-        };
-
+        res.push_str(&self.stone.to_string());
         write!(f, "{}", res)
     }
 }
 
 impl GoGroup {
-    pub(crate) fn new(stone: Option<Stone>) -> GoGroup {
+    pub(crate) fn new(stone: Stone) -> GoGroup {
         GoGroup {
             stone,
             cells: BitSet::with_capacity(GOBAN_SIZE * GOBAN_SIZE),
@@ -41,7 +33,7 @@ impl GoGroup {
     }
 
 
-    pub(crate) fn set_stone(&mut self, stone: Option<Stone>) {
+    pub(crate) fn set_stone(&mut self, stone: Stone) {
         self.stone = stone;
     }
 
@@ -56,7 +48,7 @@ impl GoGroup {
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {
-    pub(crate) fn new(stone: Option<Stone>) -> Self {
+    pub(crate) fn new(stone: Stone) -> Self {
         GoGroupRc(Rc::new(RefCell::new(GoGroup::new(stone))))
     }
 

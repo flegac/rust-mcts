@@ -34,7 +34,7 @@ impl GoBoard {
 
     pub(crate) fn reset(&mut self) {
         self.on_board(
-            GoGroupRc::new(None)
+            GoGroupRc::new(Stone::None)
                 .with_cells(self.cells().as_slice()));
     }
 
@@ -70,7 +70,7 @@ impl GoBoard {
         (x, y)
     }
 
-    pub(crate) fn update(&mut self, cell: GoCell, value: Option<Stone>) {
+    pub(crate) fn update(&mut self, cell: GoCell, value: Stone) {
         // removing cells from old group
         let mut old = self.board.get(&cell);
         old.map(|rc| rc.borrow_mut().cells.remove(cell));
@@ -91,7 +91,7 @@ impl GoBoard {
     }
 
 
-    pub(crate) fn count_stones(&self, stone: Option<Stone>) -> usize {
+    pub(crate) fn count_stones(&self, stone: Stone) -> usize {
         // self.groups.into_iter()
         //     .filter(|g| g.stone == stone)
         //     .map(|g| g.cells.len())
@@ -109,7 +109,7 @@ impl GoBoard {
         //     .collect_vec()
         self.cells()
             .iter()
-            .filter(|&c| self.board.get(c).is_none() || self.board.get(c).unwrap().borrow().stone.is_none())
+            .filter(|&c| self.board.get(c).unwrap().borrow().stone == Stone::None)
             .map(|&c| GoAction::play_at(c))
             .collect_vec()
     }
@@ -127,18 +127,9 @@ impl fmt::Display for GoBoard {
                         res.push_str(".");
                     }
                     Some(g) => {
-                        match g.borrow().stone {
-                            None => {
-                                res.push_str(".");
-                            }
-                            Some(s) => {
-                                res.push_str(&s.to_string());
-                            }
-                        };
+                        res.push_str(&g.borrow().stone.to_string());
                     }
                 }
-
-
                 res.push_str(" ");
             }
             res.push_str("\n");

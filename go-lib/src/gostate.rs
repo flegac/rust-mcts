@@ -26,8 +26,8 @@ impl State<GoAction> for GoState {
     }
 
     fn result(&self) -> Option<GameResult> {
-        let blacks = self.board.count_stones(Some(Stone::Black));
-        let whites = self.board.count_stones(Some(Stone::White));
+        let blacks = self.board.count_stones(Stone::Black);
+        let whites = self.board.count_stones(Stone::White);
         if 4 * (whites + blacks) > 3 * GOBAN_SIZE * GOBAN_SIZE {
             Some(GameResult::Victory)
         } else {
@@ -41,7 +41,7 @@ impl State<GoAction> for GoState {
     }
 
     fn next(&mut self, action: &GoAction) {
-        action.cell.map(|cell| self.board.update(cell, Some(self.stone)));
+        action.cell.map(|cell| self.board.update(cell, self.stone));
 
         self.stone = self.stone.switch();
         self.history.push(action.clone());
@@ -51,7 +51,7 @@ impl State<GoAction> for GoState {
         match self.history.pop() {
             None => {}
             Some(action) => {
-                action.cell.map(|cell| self.board.update(cell, None));
+                action.cell.map(|cell| self.board.update(cell, Stone::None));
                 self.stone = self.stone.switch();
             }
         }
