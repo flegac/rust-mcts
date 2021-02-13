@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub enum Stone {
     Black,
     White,

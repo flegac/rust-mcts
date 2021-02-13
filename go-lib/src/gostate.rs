@@ -1,11 +1,11 @@
 use core::fmt;
 
 use mcts_lib::state::{GameResult, State};
+use stones::stone::Stone;
 
 use crate::action::GoAction;
 use crate::board::GoBoard;
 use crate::constants::GOBAN_SIZE;
-use crate::stone::Stone;
 
 pub struct GoState {
     board: GoBoard,
@@ -28,7 +28,7 @@ impl State<GoAction> for GoState {
     fn result(&self) -> Option<GameResult> {
         let blacks = self.board.count_stones(Some(Stone::Black));
         let whites = self.board.count_stones(Some(Stone::White));
-        if 4 * (whites + blacks) > 3*GOBAN_SIZE * GOBAN_SIZE {
+        if 4 * (whites + blacks) > 3 * GOBAN_SIZE * GOBAN_SIZE {
             Some(GameResult::Victory)
         } else {
             None

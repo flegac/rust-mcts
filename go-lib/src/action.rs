@@ -1,4 +1,4 @@
-use crate::board::GoCell;
+use board::GoCell;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct GoAction {

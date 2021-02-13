@@ -1,5 +1,5 @@
 use core::fmt;
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::iter::Map;
@@ -9,17 +9,17 @@ use std::rc::Rc;
 use itertools::{iproduct, Itertools, Product};
 
 use mcts_lib::mymcts::MyMcts;
+use stones::group::GoGroupRc;
+use stones::stone::Stone;
 
 use crate::action::GoAction;
 use crate::constants::GOBAN_SIZE;
-use crate::stone::Stone;
-use crate::stone_group::StoneGroup;
 
 pub type GoCell = usize;
 
+
 pub(crate) struct GoBoard<> {
-    board: HashMap<GoCell, Rc<RefCell<StoneGroup>>>,
-    groups: HashSet<StoneGroup>,
+    board: HashMap<GoCell, GoGroupRc>,
 }
 
 
@@ -27,20 +27,22 @@ impl GoBoard {
     pub(crate) fn new() -> Self {
         let mut board = GoBoard {
             board: HashMap::new(),
-            groups: HashSet::new(),
         };
-
-        let g = StoneGroup::new(None);
-        let gg = Rc::new(RefCell::new(g));
-        for c in board.cells() {
-            gg.borrow_mut().cells.insert(c);
-        }
-        for c in gg.borrow().cells.iter() {
-            board.board.insert(c, Rc::clone(&gg));
-        }
-
-
+        board.reset();
         board
+    }
+
+    pub(crate) fn reset(&mut self) {
+        self.on_board(
+            GoGroupRc::new(None)
+                .with_cells(self.cells().as_slice()));
+    }
+
+    pub(crate) fn on_board(&mut self, stones: GoGroupRc) {
+        for c in stones.borrow().cells.iter() {
+            self.board.insert(c, stones.clone());
+        }
+        // self.groups.insert(stones.clone());
     }
 
     pub(crate) fn lines(&self) -> Vec<Vec<usize>> {
@@ -78,13 +80,13 @@ impl GoBoard {
 
         // adding stone to new group
         // TODO: find adjacent groups (on adjacent cells) & fusion them together if appropriate
-        let mut group = StoneGroup::new(value);
-        group.cells.insert(cell);
+        let cells = vec![cell];
 
         // // updating cells with new group
-        let rc = Rc::new(RefCell::new(group));
-        for c in rc.borrow().cells.iter() {
-            self.board.insert(cell, Rc::clone(&rc));
+        let stones = GoGroupRc::new(value)
+            .with_cells(cells.as_slice());
+        for c in stones.borrow().cells.iter() {
+            self.board.insert(c, stones.clone());
         }
     }
 

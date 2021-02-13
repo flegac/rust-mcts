@@ -3,24 +3,23 @@ extern crate core;
 extern crate itertools;
 extern crate mcts_lib;
 
-pub mod stone;
+pub mod stones;
 pub mod action;
 pub mod gostate;
-pub mod board;
-pub mod stone_group;
 pub mod constants;
+pub mod board;
 
 #[cfg(test)]
 mod tests {
     use board::GoBoard;
-    use stone_group::StoneGroup;
+    use group::GoGroup;
 
     #[test]
     fn stone_groups() {
         let board = GoBoard::new();
 
 
-        let mut empty = StoneGroup::new(None);
+        let mut empty = GoGroup::new(None);
         empty.cells.insert(board.cell(0, 0));
         empty.cells.insert(board.cell(0, 3));
         empty.cells.insert(board.cell(3, 0));
