@@ -16,19 +16,6 @@ pub(crate) struct GoGroup {
     pub(crate) cells: BitSet,
 }
 
-impl fmt::Display for GoGroup {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let mut res = String::new();
-        res.push_str(&self.stone.to_string());
-        res.push_str(": ");
-        for c in self.cells.iter() {
-            res.push_str(&c.to_string());
-            res.push_str(" ");
-        }
-        write!(f, "{}", res)
-    }
-}
-
 impl GoGroup {
     pub(crate) fn new(stone: Stone) -> GoGroup {
         GoGroup {
@@ -102,5 +89,25 @@ impl GoGroupRc {
     }
     pub(crate) fn borrow_mut(&self) -> RefMut<GoGroup> {
         self.0.borrow_mut()
+    }
+}
+impl fmt::Display for GoGroup {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut res = String::new();
+        res.push_str(&self.stone.to_string());
+        res.push_str("[");
+        for c in self.cells.iter() {
+            res.push_str(&c.to_string());
+            res.push_str(" ");
+        }
+        res.push_str("]");
+
+        write!(f, "{}", res)
+    }
+}
+
+impl fmt::Display for GoGroupRc {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.borrow())
     }
 }

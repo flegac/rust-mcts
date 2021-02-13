@@ -33,12 +33,13 @@ impl GoBoard {
     }
 
     pub(crate) fn reset(&mut self) {
-        self.on_board(
-            GoGroupRc::new(Stone::None)
-                .with_cells(self.cells().as_slice()));
+        let group = GoGroupRc::new(Stone::None)
+            .with_cells(self.cells().as_slice());
+        self.update_group(
+            &group);
     }
 
-    pub(crate) fn on_board(&mut self, stones: GoGroupRc) {
+    pub(crate) fn update_group(&mut self, stones: &GoGroupRc) {
         for c in stones.borrow().cells.iter() {
             self.board.insert(c, stones.clone());
         }
@@ -69,24 +70,39 @@ impl GoBoard {
         (x, y)
     }
 
-    pub(crate) fn update(&mut self, cell: GoCell, value: Stone) {
-        // adding stone to new group
-        // TODO: find adjacent groups (on adjacent cells) & fusion them together if appropriate
-        let cells = vec![cell];
-        let gg = GoGroupRc::new(value)
-            .with_cells(cells.as_slice());
+    pub(crate) fn adjacents(&self, cell: GoCell) -> Vec<GoCell> {
+        let (x0, y0) = self.xy(cell);
+        (iproduct![0..3,0..3])
+            .into_iter()
+            .filter(|(dx, dy)| *dx == 1 || *dy == 1)
+            .filter(|(dx, dy)| *dx != 1 || *dy != 1)
+            .map(|(dx, dy)| (x0 + dx, y0 + dy))
+            .filter(|(x, y)| *x > 0 && *x <= GOBAN_SIZE)
+            .filter(|(x, y)| *y > 0 && *y <= GOBAN_SIZE)
+            .map(|(x, y)| (x - 1, y - 1))
+            .map(|(x, y)| self.cell(x, y))
+            .collect_vec()
+    }
 
-        // updating board with new group
-        self.on_board(
-            GoGroupRc::new(value)
-                .with_cells(cells.as_slice()));
+    pub(crate) fn update(&mut self, cell: GoCell, value: Stone) {
+        // creating new group
+        let cells = vec![cell];
+        // TODO: find adjacent groups (on adjacent cells) & fusion them together if appropriate
+        let gg = GoGroupRc::new(value).with_cells(cells.as_slice());
+
 
         // removing cells from old group
         let mut old = self.board.get(&cell).unwrap();
         old.borrow_mut().remove_group(&gg.borrow());
-        println!("{}", old.borrow());
+
+        println!("new: {} adjacent:{:?}", gg, self.adjacents(cell));
+        println!("old: {}", old);
+
 
         //TODO: check if old group connectivity & split it if needed
+
+        //updating board with new group
+        self.update_group(&gg);
     }
 
 
