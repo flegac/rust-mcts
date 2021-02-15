@@ -1,1 +1,1 @@
-pub(crate) const GOBAN_SIZE: usize = 5;
+pub(crate) const GOBAN_SIZE: usize = 9;

@@ -1,20 +1,25 @@
-extern crate mcts_lib;
 extern crate go_lib;
+extern crate mcts_lib;
 
-use mcts_lib::mymcts::MyMcts;
+use std::time::Instant;
+
 use go_lib::action::GoAction;
 use go_lib::gostate::GoState;
 use mcts_lib::mcts::Mcts;
+use mcts_lib::mymcts::MyMcts;
 use mcts_lib::state::State;
 
 pub fn main() {
+    let start = Instant::now();
+
     let mcts: MyMcts<GoAction, GoState> = MyMcts::new();
 
     let mut state = GoState::initial();
 
-    let res = mcts.explore(&mut state);
+    mcts.explore(&mut state);
 
-    println!("game length: {}", res);
     println!("{}", state);
-    println!("{:?}", state.history)
+
+    let duration = start.elapsed();
+    println!("duration: {:?}", duration);
 }

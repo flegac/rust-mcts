@@ -1,10 +1,13 @@
 use core::fmt;
 
+use itertools::Itertools;
+
+use board::goban::Goban;
+use board::goboard::GoBoard;
 use mcts_lib::state::{GameResult, State};
 use stones::stone::Stone;
 
 use crate::action::GoAction;
-use crate::board::GoBoard;
 use crate::constants::GOBAN_SIZE;
 
 pub struct GoState {
@@ -19,16 +22,20 @@ impl GoState {}
 impl State<GoAction> for GoState {
     fn initial() -> GoState {
         GoState {
-            board: GoBoard::new(),
+            board: GoBoard::new(Goban::new(GOBAN_SIZE)),
             stone: Stone::Black,
             history: vec![],
         }
     }
 
     fn result(&self) -> Option<GameResult> {
+        let size = self.board.goban.size;
+
         let blacks = self.board.count_stones(Stone::Black);
         let whites = self.board.count_stones(Stone::White);
-        if 4 * (whites + blacks) > 3 * GOBAN_SIZE * GOBAN_SIZE {
+        println!("{} {}", blacks, whites);
+        println!("{}", self);
+        if 10 * (whites + blacks) > 9 * size * size {
             Some(GameResult::Victory)
         } else {
             None
@@ -37,11 +44,15 @@ impl State<GoAction> for GoState {
 
 
     fn actions(&self) -> Vec<GoAction> {
-        self.board.actions()
+        self.board.goban.cells
+            .iter()
+            .filter(|c| self.board.group_at(c).borrow().stone == Stone::None)
+            .map(|c| GoAction::play_at(c))
+            .collect_vec()
     }
 
     fn next(&mut self, action: &GoAction) {
-        action.cell.map(|cell| self.board.update(cell, self.stone));
+        action.cell.map(|cell| self.board.play_at(cell, self.stone));
 
         self.stone = self.stone.switch();
         self.history.push(action.clone());
@@ -51,7 +62,7 @@ impl State<GoAction> for GoState {
         match self.history.pop() {
             None => {}
             Some(action) => {
-                action.cell.map(|cell| self.board.update(cell, Stone::None));
+                action.cell.map(|cell| self.board.play_at(cell, Stone::None));
                 self.stone = self.stone.switch();
             }
         }
@@ -60,6 +71,22 @@ impl State<GoAction> for GoState {
 
 impl fmt::Display for GoState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "side: {}\n{}", self.stone, self.board)
+        let mut res = String::new();
+        res.push_str("side: ");
+        res.push_str(&self.stone.to_string());
+        res.push_str("\n");
+        res.push_str(&self.board.to_string());
+
+        res.push_str("history(");
+        res.push_str(&self.history.len().to_string());
+        res.push_str("): ");
+
+        for a in self.history.iter() {
+            res.push_str(&a.to_string());
+            res.push_str(" ");
+        }
+
+
+        write!(f, "{}", res)
     }
 }

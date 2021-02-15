@@ -5,5 +5,5 @@ pub trait Mcts<A, S> where S: State<A> {
 
     fn best_play(&self, state: &S) -> A;
 
-    fn explore(&self, state: &mut S) -> usize;
+    fn explore(&self, state: &mut S);
 }

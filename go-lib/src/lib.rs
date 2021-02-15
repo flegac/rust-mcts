@@ -12,25 +12,26 @@ pub mod board;
 #[cfg(test)]
 mod tests {
     use board::GoBoard;
-    use group::GoGroup;
     use stones::group::GoGroup;
+    use stones::stone::Stone;
+    use board::goboard::GoBoard;
+    use constants::GOBAN_SIZE;
 
     #[test]
     fn stone_groups() {
-        let board = GoBoard::new();
+        let board = GoBoard::new(GOBAN_SIZE);
+        let empty = GoGroup::new(Stone::None, &[
+            board.cell(0, 0),
+            board.cell(0, 3),
+            board.cell(3, 0)
+        ]);
 
-
-        let mut empty = GoGroup::new(GoStone::None);
-        empty.cells.insert(board.cell(0, 0));
-        empty.cells.insert(board.cell(0, 3));
-        empty.cells.insert(board.cell(3, 0));
-
-        assert_eq!(empty.cells.len(), 3);
+        assert_eq!(empty.size(), 3);
     }
 
     #[test]
     fn board_cell_id() {
-        let board = GoBoard::new();
+        let board = GoBoard::new(GOBAN_SIZE);
 
         for c in board.cells() {
             let (x, y) = board.xy(c);

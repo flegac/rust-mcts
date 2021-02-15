@@ -1,10 +1,10 @@
 use indextree::{Arena, NodeId};
+use rand::prelude::SliceRandom;
+use rand::thread_rng;
 
 use crate::mcts::Mcts;
 use crate::state::State;
 use crate::stats::MctsStats;
-use rand::thread_rng;
-use rand::prelude::SliceRandom;
 
 pub struct MyMcts<A, S>
     where S: State<A> {
@@ -42,7 +42,7 @@ impl<A, S> Mcts<A, S> for MyMcts<A, S>
         actions.get(0).unwrap().clone()
     }
 
-    fn explore(&self, state: &mut S) -> usize {
+    fn explore(&self, state: &mut S) {
         let mut i = 0;
         while state.result().is_none() {
             let a = self.best_play(state);
@@ -52,6 +52,9 @@ impl<A, S> Mcts<A, S> for MyMcts<A, S>
             i += 1;
         }
 
-        return i;
+        // while i > 0 {
+        //     state.prev();
+        //     i -= 1;
+        // }
     }
 }
