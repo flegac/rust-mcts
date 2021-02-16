@@ -12,5 +12,4 @@ pub trait State<A> {
 
     fn actions(&self) -> Vec<A>;
     fn next(&mut self, action: &A);
-    fn prev(&mut self);
 }

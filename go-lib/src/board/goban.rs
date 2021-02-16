@@ -6,6 +6,7 @@ use itertools::{iproduct, Itertools, Product};
 
 pub type GoCell = usize;
 
+#[derive(Hash, Eq, PartialEq)]
 pub struct Goban {
     pub size: usize,
     pub cells: BitSet,
@@ -14,7 +15,7 @@ pub struct Goban {
 impl Goban {
     pub fn new(size: usize) -> Self {
         let mut cells = BitSet::new();
-        cells.extend((0..(size * size)));
+        cells.extend(0..(size * size));
         Goban {
             size,
             cells,
@@ -49,5 +50,31 @@ impl Goban {
                 .map(|(x, y)| (x - 1, y - 1))
                 .map(|(x, y)| convert(x, y))
         )
+    }
+
+
+    pub fn flood<F>(&self, cell: GoCell, test: &F) -> BitSet
+        where F: Fn(GoCell) -> bool {
+        let mut visited = BitSet::new();
+        let mut to_visit = BitSet::new();
+        to_visit.insert(cell);
+        visited.insert(cell);
+
+        while !to_visit.is_empty() {
+            let mut connected = BitSet::new();
+            for c in to_visit.iter() {
+                self.adjacents(c).iter()
+                    .filter(|&c| test(c))
+                    .filter(|&a| !visited.contains(a))
+                    .for_each(|c| {
+                        connected.insert(c);
+                    });
+            }
+
+
+            visited.union_with(&connected);
+            to_visit = connected;
+        }
+        visited
     }
 }

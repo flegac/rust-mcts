@@ -46,7 +46,6 @@ impl<A, S> Mcts<A, S> for MyMcts<A, S>
         let mut i = 0;
         while state.result().is_none() {
             let a = self.best_play(state);
-
             state.next(&a);
             // state.prev();
             i += 1;

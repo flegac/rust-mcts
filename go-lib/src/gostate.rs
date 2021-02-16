@@ -33,7 +33,6 @@ impl State<GoAction> for GoState {
 
         let blacks = self.board.count_stones(Stone::Black);
         let whites = self.board.count_stones(Stone::White);
-        println!("{} {}", blacks, whites);
         println!("{}", self);
         if 10 * (whites + blacks) > 9 * size * size {
             Some(GameResult::Victory)
@@ -57,16 +56,6 @@ impl State<GoAction> for GoState {
         self.stone = self.stone.switch();
         self.history.push(action.clone());
     }
-
-    fn prev(&mut self) {
-        match self.history.pop() {
-            None => {}
-            Some(action) => {
-                action.cell.map(|cell| self.board.play_at(cell, Stone::None));
-                self.stone = self.stone.switch();
-            }
-        }
-    }
 }
 
 impl fmt::Display for GoState {
@@ -76,16 +65,17 @@ impl fmt::Display for GoState {
         res.push_str(&self.stone.to_string());
         res.push_str("\n");
         res.push_str(&self.board.to_string());
+        res.push_str("\n");
 
+        //history
         res.push_str("history(");
         res.push_str(&self.history.len().to_string());
         res.push_str("): ");
-
         for a in self.history.iter() {
             res.push_str(&a.to_string());
             res.push_str(" ");
         }
-
+        res.push_str("\n");
 
         write!(f, "{}", res)
     }

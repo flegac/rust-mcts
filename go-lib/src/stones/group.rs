@@ -1,9 +1,10 @@
 use std::fmt;
 use std::fmt::Formatter;
+use std::rc::Rc;
 
-use bit_set::{BitSet, Iter};
+use bit_set::BitSet;
 
-use board::goban::GoCell;
+use board::goban::{Goban, GoCell};
 use stones::stone::Stone;
 
 #[derive(Hash, Eq, PartialEq)]

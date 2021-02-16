@@ -1,31 +1,29 @@
 use core::fmt;
-use std::borrow::Borrow;
-use std::collections::{HashMap, HashSet};
-use std::collections::hash_map::RandomState;
-use std::iter::FromIterator;
+use std::collections::HashMap;
+use std::iter::{Filter, FromIterator, Map};
 use std::ops::Deref;
 
-use bit_set::BitSet;
+use bit_set::{BitSet, Iter};
 use itertools::Itertools;
 
 use board::goban::{Goban, GoCell};
+use board::stats::GoBoardStats;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
-use crate::action::GoAction;
-
 pub(crate) struct GoBoard<> {
     pub(crate) goban: Goban,
     groups: HashMap<GoCell, GoGroupRc>,
+    stats: GoBoardStats,
 }
-
 
 impl GoBoard {
     pub(crate) fn new(goban: Goban) -> Self {
         let mut board = GoBoard {
             goban,
             groups: HashMap::new(),
+            stats: GoBoardStats::new(),
         };
         board.update_board_with_group(&mut GoGroupRc::new(Stone::None, board.goban.cells.clone()));
         board
@@ -36,46 +34,35 @@ impl GoBoard {
         self.group_at(cell).borrow().stone
     }
 
-    fn flood(&self, stone: Stone, cell: GoCell) -> BitSet {
-        let mut visited = BitSet::new();
-        let mut to_visit = BitSet::new();
-        to_visit.insert(cell);
 
-        while !to_visit.is_empty() {
-            let mut connected = BitSet::new();
-            for c in to_visit.iter() {
-                self.goban.adjacents(c).iter()
-                    .filter(|a| self.stone_at(a) == stone)
-                    .filter(|&a| !visited.contains(a))
-                    .for_each(|c| {
-                        connected.insert(c);
-                    });
-            }
+    pub(crate) fn split(&self, g: GoGroupRc) -> Vec<GoGroupRc> {
+        let mut res = vec![];
 
-
-            visited.union_with(&connected);
-            to_visit = connected;
+        while !g.borrow().is_empty() {
+            let g1 = self.next_split(&g);
+            g.borrow_mut().remove_group(&g1.borrow());
+            res.push(g1);
         }
-        visited
+
+
+        res
     }
 
-    fn split(&self, group: &GoGroupRc) {
-        let to_visit = &group.borrow().cells;
-        let groups: Vec<GoGroup> = vec![];
-        //TODO: split a group by connectivity
-        while !to_visit.is_empty() {}
-    }
 
     pub fn play_at(&mut self, cell: GoCell, stone: Stone) {
-        let mut new_group = GoGroupRc::from_cell(stone, cell);
-        let old = self.group_at(&cell);
+        let new_group = GoGroupRc::from_cell(stone, cell);
+        let old = self.group_at(&cell).clone();
         old.borrow_mut().remove_group(&new_group.borrow());
-        //TODO: check old group connectivity & split if needed
+        for part in self.split(old) {
+            self.update_board_with_group(&part);
+        }
+
 
         // update new group
         self.goban.adjacents(cell).iter()
+            .filter(|c| self.stone_at(c) == stone)
             .map(|c| self.group_at(&c))
-            .filter(|&g| g.borrow().stone == stone)
+            .unique()
             .for_each(|g| {
                 new_group.borrow_mut().add_group(g.borrow().deref())
             });
@@ -85,13 +72,33 @@ impl GoBoard {
         self.update_board_with_group(&new_group);
 
         // kill groups
-        self.goban.adjacents(cell).iter()
-            .map(|c| self.group_at(&c))
-            .filter(|&g| g.borrow().stone == stone.switch())
-            .for_each(|g| self.death_test(g));
+        let deads = self.goban.adjacents(cell)
+            .iter()
+            .map(|c| self.group_at(&c).clone())
+            .filter(|g| g.borrow().stone == stone.switch())
+            .filter(|g| self.is_dead(g))
+            .collect_vec();
+        for g in deads.iter().unique()
+        {
+            if g.borrow().stone != Stone::None {
+                self.capture_group(&g);
+            }
+        }
+
+        self.update_stats();
     }
 
-    pub(crate) fn group_at(&self, cell: &GoCell) -> &GoGroupRc {
+
+    fn update_stats(&mut self) {
+        self.stats.black.stones = self.count_stones(Stone::Black);
+        self.stats.black.groups = self.count_groups(Stone::Black);
+        self.stats.white.stones = self.count_stones(Stone::White);
+        self.stats.white.groups = self.count_groups(Stone::White);
+        self.stats.none.stones = self.count_stones(Stone::None);
+        self.stats.none.groups = self.count_groups(Stone::None);
+    }
+
+    pub fn group_at(&self, cell: &GoCell) -> &GoGroupRc {
         self.groups.get(&cell).unwrap()
     }
 
@@ -103,16 +110,28 @@ impl GoBoard {
             .sum()
     }
 
-    fn death_test(&self, group: &GoGroupRc) {
-        self.update_group_liberties(group);
+    pub(crate) fn count_groups(&self, stone: Stone) -> usize {
+        self.groups.values()
+            .filter(|&g| g.borrow().stone == stone)
+            .unique()
+            .count()
+    }
 
-        if self.is_dead(group) {
-            println!("KILLED! {}", group);
-            group.borrow_mut().set_stone(Stone::None)
+    fn capture_group(&mut self, group: &GoGroupRc) {
+        println!("CAPTURED: {}", group);
+
+        match group.borrow().stone {
+            Stone::None => {
+                panic!("capturing empty cells !");
+            }
+            Stone::Black => self.stats.black.captured += group.borrow().size(),
+            Stone::White => self.stats.white.captured += group.borrow().size(),
         }
+        group.borrow_mut().set_stone(Stone::None)
     }
 
     fn is_dead(&self, group: &GoGroupRc) -> bool {
+        self.update_group_liberties(group);
         group.borrow().liberties.is_empty()
     }
 
@@ -137,6 +156,15 @@ impl GoBoard {
             self.groups.insert(c, group.clone());
         }
     }
+
+    fn next_split(&self, group: &GoGroupRc) -> GoGroupRc {
+        let to_visit = &group.borrow().cells;
+        let test = |c: GoCell| to_visit.contains(c);
+
+        let cell = to_visit.iter().next().unwrap();
+        let cells = self.goban.flood(cell, &test);
+        GoGroupRc::new(group.borrow().stone, cells)
+    }
 }
 
 
@@ -153,6 +181,14 @@ impl fmt::Display for GoBoard {
             }
             res.push_str("\n");
         }
+        res.push_str("captured: ");
+        res.push_str("black: ");
+        res.push_str(&self.stats.black.captured.to_string());
+        res.push_str(", white: ");
+        res.push_str(&self.stats.white.captured.to_string());
+        res.push_str("\n");
+
+        res.push_str(&self.stats.to_string());
         write!(f, "{}", res)
     }
 }
