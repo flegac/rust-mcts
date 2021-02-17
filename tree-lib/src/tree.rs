@@ -5,7 +5,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
-use trees::node::Node;
+use crate::node::Node;
 
 pub struct Tree<T>(Rc<Node<T>>);
 

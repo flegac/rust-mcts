@@ -7,11 +7,11 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 use state::GameResult;
-use trees::tree::Tree;
 
 use crate::mcts::Mcts;
 use crate::state::State;
 use crate::stats::MctsStats;
+use tree_lib::tree::Tree;
 
 pub struct MyMcts<A> {
     pub root: Tree<MctsStats<A>>,
