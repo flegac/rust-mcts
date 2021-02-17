@@ -1,4 +1,5 @@
 use core::fmt;
+use std::cmp::Ordering;
 
 use itertools::Itertools;
 
@@ -31,12 +32,18 @@ impl State<GoAction> for GoState {
     fn result(&self) -> Option<GameResult> {
         let size = self.board.goban.size;
 
-        let blacks = self.board.stats.black.stones;
-        let whites = self.board.stats.white.stones;
-        if 10 * (whites + blacks) > 9 * size * size {
-            Some(GameResult::Victory)
-        } else {
-            None
+        let black_stats = &self.board.stats.black;
+        let white_stats = &self.board.stats.white;
+        let blacks = black_stats.captured + black_stats.territory;
+        let whites = white_stats.captured + white_stats.territory;
+
+        match self.board.stats.none.stones.cmp(&10) {
+            Ordering::Less => Some(match blacks.cmp(&whites) {
+                Ordering::Less => GameResult::Defeat,
+                Ordering::Equal => GameResult::Draw,
+                Ordering::Greater => GameResult::Victory
+            }),
+            _ => None
         }
     }
 

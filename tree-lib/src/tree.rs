@@ -1,4 +1,4 @@
-use std::borrow::{Borrow, BorrowMut};
+use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
@@ -17,7 +17,7 @@ impl<T> Tree<T> {
 
     pub fn new(value: T) -> Tree<T> {
         Tree(Rc::new(Node {
-            value,
+            value: RefCell::new(value),
             parent: RefCell::new(Weak::new()),
             children: RefCell::new(vec![]),
         }))
@@ -27,13 +27,6 @@ impl<T> Tree<T> {
         self.parent.borrow().upgrade().map(|c| Tree(Rc::clone(&c)))
     }
 
-    pub fn value(&self) -> &T {
-        &self.0.value
-    }
-
-    // pub fn value_mut(&mut self) -> &mut T {
-    //     &mut self.borrow_mut().value
-    // }
 
     pub fn set_child(&self, index: usize, value: &Tree<T>) {
         self.0.children.borrow_mut().as_mut_slice()[index] = Rc::clone(&value.0);

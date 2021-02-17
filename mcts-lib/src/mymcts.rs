@@ -1,4 +1,6 @@
+use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
+use std::fmt::Display;
 use std::ops::DerefMut;
 
 use indextree::{Arena, NodeId};
@@ -7,11 +9,11 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 use state::GameResult;
+use tree_lib::tree::Tree;
 
 use crate::mcts::Mcts;
 use crate::state::State;
 use crate::stats::MctsStats;
-use tree_lib::tree::Tree;
 
 pub struct MyMcts<A> {
     pub root: Tree<MctsStats<A>>,
@@ -28,7 +30,7 @@ impl<A> MyMcts<A> {
 
 
 impl<A> Mcts<A> for MyMcts<A>
-    where A: Copy {
+    where A: Copy, A: Display {
     fn new(seed: u64) -> MyMcts<A> {
         let root = Tree::new(MctsStats::new(None));
         MyMcts {
@@ -44,6 +46,9 @@ impl<A> Mcts<A> for MyMcts<A>
         where S: State<A> {
         let mut actions = state.actions();
         let mut rng = self.rng.borrow_mut();
+
+        //TODO: sort by best expected result & exploration ratio
+
         actions.shuffle(rng.deref_mut());
         actions.get(0).unwrap().clone()
     }
@@ -52,21 +57,23 @@ impl<A> Mcts<A> for MyMcts<A>
         where S: State<A> {
         while state.result().is_none() {
             let a = self.best_play(state);
-            self.current.add_child(&Tree::new(MctsStats::new(Some(a))));
+            let next_current = Tree::new(MctsStats::new(Some(a)));
+            self.current.add_child(&next_current);
 
             state.next(&a);
+            self.current = next_current;
         }
-        let result = state.result().unwrap();
 
-        // for c in self.current.parents() {
-        //     let x = c.value_mut();
-        //     x.explored += 1;
-        //     match result {
-        //         GameResult::Victory => x.wins += 1,
-        //         GameResult::Defeat => {}
-        //         GameResult::Draw => x.draws += 1
-        //     }
-        // }
+        let result = state.result().unwrap();
+        for c in self.current.parents() {
+            c.value.borrow_mut().explored += 1;
+            match result {
+                GameResult::Victory => c.value.borrow_mut().wins += 1,
+                GameResult::Defeat => {}
+                GameResult::Draw => c.value.borrow_mut().draws += 1
+            }
+        }
+
         self.current = self.root.clone();
     }
 }

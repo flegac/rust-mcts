@@ -4,7 +4,28 @@ pub mod tree;
 #[cfg(test)]
 mod tests {
     use crate::tree::Tree;
+    use crate::node::N;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
+    #[test]
+    fn test_it2() {
+        let x0 = N {
+            data: RefCell::new(0),
+            children: RefCell::new(vec![]),
+        };
+        let x1 = N {
+            data: RefCell::new(1),
+            children: RefCell::new(vec![]),
+        };
+        let  n0 = Rc::new(x0);
+        let  n1 = Rc::new(x1);
+
+        n0.children.borrow_mut().push(Rc::clone(&n0));
+
+        println!("{:?}", &n0);
+        println!("{:?}", &n1);
+    }
     #[test]
     fn test_it() {
         let root = Tree::new(1);

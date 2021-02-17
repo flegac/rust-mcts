@@ -29,6 +29,8 @@ impl GoBoard {
             stats: GoBoardStats::new(),
         };
         board.update_board_with_group(&mut GoGroupRc::new(Stone::None, board.goban.cells.clone()));
+        board.update_stats();
+
         board
     }
 
@@ -141,8 +143,6 @@ impl GoBoard {
     }
 
     fn capture_group(&mut self, group: &GoGroupRc) {
-        println!("CAPTURED: {}", group);
-
         match group.borrow().stone {
             Stone::None => {
                 panic!("capturing empty cells !");
