@@ -10,6 +10,7 @@ pub(crate) struct StoneStats {
     pub(crate) groups: usize,
     pub(crate) stones: usize,
     pub(crate) captured: usize,
+    pub(crate) territory: usize,
 }
 
 impl StoneStats {
@@ -19,6 +20,7 @@ impl StoneStats {
             stones: 0,
             groups: 0,
             captured: 0,
+            territory: 0,
         }
     }
 }
@@ -42,25 +44,20 @@ impl GoBoardStats {
 
 impl fmt::Display for StoneStats {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut res = String::new();
-        res.push_str(&self.stone.to_string());
-        res.push_str(": ");
-        res.push_str(&self.stones.to_string());
-        res.push_str(" stones, ");
-        res.push_str(&self.groups.to_string());
-        res.push_str(" groups");
-        write!(f, "{}", res)
+        write!(f, "{}", format!("{}: {} tones, {} groups",
+                                &self.stone,
+                                &self.stones,
+                                &self.groups
+        ).as_str())
     }
 }
 
 impl fmt::Display for GoBoardStats {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut res = String::new();
-        res.push_str(&self.black.to_string());
-        res.push_str("\n");
-        res.push_str(&self.white.to_string());
-        res.push_str("\n");
-        res.push_str(&self.none.to_string());
-        write!(f, "{}", res)
+        write!(f, "{}", format!("{}\n{}\n{}",
+                                self.black,
+                                self.white,
+                                self.none
+        ))
     }
 }

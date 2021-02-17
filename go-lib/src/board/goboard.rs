@@ -4,6 +4,7 @@ use std::iter::{Filter, FromIterator, Map};
 use std::ops::Deref;
 
 use bit_set::{BitSet, Iter};
+use fixed_typed_arena::Arena;
 use itertools::Itertools;
 
 use board::goban::{Goban, GoCell};
@@ -13,6 +14,7 @@ use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
 pub(crate) struct GoBoard<> {
+    arena: Arena<GoGroup>,
     pub(crate) goban: Goban,
     groups: HashMap<GoCell, GoGroupRc>,
     pub(crate) stats: GoBoardStats,
@@ -21,6 +23,7 @@ pub(crate) struct GoBoard<> {
 impl GoBoard {
     pub fn new(goban: Goban) -> Self {
         let mut board = GoBoard {
+            arena: Arena::new(),
             goban,
             groups: HashMap::new(),
             stats: GoBoardStats::new(),
@@ -30,8 +33,15 @@ impl GoBoard {
     }
 
 
+    pub fn new_group(&self, stone: Stone, cells: BitSet) -> &mut GoGroup {
+        self.arena.alloc(GoGroup::new(stone, cells))
+    }
+
     pub fn play_at(&mut self, cell: GoCell, stone: Stone) {
-        let new_group = GoGroupRc::from_cell(stone, cell);
+        let mut cells = BitSet::new();
+        cells.insert(cell);
+
+        let new_group = GoGroupRc::new(stone, cells);
         let old = self.group_at(&cell).clone();
         old.borrow_mut().remove_group(&new_group.borrow());
         for part in self.split(old) {
@@ -182,49 +192,46 @@ impl GoBoard {
     fn update_stats(&mut self) {
         self.stats.black.stones = self.count_stones(Stone::Black);
         self.stats.black.groups = self.count_groups(Stone::Black);
+        self.stats.black.territory = self.count_territory(Stone::Black);
+
         self.stats.white.stones = self.count_stones(Stone::White);
         self.stats.white.groups = self.count_groups(Stone::White);
+        self.stats.black.territory = self.count_territory(Stone::White);
+
         self.stats.none.stones = self.count_stones(Stone::None);
         self.stats.none.groups = self.count_groups(Stone::None);
     }
 
 
-    fn write_score(&self, res: &mut String) {
-        res.push_str("black: territories=");
-        res.push_str(&self.count_territory(Stone::Black).to_string());
-        res.push_str(", captured:=");
-        res.push_str(&self.stats.black.captured.to_string());
-        res.push_str("\n");
-
-        res.push_str("white: territories=");
-        res.push_str(&self.stats.white.captured.to_string());
-        res.push_str(", captured:=");
-        res.push_str(&self.count_territory(Stone::White).to_string());
-        res.push_str("\n");
+    fn score_string(&self) -> String {
+        format!("\
+            black: territories={}, captured={}\n\
+            white: territories={}, captured={}",
+                self.stats.black.territory,
+                self.stats.black.captured,
+                self.stats.white.territory,
+                self.stats.white.captured
+        )
     }
 }
 
 
 impl fmt::Display for GoBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut res = String::new();
-
         let size = self.goban.size;
+
+        let mut res = String::new();
         for x in 0..size {
             for y in 0..size {
-                let g = self.group_at(&self.goban.cell(x, y));
-                res.push_str(&g.borrow().stone.to_string());
-                res.push_str(" ");
+                let g = self.stone_at(&self.goban.cell(x, y));
+                res.push_str(format!("{} ", g).as_str());
             }
             res.push_str("\n");
         }
-
-
-        self.write_score(&mut res);
-
-        res.push_str(&self.stats.to_string());
-        res.push_str("\n");
-
-        write!(f, "{}", res)
+        write!(f, "{}", format!("{}{}\n{}",
+                                res,
+                                self.score_string(),
+                                self.stats
+        ))
     }
 }

@@ -10,7 +10,7 @@ pub struct GoAction {
 
 
 impl GoAction {
-    pub(crate) fn play_at(cell: GoCell) -> GoAction {
+    pub(crate) fn at(cell: GoCell) -> GoAction {
         GoAction { cell: Some(cell) }
     }
 
@@ -22,11 +22,9 @@ impl GoAction {
 
 impl fmt::Display for GoAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let mut res = String::new();
         match self.cell {
-            None => { res.push_str("Pass") }
-            Some(cell) => { res.push_str(&cell.to_string()) }
+            None => write!(f, "Pass"),
+            Some(cell) => write!(f, "{}", cell.to_string())
         }
-        write!(f, "{}", res)
     }
 }

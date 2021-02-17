@@ -12,7 +12,7 @@ use mcts_lib::state::State;
 pub fn main() {
     let start = Instant::now();
 
-    let mcts: MyMcts<GoAction, GoState> = MyMcts::new();
+    let mut mcts: MyMcts<GoAction> = MyMcts::new(1234);
 
     let mut state = GoState::initial();
 

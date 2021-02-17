@@ -2,12 +2,14 @@ extern crate bit_set;
 extern crate core;
 extern crate itertools;
 extern crate mcts_lib;
+extern crate fixed_typed_arena;
 
 pub mod stones;
 pub mod action;
 pub mod gostate;
 pub mod constants;
 pub mod board;
+mod game;
 
 #[cfg(test)]
 mod tests {

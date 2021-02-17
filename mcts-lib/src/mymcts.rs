@@ -1,59 +1,76 @@
+use std::cell::RefCell;
+use std::ops::DerefMut;
+
 use indextree::{Arena, NodeId};
 use rand::prelude::SliceRandom;
-use rand::thread_rng;
+use rand::SeedableRng;
+use rand_pcg::Pcg64;
+
+use state::GameResult;
+use trees::tree::Tree;
 
 use crate::mcts::Mcts;
 use crate::state::State;
 use crate::stats::MctsStats;
 
-pub struct MyMcts<A, S>
-    where S: State<A> {
-    arena: Arena<MctsStats<A>>,
-    root_node: NodeId,
-    root_state: S,
+pub struct MyMcts<A> {
+    root: Tree<MctsStats<A>>,
+    current: Tree<MctsStats<A>>,
+    rng: RefCell<Pcg64>,
+    _oups: Option<A>,
 }
 
-impl<A, S> MyMcts<A, S>
-    where S: State<A> {
+impl<A> MyMcts<A> {
     pub(crate) fn find_node() {
         unimplemented!()
     }
 }
 
 
-impl<A, S> Mcts<A, S> for MyMcts<A, S>
-    where S: State<A>,
-          A: Copy {
-    fn new() -> MyMcts<A, S> {
-        let mut arena = Arena::new();
-        let root_node = arena.new_node(MctsStats::new(None));
+impl<A> Mcts<A> for MyMcts<A>
+    where A: Copy {
+    fn new(seed: u64) -> MyMcts<A> {
+        let root = Tree::new(MctsStats::new(None));
         MyMcts {
-            arena,
-            root_node,
-            root_state: S::initial(),
+            root: root.clone(),
+            current: root.clone(),
+            rng: RefCell::new(Pcg64::seed_from_u64(seed)),
+            _oups: None,
         }
     }
 
 
-    fn best_play(&self, state: &S) -> A {
+    fn best_play<S>(&self, state: &S) -> A
+        where S: State<A> {
         let mut actions = state.actions();
-        let mut rng = thread_rng();
-        actions.shuffle(&mut rng);
+        let mut rng = self.rng.borrow_mut();
+        actions.shuffle(rng.deref_mut());
         actions.get(0).unwrap().clone()
     }
 
-    fn explore(&self, state: &mut S) {
-        let mut i = 0;
+    fn explore<S>(&mut self, state: &mut S)
+        where S: State<A> {
         while state.result().is_none() {
             let a = self.best_play(state);
-            state.next(&a);
-            // state.prev();
-            i += 1;
-        }
+            self.current.add_child(&Tree::new(MctsStats::new(Some(a))));
 
-        // while i > 0 {
-        //     state.prev();
-        //     i -= 1;
+            state.next(&a);
+        }
+        let result = state.result().unwrap();
+
+
+        // loop {
+        //     let x = self.current.value_mut();
+        //     x.explored += 1;
+        //     match result {
+        //         GameResult::Victory => x.wins += 1,
+        //         GameResult::Defeat => {}
+        //         GameResult::Draw => x.draws += 1
+        //     }
+        //     match self.current.parent() {
+        //         None => break,
+        //         Some(parent) => self.current = parent
+        //     }
         // }
     }
 }

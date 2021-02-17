@@ -1,9 +1,9 @@
 use crate::state::State;
 
-pub trait Mcts<A, S> where S: State<A> {
-    fn new() -> Self;
+pub trait Mcts<A> {
+    fn new(seed: u64) -> Self;
 
-    fn best_play(&self, state: &S) -> A;
+    fn best_play<S>(&self, state: &S) -> A where S: State<A>;
 
-    fn explore(&self, state: &mut S);
+    fn explore<S>(&mut self, state: &mut S) where S: State<A>;
 }

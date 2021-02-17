@@ -15,16 +15,6 @@ pub(crate) struct GoGroup {
 }
 
 impl GoGroup {
-    pub(crate) fn from_cell(stone: Stone, cell: GoCell) -> GoGroup {
-        let mut bitset = BitSet::new();
-        bitset.insert(cell);
-        GoGroup {
-            stone,
-            cells: bitset,
-            liberties: BitSet::new(),
-        }
-    }
-
     pub(crate) fn new(stone: Stone, cells: BitSet) -> GoGroup {
         GoGroup {
             stone,
@@ -32,8 +22,6 @@ impl GoGroup {
             liberties: BitSet::new(),
         }
     }
-
-
     pub(crate) fn size(&self) -> usize {
         self.cells.len()
     }
@@ -63,8 +51,7 @@ impl fmt::Display for GoGroup {
         res.push_str(&self.stone.to_string());
         res.push_str("[");
         for c in self.cells.iter() {
-            res.push_str(&c.to_string());
-            res.push_str(" ");
+            res.push_str(format!("{} ", c).as_str());
         }
         res.push_str("]");
 

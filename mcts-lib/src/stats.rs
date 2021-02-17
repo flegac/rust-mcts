@@ -2,10 +2,10 @@ const _WIN_SCORE: f32 = 1.0;
 const _DRAW_SCORE: f32 = 0.5;
 
 pub(crate) struct MctsStats<A> {
-    action: Option<A>,
-    explored: usize,
-    wins: usize,
-    draws: usize,
+    pub action: Option<A>,
+    pub explored: usize,
+    pub wins: usize,
+    pub draws: usize,
 }
 
 impl<A> MctsStats<A> {

@@ -8,6 +8,7 @@ authors = ["Florent"]
 [dependencies]
 itertools = "0.10.0"
 bit-set = "0.5.2"
+fixed-typed-arena = "0.1.0"
 
 [dependencies.mcts-lib]
 path = "../mcts-lib"
