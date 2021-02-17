@@ -33,7 +33,6 @@ impl State<GoAction> for GoState {
 
         let blacks = self.board.stats.black.stones;
         let whites = self.board.stats.white.stones;
-        println!("{}", self);
         if 10 * (whites + blacks) > 9 * size * size {
             Some(GameResult::Victory)
         } else {

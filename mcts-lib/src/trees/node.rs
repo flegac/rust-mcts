@@ -9,7 +9,7 @@ pub struct Node<T> {
     pub children: RefCell<Vec<Rc<Node<T>>>>,
 }
 
-impl<T> fmt::Display for Node<T> where T: Display, T: Debug {
+impl<T> fmt::Display for Node<T> where T: Display {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut res = String::new();
         res.push_str(&self.value.to_string());

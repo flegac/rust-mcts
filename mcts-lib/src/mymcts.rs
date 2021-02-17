@@ -14,7 +14,7 @@ use crate::state::State;
 use crate::stats::MctsStats;
 
 pub struct MyMcts<A> {
-    root: Tree<MctsStats<A>>,
+    pub root: Tree<MctsStats<A>>,
     current: Tree<MctsStats<A>>,
     rng: RefCell<Pcg64>,
     _oups: Option<A>,
@@ -58,19 +58,15 @@ impl<A> Mcts<A> for MyMcts<A>
         }
         let result = state.result().unwrap();
 
-
-        // loop {
-        //     let x = self.current.value_mut();
+        // for c in self.current.parents() {
+        //     let x = c.value_mut();
         //     x.explored += 1;
         //     match result {
         //         GameResult::Victory => x.wins += 1,
         //         GameResult::Defeat => {}
         //         GameResult::Draw => x.draws += 1
         //     }
-        //     match self.current.parent() {
-        //         None => break,
-        //         Some(parent) => self.current = parent
-        //     }
         // }
+        self.current = self.root.clone();
     }
 }

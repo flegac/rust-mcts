@@ -26,7 +26,8 @@ fn test_it() {
     let c = root.get_child(0).unwrap().get_child(0).unwrap();
 
 
-    println!("{}", &c);
-    let parent = c.parent().unwrap();
-    println!("{}", parent);
+    println!("parents({}) :", c);
+    for x in c.parents() {
+        println!("- {}", x);
+    }
 }

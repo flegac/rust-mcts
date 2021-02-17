@@ -48,6 +48,17 @@ impl<T> Tree<T> {
             .map(|c| Tree(Rc::clone(c)))
     }
 
+    pub fn parents(&self) -> Vec<Tree<T>> {
+        let mut res = vec![];
+        let mut t = self.clone();
+        while t.parent().is_some() {
+            t = t.parent().unwrap().clone();
+            res.push(t.clone());
+        }
+        res
+    }
+
+
     pub fn add_child(&self, tree: &Tree<T>) {
         self.0.children.borrow_mut().push(Rc::clone(&tree.0));
         *tree.0.parent.borrow_mut() = Rc::downgrade(&self.0);
@@ -63,7 +74,7 @@ impl<T> Deref for Tree<T> {
 }
 
 impl<T> fmt::Display for Tree<T>
-    where T: Display, T: Debug {
+    where T: Display {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", format!("{}", self.0))
     }
