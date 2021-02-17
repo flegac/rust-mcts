@@ -31,8 +31,8 @@ impl State<GoAction> for GoState {
     fn result(&self) -> Option<GameResult> {
         let size = self.board.goban.size;
 
-        let blacks = self.board.count_stones(Stone::Black);
-        let whites = self.board.count_stones(Stone::White);
+        let blacks = self.board.stats.black.stones;
+        let whites = self.board.stats.white.stones;
         println!("{}", self);
         if 10 * (whites + blacks) > 9 * size * size {
             Some(GameResult::Victory)

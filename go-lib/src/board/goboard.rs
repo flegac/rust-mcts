@@ -1,5 +1,5 @@
 use core::fmt;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::iter::{Filter, FromIterator, Map};
 use std::ops::Deref;
 
@@ -15,11 +15,11 @@ use stones::stone::Stone;
 pub(crate) struct GoBoard<> {
     pub(crate) goban: Goban,
     groups: HashMap<GoCell, GoGroupRc>,
-    stats: GoBoardStats,
+    pub(crate) stats: GoBoardStats,
 }
 
 impl GoBoard {
-    pub(crate) fn new(goban: Goban) -> Self {
+    pub fn new(goban: Goban) -> Self {
         let mut board = GoBoard {
             goban,
             groups: HashMap::new(),
@@ -27,25 +27,6 @@ impl GoBoard {
         };
         board.update_board_with_group(&mut GoGroupRc::new(Stone::None, board.goban.cells.clone()));
         board
-    }
-
-
-    fn stone_at(&self, cell: &GoCell) -> Stone {
-        self.group_at(cell).borrow().stone
-    }
-
-
-    pub(crate) fn split(&self, g: GoGroupRc) -> Vec<GoGroupRc> {
-        let mut res = vec![];
-
-        while !g.borrow().is_empty() {
-            let g1 = self.next_split(&g);
-            g.borrow_mut().remove_group(&g1.borrow());
-            res.push(g1);
-        }
-
-
-        res
     }
 
 
@@ -89,20 +70,52 @@ impl GoBoard {
     }
 
 
-    fn update_stats(&mut self) {
-        self.stats.black.stones = self.count_stones(Stone::Black);
-        self.stats.black.groups = self.count_groups(Stone::Black);
-        self.stats.white.stones = self.count_stones(Stone::White);
-        self.stats.white.groups = self.count_groups(Stone::White);
-        self.stats.none.stones = self.count_stones(Stone::None);
-        self.stats.none.groups = self.count_groups(Stone::None);
-    }
-
     pub fn group_at(&self, cell: &GoCell) -> &GoGroupRc {
         self.groups.get(&cell).unwrap()
     }
 
-    pub(crate) fn count_stones(&self, stone: Stone) -> usize {
+
+    pub fn stone_at(&self, cell: &GoCell) -> Stone {
+        self.group_at(cell).borrow().stone
+    }
+
+    pub fn split(&self, g: GoGroupRc) -> Vec<GoGroupRc> {
+        let mut res = vec![];
+
+        while !g.borrow().is_empty() {
+            let g1 = self.next_split(&g);
+            g.borrow_mut().remove_group(&g1.borrow());
+            res.push(g1);
+        }
+
+
+        res
+    }
+
+    fn get_territory_owner(&self, group: &GoGroupRc) -> Stone {
+        let border = group.borrow().liberties.iter()
+            .map(|c| self.stone_at(&c))
+            .unique()
+            .collect_vec();
+        if border.len() >= 2 || border.is_empty() {
+            Stone::None
+        } else {
+            border.get(0).unwrap().clone()
+        }
+    }
+
+    fn count_territory(&self, stone: Stone) -> usize {
+
+        //TODO: fix that
+        self.groups.values()
+            .filter(|&g| g.borrow().stone == Stone::None)
+            .unique()
+            .filter(|&g| self.get_territory_owner(g) == stone)
+            .map(|g| g.borrow().size())
+            .sum()
+    }
+
+    fn count_stones(&self, stone: Stone) -> usize {
         self.groups.values()
             .filter(|&g| g.borrow().stone == stone)
             .unique()
@@ -110,7 +123,7 @@ impl GoBoard {
             .sum()
     }
 
-    pub(crate) fn count_groups(&self, stone: Stone) -> usize {
+    fn count_groups(&self, stone: Stone) -> usize {
         self.groups.values()
             .filter(|&g| g.borrow().stone == stone)
             .unique()
@@ -165,6 +178,30 @@ impl GoBoard {
         let cells = self.goban.flood(cell, &test);
         GoGroupRc::new(group.borrow().stone, cells)
     }
+
+    fn update_stats(&mut self) {
+        self.stats.black.stones = self.count_stones(Stone::Black);
+        self.stats.black.groups = self.count_groups(Stone::Black);
+        self.stats.white.stones = self.count_stones(Stone::White);
+        self.stats.white.groups = self.count_groups(Stone::White);
+        self.stats.none.stones = self.count_stones(Stone::None);
+        self.stats.none.groups = self.count_groups(Stone::None);
+    }
+
+
+    fn write_score(&self, res: &mut String) {
+        res.push_str("black: territories=");
+        res.push_str(&self.count_territory(Stone::Black).to_string());
+        res.push_str(", captured:=");
+        res.push_str(&self.stats.black.captured.to_string());
+        res.push_str("\n");
+
+        res.push_str("white: territories=");
+        res.push_str(&self.stats.white.captured.to_string());
+        res.push_str(", captured:=");
+        res.push_str(&self.count_territory(Stone::White).to_string());
+        res.push_str("\n");
+    }
 }
 
 
@@ -181,14 +218,13 @@ impl fmt::Display for GoBoard {
             }
             res.push_str("\n");
         }
-        res.push_str("captured: ");
-        res.push_str("black: ");
-        res.push_str(&self.stats.black.captured.to_string());
-        res.push_str(", white: ");
-        res.push_str(&self.stats.white.captured.to_string());
-        res.push_str("\n");
+
+
+        self.write_score(&mut res);
 
         res.push_str(&self.stats.to_string());
+        res.push_str("\n");
+
         write!(f, "{}", res)
     }
 }
