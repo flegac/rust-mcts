@@ -14,7 +14,7 @@ pub fn main() {
 
     let mut mcts: MyMcts<GoAction> = MyMcts::new(1234);
 
-    for i in 0..50 {
+    for i in 0..1 {
         let mut state = GoState::initial();
         mcts.explore(&mut state);
     }

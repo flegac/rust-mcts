@@ -1,10 +1,8 @@
 use std::fmt;
 use std::fmt::Formatter;
-use std::ops::Deref;
-use std::ptr::write_bytes;
 
 use action::GoAction;
-use game::gogame::Sequence::{Cons, Nil, Variation};
+use game::gogame::Sequence::{Cons, Nil};
 
 #[derive(Debug)]
 enum Sequence {

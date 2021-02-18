@@ -1,8 +1,6 @@
 use std::fmt;
 
-use itertools::Itertools;
 
-use board::goboard::GoBoard;
 use stones::stone::Stone;
 
 pub(crate) struct StoneStats {

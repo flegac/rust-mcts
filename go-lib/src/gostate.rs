@@ -37,13 +37,14 @@ impl State<GoAction> for GoState {
         let blacks = black_stats.captured + black_stats.territory;
         let whites = white_stats.captured + white_stats.territory;
 
-        match self.board.stats.none.stones.cmp(&10) {
-            Ordering::Less => Some(match blacks.cmp(&whites) {
+        if self.actions().is_empty() {
+            Some(match blacks.cmp(&whites) {
                 Ordering::Less => GameResult::Defeat,
                 Ordering::Equal => GameResult::Draw,
                 Ordering::Greater => GameResult::Victory
-            }),
-            _ => None
+            })
+        } else {
+            None
         }
     }
 
@@ -52,12 +53,16 @@ impl State<GoAction> for GoState {
         self.board.goban.cells
             .iter()
             .filter(|c| self.board.group_at(c).borrow().stone == Stone::None)
-            .map(|c| GoAction::at(c))
+            .map(|c| self.board.goban.xy(c))
+            .map(|(x, y)| GoAction::Cell(x, y))
             .collect_vec()
     }
 
     fn next(&mut self, action: &GoAction) {
-        action.cell.map(|cell| self.board.play_at(cell, self.stone));
+        match action {
+            GoAction::Pass => {}
+            GoAction::Cell(_, _) => self.board.play_at(action, self.stone)
+        }
 
         self.stone = self.stone.switch();
         self.history.push(action.clone());

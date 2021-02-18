@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::rc::{Rc, Weak};
-use std::borrow::BorrowMut;
 
 #[derive(Debug)]
 pub struct N {

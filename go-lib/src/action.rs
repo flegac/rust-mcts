@@ -1,30 +1,47 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use board::goban::GoCell;
+use board::goban::{Goban, GoCell};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct GoAction {
-    pub cell: Option<GoCell>
+pub enum GoAction {
+    Pass,
+    Cell(usize, usize),
 }
 
 
 impl GoAction {
-    pub(crate) fn at(cell: GoCell) -> GoAction {
-        GoAction { cell: Some(cell) }
+    pub fn x(&self) -> Option<&usize> {
+        match self {
+            GoAction::Pass => { None }
+            GoAction::Cell(x, y) => Some(x)
+        }
     }
 
-    fn pass() -> GoAction {
-        GoAction { cell: None }
+    pub fn y(self) -> Option<usize> {
+        match self {
+            GoAction::Pass => None,
+            GoAction::Cell(x, y) => Some(y)
+        }
+    }
+
+    pub fn cell(&self, goban: &Goban) -> Option<GoCell> {
+        match self {
+            GoAction::Pass => {
+                None
+            }
+            GoAction::Cell(x, y) => {
+                Some(x * goban.size + y)
+            }
+        }
     }
 }
 
-
 impl fmt::Display for GoAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self.cell {
-            None => write!(f, "Pass"),
-            Some(cell) => write!(f, "{}", cell.to_string())
+        match self {
+            GoAction::Pass => write!(f, "Pass"),
+            GoAction::Cell(x, y) => write!(f, "({},{})", x, y)
         }
     }
 }

@@ -1,9 +1,7 @@
-use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
 use std::fmt::Display;
 use std::ops::DerefMut;
 
-use indextree::{Arena, NodeId};
 use rand::prelude::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;

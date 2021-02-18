@@ -2,7 +2,7 @@ use std::iter::{Filter, FromIterator, Map};
 use std::ops::Range;
 
 use bit_set::BitSet;
-use itertools::{iproduct, Itertools, Product};
+use itertools::{iproduct, Itertools};
 
 pub type GoCell = usize;
 

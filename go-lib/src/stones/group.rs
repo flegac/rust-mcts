@@ -1,6 +1,5 @@
 use std::fmt;
 use std::fmt::Formatter;
-use std::rc::Rc;
 
 use bit_set::BitSet;
 
