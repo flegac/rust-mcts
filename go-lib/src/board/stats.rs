@@ -42,7 +42,7 @@ impl GoBoardStats {
 
 impl fmt::Display for StoneStats {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", format!("{}: {} tones, {} groups",
+        write!(f, "{}", format!("{}: {} stones, {} groups",
                                 &self.stone,
                                 &self.stones,
                                 &self.groups

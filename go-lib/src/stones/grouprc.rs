@@ -14,8 +14,11 @@ use stones::stone::Stone;
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {
+    pub(crate) fn from(group: GoGroup) -> Self {
+        GoGroupRc(Rc::new(RefCell::new(group)))
+    }
     pub(crate) fn new(stone: Stone, cells: BitSet) -> Self {
-        GoGroupRc(Rc::new(RefCell::new(GoGroup::new(stone, cells))))
+        GoGroupRc::from(GoGroup::new(stone, cells))
     }
     pub(crate) fn clone(&self) -> Self {
         GoGroupRc(Rc::clone(&self.0))

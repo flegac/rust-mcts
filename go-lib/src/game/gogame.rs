@@ -2,7 +2,7 @@ use std::fmt;
 use std::fmt::Formatter;
 
 use action::GoAction;
-use game::gogame::Sequence::{Cons, Nil};
+use game::gogame::Sequence::{Cons, Nil, Variation};
 
 #[derive(Debug)]
 enum Sequence {
@@ -45,19 +45,19 @@ impl Sequence {
 #[test]
 fn stone_groups() {
     let main = Sequence::build(&[
-        GoAction::at(32),
-        GoAction::at(22),
-        GoAction::at(11),
+        GoAction::Cell(3,2),
+        GoAction::Cell(2,2),
+        GoAction::Cell(1,1),
     ]);
     let var1 = Sequence::build(&[
-        GoAction::at(32),
-        GoAction::at(22),
-        GoAction::at(11),
+        GoAction::Cell(3,2),
+        GoAction::Cell(2,2),
+        GoAction::Cell(1,1),
     ]);
     let var2 = Sequence::build(&[
-        GoAction::at(32),
-        GoAction::at(22),
-        GoAction::at(11),
+        GoAction::Cell(3,2),
+        GoAction::Cell(2,2),
+        GoAction::Cell(1,1),
     ]);
     let var = Variation(Box::new(var1), Box::new(var2));
     let game = Variation(Box::new(main), Box::new(var));
