@@ -30,19 +30,19 @@ impl State<GoAction> for GoState {
     }
 
     fn result(&self) -> Option<GameResult> {
-        let size = self.board.goban.size;
-
         let black_stats = &self.board.stats.black;
         let white_stats = &self.board.stats.white;
         let blacks = black_stats.captured + black_stats.territory;
         let whites = white_stats.captured + white_stats.territory;
 
-        if self.actions().is_empty() {
-            Some(match blacks.cmp(&whites) {
+        if self.actions().is_empty() || self.history.len() == 150 {
+            let res = match blacks.cmp(&whites) {
                 Ordering::Less => GameResult::Defeat,
                 Ordering::Equal => GameResult::Draw,
                 Ordering::Greater => GameResult::Victory
-            })
+            };
+            println!("{:?}", res);
+            Some(res)
         } else {
             None
         }
@@ -61,9 +61,11 @@ impl State<GoAction> for GoState {
     fn next(&mut self, action: &GoAction) {
         match action {
             GoAction::Pass => {}
-            GoAction::Cell(_, _) => self.board.play_at(action, self.stone)
+            GoAction::Cell(x, y) => {
+                let cell = self.board.goban.cell(*x, *y);
+                self.board.place_stone(cell, self.stone);
+            }
         }
-
         self.stone = self.stone.switch();
         self.history.push(action.clone());
     }

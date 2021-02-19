@@ -20,7 +20,7 @@ impl<A> MctsStats<A> {
             draws: 0,
         }
     }
-    pub(crate) fn score(&self, node: &MctsStats<A>) -> f32 {
+    pub fn score(&self, node: &MctsStats<A>) -> f32 {
         (node.wins as f32 * _WIN_SCORE + node.draws as f32 * _DRAW_SCORE) / node.explored as f32
     }
 }

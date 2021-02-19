@@ -1,8 +1,9 @@
 extern crate bit_set;
 extern crate core;
+extern crate fixed_typed_arena;
 extern crate itertools;
 extern crate mcts_lib;
-extern crate fixed_typed_arena;
+extern crate rpool;
 
 pub mod stones;
 pub mod action;
@@ -13,7 +14,10 @@ mod game;
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use bit_set::BitSet;
+    use rpool::{Pool, Poolable, PoolScaleMode};
 
     use board::goban::Goban;
     use board::goboard::GoBoard;
@@ -25,18 +29,18 @@ mod tests {
     #[test]
     fn stone_groups() {
         let goban = Goban::new(GOBAN_SIZE);
-
+        let board = GoBoard::new(goban);
 
         let mut cells = BitSet::new();
         for cell in &[
-            goban.cell(0, 0),
-            goban.cell(0, 3),
-            goban.cell(3, 0)
+            board.goban.cell(0, 0),
+            board.goban.cell(0, 3),
+            board.goban.cell(3, 0)
         ] {
             cells.insert(*cell);
         }
 
-        let group = GoGroup::new(Stone::None, cells);
+        let group = board.new_group(Stone::None, cells);
 
         assert_eq!(group.size(), 3);
     }
@@ -70,7 +74,7 @@ mod tests {
         };
         let mut cells1 = board.goban.flood(board.goban.cell(0, 0), &test1);
         cells1.union_with(&board.goban.flood(board.goban.cell(2, 0), &test2));
-        let mut g = GoGroupRc::new(Stone::White, cells1);
+        let g = board.new_group(Stone::White, cells1);
         println!("big group: {}", g);
 
 

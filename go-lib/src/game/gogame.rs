@@ -14,17 +14,12 @@ enum Sequence {
 
 impl fmt::Display for Sequence {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let res = String::new();
-        match
-        self {
-            Nil => write!(f,
-                          ""),
-            Cons(seq,
-                 a) => {
+        match self {
+            Nil => write!(f, ""),
+            Cons(seq, a) => {
                 write!(f, "{};{}", seq, a)
             }
-            Sequence::Variation(main,
-                                var) => {
+            Variation(main, var) => {
                 write!(f, "{}({})", main, var)
             }
         }
@@ -32,7 +27,7 @@ impl fmt::Display for Sequence {
 }
 
 impl Sequence {
-    fn build(actions: &[GoAction]) -> Sequence {
+    pub fn build(actions: &[GoAction]) -> Sequence {
         let mut res = Nil;
         for &a in actions {
             res = Cons(Box::new(res), a);
@@ -45,19 +40,19 @@ impl Sequence {
 #[test]
 fn stone_groups() {
     let main = Sequence::build(&[
-        GoAction::Cell(3,2),
-        GoAction::Cell(2,2),
-        GoAction::Cell(1,1),
+        GoAction::Cell(3, 2),
+        GoAction::Cell(2, 2),
+        GoAction::Cell(1, 1),
     ]);
     let var1 = Sequence::build(&[
-        GoAction::Cell(3,2),
-        GoAction::Cell(2,2),
-        GoAction::Cell(1,1),
+        GoAction::Cell(3, 2),
+        GoAction::Cell(2, 2),
+        GoAction::Cell(1, 1),
     ]);
     let var2 = Sequence::build(&[
-        GoAction::Cell(3,2),
-        GoAction::Cell(2,2),
-        GoAction::Cell(1,1),
+        GoAction::Cell(3, 2),
+        GoAction::Cell(2, 2),
+        GoAction::Cell(1, 1),
     ]);
     let var = Variation(Box::new(var1), Box::new(var2));
     let game = Variation(Box::new(main), Box::new(var));

@@ -1,8 +1,7 @@
-use std::iter::{Filter, FromIterator, Map};
-use std::ops::Range;
+use std::iter::FromIterator;
 
 use bit_set::BitSet;
-use itertools::{iproduct, Itertools};
+use itertools::iproduct;
 
 pub type GoCell = usize;
 
@@ -45,8 +44,8 @@ impl Goban {
                 .filter(|(dx, dy)| *dx == 1 || *dy == 1)
                 .filter(|(dx, dy)| *dx != 1 || *dy != 1)
                 .map(|(dx, dy)| (x0 + dx, y0 + dy))
-                .filter(|(x, y)| *x > 0 && *x <= size)
-                .filter(|(x, y)| *y > 0 && *y <= size)
+                .filter(|(x, _y)| *x > 0 && *x <= size)
+                .filter(|(_x, y)| *y > 0 && *y <= size)
                 .map(|(x, y)| (x - 1, y - 1))
                 .map(|(x, y)| convert(x, y))
         )

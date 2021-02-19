@@ -3,7 +3,6 @@ use std::fmt::Formatter;
 
 use bit_set::BitSet;
 
-use board::goban::{Goban, GoCell};
 use stones::stone::Stone;
 
 #[derive(Hash, Eq, PartialEq)]

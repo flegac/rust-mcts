@@ -21,7 +21,7 @@ pub struct MyMcts<A> {
 }
 
 impl<A> MyMcts<A> {
-    pub(crate) fn find_node() {
+    pub fn find_node() {
         unimplemented!()
     }
 }

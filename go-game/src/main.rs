@@ -14,7 +14,7 @@ pub fn main() {
 
     let mut mcts: MyMcts<GoAction> = MyMcts::new(1234);
 
-    for i in 0..1 {
+    for _i in 0..20 {
         let mut state = GoState::initial();
         mcts.explore(&mut state);
     }
@@ -22,7 +22,7 @@ pub fn main() {
     let mut state = GoState::initial();
     mcts.explore(&mut state);
     println!("{}", state);
-    println!("tree: {}", mcts.root);
+    // println!("tree: {}", mcts.root);
 
     let duration = start.elapsed();
     println!("duration: {:?}", duration);

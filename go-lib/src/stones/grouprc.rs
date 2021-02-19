@@ -6,7 +6,6 @@ use std::rc::Rc;
 
 use bit_set::BitSet;
 
-use board::goban::{Goban, GoCell};
 use stones::group::GoGroup;
 use stones::stone::Stone;
 
@@ -14,11 +13,9 @@ use stones::stone::Stone;
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {
-    pub(crate) fn from(group: GoGroup) -> Self {
-        GoGroupRc(Rc::new(RefCell::new(group)))
-    }
     pub(crate) fn new(stone: Stone, cells: BitSet) -> Self {
-        GoGroupRc::from(GoGroup::new(stone, cells))
+        let group = GoGroup::new(stone, cells);
+        GoGroupRc(Rc::new(RefCell::new(group)))
     }
     pub(crate) fn clone(&self) -> Self {
         GoGroupRc(Rc::clone(&self.0))
