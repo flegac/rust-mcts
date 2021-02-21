@@ -7,15 +7,16 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 use state::GameResult;
-use tree_lib::tree::Tree;
 
 use crate::mcts::Mcts;
 use crate::state::State;
 use crate::stats::MctsStats;
+use tree_lib::safe_tree::SafeTree;
+use tree_lib::tree::Tree;
 
 pub struct MyMcts<A> {
-    pub root: Tree<MctsStats<A>>,
-    current: Tree<MctsStats<A>>,
+    pub root: SafeTree<MctsStats<A>>,
+    current: SafeTree<MctsStats<A>>,
     rng: RefCell<Pcg64>,
     _oups: Option<A>,
 }
@@ -30,7 +31,7 @@ impl<A> MyMcts<A> {
 impl<A> Mcts<A> for MyMcts<A>
     where A: Copy, A: Display {
     fn new(seed: u64) -> MyMcts<A> {
-        let root = Tree::new(MctsStats::new(None));
+        let root = SafeTree::new(MctsStats::new(None));
         MyMcts {
             root: root.clone(),
             current: root.clone(),
@@ -53,16 +54,21 @@ impl<A> Mcts<A> for MyMcts<A>
 
     fn explore<S>(&mut self, state: &mut S)
         where S: State<A> {
-        while state.result().is_none() {
+
+        let mut res = state.result();
+        while res.is_none() {
             let a = self.best_play(state);
-            let next_current = Tree::new(MctsStats::new(Some(a)));
+            let next_current = SafeTree::new(MctsStats::new(Some(a)));
             self.current.add_child(&next_current);
 
             state.next(&a);
             self.current = next_current;
+            res = state.result();
         }
 
-        let result = state.result().unwrap();
+        let result = res.unwrap();
+        println!("{:?}", result);
+
         for c in self.current.parents() {
             c.value.borrow_mut().explored += 1;
             match result {

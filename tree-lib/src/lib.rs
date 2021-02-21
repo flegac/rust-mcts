@@ -1,5 +1,6 @@
 pub mod node;
 pub mod tree;
+pub mod safe_tree;
 
 #[cfg(test)]
 mod tests {
@@ -11,6 +12,7 @@ mod tests {
     use rpool::{Pool, Poolable, PoolScaleMode};
 
     use crate::node::N;
+    use crate::safe_tree::SafeTree;
     use crate::tree::Tree;
 
     #[test]
@@ -34,16 +36,16 @@ mod tests {
 
     #[test]
     fn test_it() {
-        let root = Tree::new(1);
+        let root = SafeTree::new(1);
 
-        root.add_child(&Tree::new(10));
-        root.add_child(&Tree::new(11));
-        root.add_child(&Tree::new(12));
+        root.add_child(&SafeTree::new(10));
+        root.add_child(&SafeTree::new(11));
+        root.add_child(&SafeTree::new(12));
         println!("{}", &root);
         root.get_child(1).map(|c| {
-            c.add_child(&Tree::new(110));
-            c.add_child(&Tree::new(111));
-            c.add_child(&Tree::new(112));
+            c.add_child(&SafeTree::new(110));
+            c.add_child(&SafeTree::new(111));
+            c.add_child(&SafeTree::new(112));
         });
         println!("{}", &root);
         root.remove(2);

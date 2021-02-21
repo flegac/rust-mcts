@@ -41,7 +41,6 @@ impl State<GoAction> for GoState {
                 Ordering::Equal => GameResult::Draw,
                 Ordering::Greater => GameResult::Victory
             };
-            println!("{:?}", res);
             Some(res)
         } else {
             None

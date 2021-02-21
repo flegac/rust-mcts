@@ -1,4 +1,5 @@
 use core::fmt;
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -80,7 +81,7 @@ impl GoBoard {
             }
         }
 
-        // self.update_stats();
+        self.update_stats();
     }
 
 
@@ -104,16 +105,26 @@ impl GoBoard {
         res
     }
 
-    fn get_territory_owner(&self, group: &GoGroupRc) -> Stone {
-        let border = group.borrow().liberties.iter()
+    fn get_territory_owner(&self, group: GoGroupRc) -> Stone {
+        let adjacents = self.adjacent_cells(group.clone());
+
+
+        let border = adjacents.iter()
             .map(|c| self.stone_at(&c))
             .unique()
             .collect_vec();
-        if border.len() >= 2 || border.is_empty() {
+
+        let white = border.contains(&Stone::White);
+        let black = border.contains(&Stone::Black);
+
+        let owner = if white && black {
             Stone::None
+        } else if white {
+            Stone::White
         } else {
-            border.get(0).unwrap().clone()
-        }
+            Stone::Black
+        };
+        owner
     }
 
     fn count_territory(&self, stone: Stone) -> usize {
@@ -122,15 +133,7 @@ impl GoBoard {
         self.groups.values()
             .filter(|&g| g.borrow().stone == Stone::None)
             .unique()
-            .filter(|&g| self.get_territory_owner(g) == stone)
-            .map(|g| g.borrow().size())
-            .sum()
-    }
-
-    fn count_stones(&self, stone: Stone) -> usize {
-        self.groups.values()
-            .filter(|&g| g.borrow().stone == stone)
-            .unique()
+            .filter(|&g| self.get_territory_owner(g.clone()) == stone)
             .map(|g| g.borrow().size())
             .sum()
     }
@@ -154,17 +157,22 @@ impl GoBoard {
     }
 
     fn is_dead(&self, group: &GoGroupRc) -> bool {
-        self.update_group_liberties(group);
+        self.update_group_liberties(group.clone());
         group.borrow().liberties.is_empty()
     }
 
 
-    fn update_group_liberties(&self, group: &GoGroupRc) {
+    fn adjacent_cells(&self, group: GoGroupRc) -> BitSet {
         let mut adjacents = BitSet::new();
         for c in group.borrow().cells.iter() {
             adjacents.union_with(&self.goban.adjacents(c));
         }
         adjacents.difference_with(&group.borrow().cells);
+        adjacents
+    }
+
+    fn update_group_liberties(&self, group: GoGroupRc) {
+        let mut adjacents = self.adjacent_cells(group.clone());
 
         group.borrow_mut().liberties.clear();
         for x in adjacents.iter()
@@ -192,16 +200,24 @@ impl GoBoard {
     pub(crate) fn update_stats(&mut self) {
         self.stats.black.stones = self.count_stones(Stone::Black);
         self.stats.black.groups = self.count_groups(Stone::Black);
-        self.stats.black.territory = self.count_territory(Stone::Black);
 
         self.stats.white.stones = self.count_stones(Stone::White);
         self.stats.white.groups = self.count_groups(Stone::White);
-        self.stats.black.territory = self.count_territory(Stone::White);
 
         self.stats.none.stones = self.count_stones(Stone::None);
         self.stats.none.groups = self.count_groups(Stone::None);
+
+        self.stats.black.territory = self.count_territory(Stone::Black);
+        self.stats.white.territory = self.count_territory(Stone::White);
     }
 
+    fn count_stones(&self, stone: Stone) -> usize {
+        self.groups.values()
+            .filter(|&g| g.borrow().stone == stone)
+            .unique()
+            .map(|g| g.borrow().size())
+            .sum()
+    }
 
     fn score_string(&self) -> String {
         format!("\
