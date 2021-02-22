@@ -1,5 +1,5 @@
 [package]
-name = "tree-lib"
+name = "graph-lib"
 version = "0.1.0"
 authors = ["Florent"]
 edition = "2018"
@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 rpool = "1.0.1"
+bit-set = "0.5.2"

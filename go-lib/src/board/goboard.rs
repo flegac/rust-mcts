@@ -13,6 +13,7 @@ use board::stats_board::BoardStats;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
+use graph_lib::graph::{Graph, Vert};
 
 pub(crate) struct GoBoard {
     arena: Arena<GoGroup>,

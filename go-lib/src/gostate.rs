@@ -12,7 +12,7 @@ use stones::stone::Stone;
 use crate::action::GoAction;
 use crate::constants::GOBAN_SIZE;
 use board::grid::Grid;
-use board::graph::Graph;
+use graph_lib::graph::Graph;
 
 pub struct GoState {
     board: GoBoard,

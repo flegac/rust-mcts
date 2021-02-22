@@ -4,6 +4,7 @@ extern crate fixed_typed_arena;
 extern crate itertools;
 extern crate mcts_lib;
 extern crate rpool;
+extern crate graph_lib;
 
 pub mod stones;
 pub mod action;

@@ -8,6 +8,7 @@ use board::goboard::GoBoard;
 use board::graph::Graph;
 use board::grid::{GoCell, Grid};
 use stones::stone::Stone;
+use graph_lib::graph::Graph;
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub(crate) struct GoGroup {

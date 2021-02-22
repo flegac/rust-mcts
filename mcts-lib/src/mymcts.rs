@@ -7,8 +7,8 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 use state::GameResult;
-use tree_lib::safe_tree::SafeTree;
-use tree_lib::tree::Tree;
+use graph_lib::safe_tree::SafeTree;
+use graph_lib::tree::Tree;
 
 use crate::mcts::Mcts;
 use crate::state::State;

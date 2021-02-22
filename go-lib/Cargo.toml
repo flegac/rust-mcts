@@ -14,3 +14,5 @@ log = "0.4.14"
 
 [dependencies.mcts-lib]
 path = "../mcts-lib"
+[dependencies.graph-lib]
+path = "../graph-lib"

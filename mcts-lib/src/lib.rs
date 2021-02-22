@@ -1,7 +1,7 @@
 extern crate indextree;
 extern crate rand;
 extern crate rand_pcg;
-extern crate tree_lib;
+extern crate graph_lib;
 
 pub mod mcts;
 pub mod state;

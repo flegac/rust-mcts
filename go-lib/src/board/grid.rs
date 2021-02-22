@@ -8,8 +8,7 @@ use std::rc::Rc;
 
 use bit_set::BitSet;
 use itertools::{iproduct, Iterate, Itertools};
-
-use board::graph::Graph;
+use graph_lib::graph::Graph;
 
 pub type GoCell = usize;
 
