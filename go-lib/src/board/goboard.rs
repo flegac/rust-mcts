@@ -61,10 +61,12 @@ impl GoBoard {
         let new_group = self.new_group(GoGroup::from_cell(stone, cell));
         let old = self.group_at(&cell).clone();
         old.borrow_mut().remove_group(&new_group.borrow());
-        self.stats.rem_group(old.borrow_mut().deref_mut());
+        self.stats.rem_group(old.borrow().deref());
+
         for part in old.borrow_mut().split(&self.goban) {
             self.update_group(self.new_group(part));
         }
+
 
         self.empty_cells.remove_group(new_group.borrow().deref());
 

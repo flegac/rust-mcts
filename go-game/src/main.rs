@@ -1,5 +1,3 @@
-mod editor;
-
 extern crate chrono;
 extern crate env_logger;
 extern crate go_lib;
@@ -20,6 +18,8 @@ use mcts_lib::mcts::Mcts;
 use mcts_lib::mymcts::MyMcts;
 use mcts_lib::state::State;
 
+mod editor;
+
 pub fn main() {
     init_logs();
     let bench = Instant::now();
@@ -36,11 +36,13 @@ pub fn main() {
             mcts.explore(&mut state);
             roud_games += 1;
         }
-        log::info!("Speed: {} games {:?} sec", roud_games, round.elapsed());
-        log::debug!("results: {} wins, {} defeats, {} draws",
-                    mcts.root.value.borrow().wins,
-                    mcts.root.value.borrow().defeats(),
-                    mcts.root.value.borrow().draws,
+        log::info!(
+            "Speed: {} games {:?} sec | results: {} wins, {} defeats, {} draws",
+            roud_games,
+            round.elapsed(),
+            mcts.root.value.borrow().wins,
+            mcts.root.value.borrow().defeats(),
+            mcts.root.value.borrow().draws,
         );
         total_games += roud_games;
     }
@@ -51,13 +53,14 @@ pub fn main() {
     mcts.explore(&mut state);
     log::info!("Board:\n{}", state);
 
-    log::info!("results: {} wins, {} defeats, {} draws",
-               mcts.root.value.borrow().wins,
-               mcts.root.value.borrow().defeats(),
-               mcts.root.value.borrow().draws,
+    log::info!(
+        "Speed: {} games {:?} sec | results: {} wins, {} defeats, {} draws",
+        total_games,
+        duration,
+        mcts.root.value.borrow().wins,
+        mcts.root.value.borrow().defeats(),
+        mcts.root.value.borrow().draws,
     );
-    log::info!("duration: {:?}", duration);
-    log::info!("Speed: {} games {:?} sec", total_games, duration);
 }
 
 

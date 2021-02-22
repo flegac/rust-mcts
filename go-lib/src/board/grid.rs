@@ -3,11 +3,13 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
+use std::mem::swap;
 use std::ops::Deref;
 use std::rc::Rc;
 
 use bit_set::BitSet;
 use itertools::{iproduct, Iterate, Itertools};
+
 use graph_lib::graph::Graph;
 
 pub type GoCell = usize;
@@ -94,11 +96,12 @@ impl Graph for Grid {
         where F: Fn(GoCell) -> bool {
         let mut visited = BitSet::new();
         let mut to_visit = BitSet::new();
+        let mut connected = BitSet::new();
+
         to_visit.insert(cell);
         visited.insert(cell);
 
         while !to_visit.is_empty() {
-            let mut connected = BitSet::new();
             for c in to_visit.iter() {
                 self.edges(c)
                     .iter()
@@ -109,9 +112,11 @@ impl Graph for Grid {
                     });
             }
 
-
             visited.union_with(&connected);
+            let tmp = to_visit;
             to_visit = connected;
+            connected = tmp;
+            connected.clear();
         }
         visited
     }

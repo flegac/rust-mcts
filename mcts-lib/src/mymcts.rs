@@ -6,9 +6,9 @@ use rand::prelude::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
-use state::GameResult;
 use graph_lib::safe_tree::SafeTree;
 use graph_lib::tree::Tree;
+use state::GameResult;
 
 use crate::mcts::Mcts;
 use crate::state::State;
