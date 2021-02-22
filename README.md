@@ -21,11 +21,7 @@ Build & run go-game to look at some auto-generated games.
 Hum... Do not expect wonders !
 
 # TODO
-
 - implement proper MCTS
-
-- optimise the state.actions() function
-
 - Implements GoEditor : command line interface to edit & visualise GoState/GoBoard 
 
 # Issues
