@@ -7,12 +7,12 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 use state::GameResult;
+use tree_lib::safe_tree::SafeTree;
+use tree_lib::tree::Tree;
 
 use crate::mcts::Mcts;
 use crate::state::State;
 use crate::stats::MctsStats;
-use tree_lib::safe_tree::SafeTree;
-use tree_lib::tree::Tree;
 
 pub struct MyMcts<A> {
     pub root: SafeTree<MctsStats<A>>,
@@ -54,7 +54,6 @@ impl<A> Mcts<A> for MyMcts<A>
 
     fn explore<S>(&mut self, state: &mut S)
         where S: State<A> {
-
         let mut res = state.result();
         while res.is_none() {
             let a = self.best_play(state);
@@ -67,7 +66,7 @@ impl<A> Mcts<A> for MyMcts<A>
         }
 
         let result = res.unwrap();
-        println!("{:?}", result);
+        log::debug!("{:?}", result);
 
         for c in self.current.parents() {
             c.value.borrow_mut().explored += 1;

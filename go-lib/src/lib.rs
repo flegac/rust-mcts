@@ -19,7 +19,7 @@ mod tests {
     use bit_set::BitSet;
     use rpool::{Pool, Poolable, PoolScaleMode};
 
-    use board::goban::Goban;
+    use board::grid::Grid;
     use board::goboard::GoBoard;
     use constants::GOBAN_SIZE;
     use stones::group::GoGroup;
@@ -28,7 +28,7 @@ mod tests {
 
     #[test]
     fn stone_groups() {
-        let goban = Goban::new(GOBAN_SIZE);
+        let goban = Grid::new(GOBAN_SIZE);
         let board = GoBoard::new(goban);
 
         let mut cells = BitSet::new();
@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn board_cell_id() {
-        let goban = Goban::new(GOBAN_SIZE);
+        let goban = Grid::new(GOBAN_SIZE);
 
         for c in goban.cells.iter() {
             let (x, y) = goban.xy(c);
@@ -63,7 +63,7 @@ mod tests {
 
     #[test]
     fn test_group_splitting() {
-        let board = GoBoard::new(Goban::new(GOBAN_SIZE));
+        let board = GoBoard::new(Grid::new(GOBAN_SIZE));
         let test1 = |c| {
             let (x, y) = board.goban.xy(c);
             x == 0

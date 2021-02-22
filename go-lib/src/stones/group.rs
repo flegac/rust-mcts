@@ -5,21 +5,14 @@ use bit_set::BitSet;
 
 use stones::stone::Stone;
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub(crate) struct GoGroup {
     pub(crate) stone: Stone,
-    pub(crate) liberties: BitSet,
+    pub(crate) liberties: usize,
     pub(crate) cells: BitSet,
 }
 
 impl GoGroup {
-    pub(crate) fn new(stone: Stone, cells: BitSet) -> GoGroup {
-        GoGroup {
-            stone,
-            cells,
-            liberties: BitSet::new(),
-        }
-    }
     pub(crate) fn size(&self) -> usize {
         self.cells.len()
     }

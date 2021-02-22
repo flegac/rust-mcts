@@ -22,7 +22,9 @@ Hum... Do not expect wonders !
 
 # TODO
 
-- implement MCTS
+- implement proper MCTS
+
+- optimise the state.actions() function
 
 # Issues
 

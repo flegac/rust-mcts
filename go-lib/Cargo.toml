@@ -10,6 +10,7 @@ itertools = "0.10.0"
 bit-set = "0.5.2"
 fixed-typed-arena = "0.1.0"
 rpool = "1.0.1"
+log = "0.4.14"
 
 [dependencies.mcts-lib]
 path = "../mcts-lib"

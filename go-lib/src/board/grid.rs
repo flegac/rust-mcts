@@ -1,23 +1,32 @@
+use std::borrow::Borrow;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
+use std::ops::Deref;
+use std::rc::Rc;
 
 use bit_set::BitSet;
-use itertools::iproduct;
+use itertools::{iproduct, Itertools};
 
 pub type GoCell = usize;
 
+
 #[derive(Hash, Eq, PartialEq)]
-pub struct Goban {
+pub struct Grid {
     pub size: usize,
     pub cells: BitSet,
+    pub edges: Vec<BitSet>,
 }
 
-impl Goban {
+impl Grid {
     pub fn new(size: usize) -> Self {
-        let mut cells = BitSet::new();
-        cells.extend(0..(size * size));
-        Goban {
+        Grid {
             size,
-            cells,
+            cells: BitSet::from_iter(0..(size * size)),
+            edges: (0..(size * size))
+                .map(|c| Grid::get_adjacents(size, c))
+                .collect_vec(),
         }
     }
 
@@ -31,27 +40,6 @@ impl Goban {
         (x, y)
     }
 
-    pub fn adjacents(&self, cell: GoCell) -> BitSet {
-        let (x0, y0) = self.xy(cell);
-
-        let convert = |x: usize, y: usize| self.cell(x, y);
-        let size = self.size;
-
-
-        BitSet::from_iter(
-            (iproduct![0..3,0..3])
-                .into_iter()
-                .filter(|(dx, dy)| *dx == 1 || *dy == 1)
-                .filter(|(dx, dy)| *dx != 1 || *dy != 1)
-                .map(|(dx, dy)| (x0 + dx, y0 + dy))
-                .filter(|(x, _y)| *x > 0 && *x <= size)
-                .filter(|(_x, y)| *y > 0 && *y <= size)
-                .map(|(x, y)| (x - 1, y - 1))
-                .map(|(x, y)| convert(x, y))
-        )
-    }
-
-
     pub fn flood<F>(&self, cell: GoCell, test: &F) -> BitSet
         where F: Fn(GoCell) -> bool {
         let mut visited = BitSet::new();
@@ -62,7 +50,7 @@ impl Goban {
         while !to_visit.is_empty() {
             let mut connected = BitSet::new();
             for c in to_visit.iter() {
-                self.adjacents(c).iter()
+                self.edges[c].iter()
                     .filter(|&c| test(c))
                     .filter(|&a| !visited.contains(a))
                     .for_each(|c| {
@@ -75,5 +63,19 @@ impl Goban {
             to_visit = connected;
         }
         visited
+    }
+
+    fn get_adjacents(size: usize, cell: GoCell) -> BitSet {
+        let size = size as i32;
+        let limit = (size * size) as i32;
+        let c = cell as i32;
+
+        let same_line1 = |x: i32| (x % size - c % size).abs() <= 1;
+        let in_board = |x: i32| x >= 0 && x < limit;
+
+        BitSet::from_iter([c - 1, c + 1, c - size, c + size].iter()
+            .filter(|&x| in_board(*x))
+            .filter(|&x| same_line1(*x))
+            .map(|&x| x as usize))
     }
 }

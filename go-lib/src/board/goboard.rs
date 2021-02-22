@@ -5,88 +5,111 @@ use std::ops::Deref;
 
 use bit_set::BitSet;
 use fixed_typed_arena::Arena;
-use itertools::Itertools;
+use itertools::{Itertools, sorted};
 
-use board::goban::{Goban, GoCell};
-use board::stats::GoBoardStats;
+use board::grid::{GoCell, Grid};
+use board::stats_board::BoardStats;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
 pub(crate) struct GoBoard {
     arena: Arena<GoGroup>,
-    pub(crate) goban: Goban,
+    pub(crate) goban: Grid,
     // groups: Vec<GoGroupRc>,
-    groups: HashMap<GoCell, GoGroupRc>,
-    pub(crate) stats: GoBoardStats,
+    pub(crate) groups: HashMap<GoCell, GoGroupRc>,
+    pub(crate) stats: BoardStats,
 }
 
 impl GoBoard {
-    pub fn new(goban: Goban) -> Self {
+    pub fn new(goban: Grid) -> Self {
         // let cell_number = goban.size * goban.size;
         let mut board = GoBoard {
             arena: Arena::new(),
             goban,
             // groups: Vec::with_capacity(cell_number),
             groups: HashMap::new(),
-            stats: GoBoardStats::new(),
+            stats: BoardStats::init(),
         };
-        board.update_board_with_group(&mut board.new_group(Stone::None, board.goban.cells.clone()));
-        board.update_stats();
+
+        let mut new_group = board.board_group();
+        board.update_board_with_group(&mut new_group);
         board
     }
 
 
-    pub fn new_group(&self, stone: Stone, cells: BitSet) -> GoGroupRc {
-        // self.arena.alloc(GoGroup::new(stone, cells))
-        GoGroupRc::new(stone, cells)
-    }
-
-    pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
+    pub fn cell_group(&self, stone: Stone, cell: GoCell) -> GoGroupRc {
         let mut cells = BitSet::new();
         cells.insert(cell);
+        let g = self.new_group(stone, cells, 4);
+        g
+    }
 
-        let new_group = self.new_group(stone, cells);
+    pub fn board_group(&self) -> GoGroupRc {
+        self.new_group(Stone::None, self.goban.cells.clone(), 0)
+    }
+
+    pub fn new_group(&self, stone: Stone, cells: BitSet, liberties: usize) -> GoGroupRc {
+        // self.arena.alloc(GoGroup {stone, cells, liberties})
+        GoGroupRc::new(stone, cells, liberties)
+    }
+
+
+    pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
+        log::trace!("board:\n{}", self);
+        log::debug!("PLACE STONE: {} @ {:?}", stone, self.goban.xy(cell));
+
+        let new_group = self.cell_group(stone, cell);
         let old = self.group_at(&cell).clone();
         old.borrow_mut().remove_group(&new_group.borrow());
+        self.stats.rem_group(&old);
         for part in self.split(old) {
             self.update_board_with_group(&part);
         }
 
-
-        // update new group
-        self.goban.adjacents(cell).iter()
+        // update board with new group
+        self.goban.edges[cell]
+            .iter()
             .filter(|c| self.stone_at(c) == stone)
             .map(|c| self.group_at(&c))
-            .unique()
+            .sorted()
+            .dedup()
             .for_each(|g| {
-                new_group.borrow_mut().add_group(g.borrow().deref())
+                new_group.borrow_mut().add_group(g.borrow().deref());
+                self.stats.rem_group(&g);
             });
-
-
-        //updating board with new group
         self.update_board_with_group(&new_group);
 
         // kill groups
-        let deads = self.goban.adjacents(cell)
+        let deads = self.goban.edges[cell]
             .iter()
-            .map(|c| self.group_at(&c).clone())
-            .filter(|g| g.borrow().stone == stone.switch())
-            .filter(|g| self.is_dead(g))
+            .filter(|c| self.stone_at(c) == stone.switch())
+            .map(|c| self.group_at(&c))
+            .sorted()
+            .dedup()
             .collect_vec();
-        for g in deads.iter().unique()
-        {
-            if g.borrow().stone != Stone::None {
+
+        for g in deads {
+            self.update_group_liberties(&g);
+            if self.is_dead(&g) {
                 self.capture_group(&g);
             }
         }
 
-        self.update_stats();
+        //FIXME: do not allow this case to happen !
+        self.update_group_liberties(&new_group);
+        if self.is_dead(&new_group) {
+            log::debug!("AUTOKILL MOVE! {}", new_group);
+            self.capture_group(&new_group);
+        }
+
+        //TODO: remove this when all is ok !
+        // self.stats.assert_eq(&BoardStats::new(self));
     }
 
 
-    pub fn group_at(&self, cell: &GoCell) -> &GoGroupRc {
-        self.groups.get(&cell).unwrap()
+    pub fn group_at(&self, cell: &GoCell) -> GoGroupRc {
+        self.groups.get(&cell).unwrap().clone()
     }
 
 
@@ -94,7 +117,7 @@ impl GoBoard {
         self.group_at(cell).borrow().stone
     }
 
-    pub fn split(&self, g: GoGroupRc) -> Vec<GoGroupRc> {
+    fn split(&self, g: GoGroupRc) -> Vec<GoGroupRc> {
         let mut res = vec![];
 
         while !g.borrow().is_empty() {
@@ -105,80 +128,49 @@ impl GoBoard {
         res
     }
 
-    fn get_territory_owner(&self, group: GoGroupRc) -> Stone {
-        let adjacents = self.adjacent_cells(group.clone());
-
-
-        let border = adjacents.iter()
-            .map(|c| self.stone_at(&c))
-            .unique()
-            .collect_vec();
-
-        let white = border.contains(&Stone::White);
-        let black = border.contains(&Stone::Black);
-
-        let owner = if white && black {
-            Stone::None
-        } else if white {
-            Stone::White
-        } else {
-            Stone::Black
-        };
-        owner
-    }
-
-    fn count_territory(&self, stone: Stone) -> usize {
-
-        //TODO: fix that
-        self.groups.values()
-            .filter(|&g| g.borrow().stone == Stone::None)
-            .unique()
-            .filter(|&g| self.get_territory_owner(g.clone()) == stone)
-            .map(|g| g.borrow().size())
-            .sum()
-    }
-
-    fn count_groups(&self, stone: Stone) -> usize {
-        self.groups.values()
-            .filter(|&g| g.borrow().stone == stone)
-            .unique()
-            .count()
-    }
 
     fn capture_group(&mut self, group: &GoGroupRc) {
+        self.stats.rem_group(&group);
         match group.borrow().stone {
-            Stone::None => {
-                panic!("capturing empty cells !");
-            }
+            Stone::None => {}
             Stone::Black => self.stats.black.captured += group.borrow().size(),
             Stone::White => self.stats.white.captured += group.borrow().size(),
         }
-        group.borrow_mut().set_stone(Stone::None)
+        group.borrow_mut().set_stone(Stone::None);
+        self.stats.add_group(&group);
+
+        // the stones has been counted twice for None group
+        self.stats.none.stones -= group.borrow().cells.len();
     }
 
     fn is_dead(&self, group: &GoGroupRc) -> bool {
-        self.update_group_liberties(group.clone());
-        group.borrow().liberties.is_empty()
+        group.borrow().liberties == 0
     }
 
 
-    fn adjacent_cells(&self, group: GoGroupRc) -> BitSet {
+    pub fn adjacent_cells(&self, group: GoGroupRc) -> BitSet {
         let mut adjacents = BitSet::new();
         for c in group.borrow().cells.iter() {
-            adjacents.union_with(&self.goban.adjacents(c));
+            adjacents.union_with(&self.goban.edges[c]);
         }
         adjacents.difference_with(&group.borrow().cells);
         adjacents
     }
 
-    fn update_group_liberties(&self, group: GoGroupRc) {
+
+    fn count_liberties(&self, group: &GoGroupRc) -> usize {
         let mut adjacents = self.adjacent_cells(group.clone());
 
-        group.borrow_mut().liberties.clear();
+        let mut liberties = BitSet::new();
         for x in adjacents.iter()
             .filter(|c| self.group_at(c).borrow().stone == Stone::None) {
-            group.borrow_mut().liberties.insert(x);
+            liberties.insert(x);
         }
+        liberties.len()
+    }
+
+    fn update_group_liberties(&self, group: &GoGroupRc) {
+        group.borrow_mut().liberties = self.count_liberties(group);
     }
 
 
@@ -186,6 +178,7 @@ impl GoBoard {
         for c in group.borrow().cells.iter() {
             self.groups.insert(c, group.clone());
         }
+        self.stats.add_group(&group);
     }
 
     fn next_split(&self, group: &GoGroupRc) -> GoGroupRc {
@@ -194,40 +187,8 @@ impl GoBoard {
 
         let cell = to_visit.iter().next().unwrap();
         let cells = self.goban.flood(cell, &test);
-        self.new_group(group.borrow().stone, cells)
-    }
-
-    pub(crate) fn update_stats(&mut self) {
-        self.stats.black.stones = self.count_stones(Stone::Black);
-        self.stats.black.groups = self.count_groups(Stone::Black);
-
-        self.stats.white.stones = self.count_stones(Stone::White);
-        self.stats.white.groups = self.count_groups(Stone::White);
-
-        self.stats.none.stones = self.count_stones(Stone::None);
-        self.stats.none.groups = self.count_groups(Stone::None);
-
-        self.stats.black.territory = self.count_territory(Stone::Black);
-        self.stats.white.territory = self.count_territory(Stone::White);
-    }
-
-    fn count_stones(&self, stone: Stone) -> usize {
-        self.groups.values()
-            .filter(|&g| g.borrow().stone == stone)
-            .unique()
-            .map(|g| g.borrow().size())
-            .sum()
-    }
-
-    fn score_string(&self) -> String {
-        format!("\
-            black: territories={}, captured={}\n\
-            white: territories={}, captured={}",
-                self.stats.black.territory,
-                self.stats.black.captured,
-                self.stats.white.territory,
-                self.stats.white.captured
-        )
+        let liberties = 0;
+        self.new_group(group.borrow().stone, cells, liberties)
     }
 }
 
@@ -237,8 +198,8 @@ impl fmt::Display for GoBoard {
         let size = self.goban.size;
 
         let mut res = String::new();
-        for x in 0..size {
-            for y in 0..size {
+        for y in 0..size {
+            for x in 0..size {
                 let g = self.stone_at(&self.goban.cell(x, y));
                 res.push_str(format!("{} ", g).as_str());
             }
@@ -246,7 +207,7 @@ impl fmt::Display for GoBoard {
         }
         write!(f, "{}", format!("{}{}\n{}",
                                 res,
-                                self.score_string(),
+                                self.stats.score_string(),
                                 self.stats
         ))
     }

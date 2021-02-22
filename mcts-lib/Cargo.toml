@@ -9,6 +9,7 @@ authors = ["Florent"]
 indextree = "4.3.1"
 rand = "0.8.3"
 rand_pcg = "0.3.0"
+log = "0.4.14"
 
 [dependencies.tree-lib]
 path = "../tree-lib"

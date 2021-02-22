@@ -1,3 +1,4 @@
 pub mod goboard;
-pub mod goban;
-pub mod stats;
+pub mod grid;
+pub mod stats_board;
+pub mod stats_color;

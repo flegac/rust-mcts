@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use board::goban::{Goban, GoCell};
+use board::grid::{Grid, GoCell};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum GoAction {
@@ -25,7 +25,7 @@ impl GoAction {
         }
     }
 
-    pub fn cell(&self, goban: &Goban) -> Option<GoCell> {
+    pub fn cell(&self, goban: &Grid) -> Option<GoCell> {
         match self {
             GoAction::Pass => {
                 None

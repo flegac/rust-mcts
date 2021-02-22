@@ -20,6 +20,11 @@ impl<A> MctsStats<A> {
             draws: 0,
         }
     }
+
+    pub fn defeats(&self) -> usize {
+        self.explored  - self.wins - self.draws
+    }
+
     pub fn score(&self, node: &MctsStats<A>) -> f32 {
         (node.wins as f32 * _WIN_SCORE + node.draws as f32 * _DRAW_SCORE) / node.explored as f32
     }

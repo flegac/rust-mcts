@@ -9,12 +9,12 @@ use bit_set::BitSet;
 use stones::group::GoGroup;
 use stones::stone::Stone;
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {
-    pub(crate) fn new(stone: Stone, cells: BitSet) -> Self {
-        let group = GoGroup::new(stone, cells);
+    pub(crate) fn new(stone: Stone, cells: BitSet, liberties: usize) -> Self {
+        let group = GoGroup { stone, cells, liberties };
         GoGroupRc(Rc::new(RefCell::new(group)))
     }
     pub(crate) fn clone(&self) -> Self {

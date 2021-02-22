@@ -4,13 +4,6 @@ use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
-#[derive(Debug)]
-pub struct N {
-    pub data: RefCell<usize>,
-    pub children: RefCell<Vec<Rc<N>>>,
-}
-
-
 pub struct Node<T> {
     pub value: RefCell<T>,
     pub parent: RefCell<Weak<Node<T>>>,
