@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use board::grid::{Grid, GoCell};
+use board::grid::{GoCell, Grid};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum GoAction {
@@ -31,7 +31,7 @@ impl GoAction {
                 None
             }
             GoAction::Cell(x, y) => {
-                Some(x * goban.size + y)
+                Some(goban.cell(*x, *y))
             }
         }
     }

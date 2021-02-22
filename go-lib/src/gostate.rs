@@ -4,7 +4,6 @@ use std::cmp::Ordering;
 use itertools::Itertools;
 
 use board::goboard::GoBoard;
-use board::grid::Grid;
 use board::stats_board::BoardStats;
 use board::stats_color::ColorStats;
 use mcts_lib::state::{GameResult, State};
@@ -12,10 +11,11 @@ use stones::stone::Stone;
 
 use crate::action::GoAction;
 use crate::constants::GOBAN_SIZE;
+use board::grid::Grid;
+use board::graph::Graph;
 
 pub struct GoState {
     board: GoBoard,
-    stone: Stone,
     pub history: Vec<GoAction>,
 }
 
@@ -26,7 +26,6 @@ impl State<GoAction> for GoState {
     fn initial() -> GoState {
         GoState {
             board: GoBoard::new(Grid::new(GOBAN_SIZE)),
-            stone: Stone::Black,
             history: vec![],
         }
     }
@@ -48,7 +47,7 @@ impl State<GoAction> for GoState {
 
 
     fn actions(&self) -> Vec<GoAction> {
-        self.board.goban.cells
+        self.board.vertices()
             .iter()
             .filter(|c| self.board.stone_at(c) == Stone::None)
             .map(|c| self.board.goban.xy(c))
@@ -61,10 +60,10 @@ impl State<GoAction> for GoState {
             GoAction::Pass => {}
             GoAction::Cell(x, y) => {
                 let cell = self.board.goban.cell(*x, *y);
-                self.board.place_stone(cell, self.stone);
+                self.board.place_stone(cell, self.board.stone);
             }
         }
-        self.stone = self.stone.switch();
+        self.board.stone = self.board.stone.switch();
         self.history.push(action.clone());
     }
 }
@@ -76,8 +75,7 @@ impl fmt::Display for GoState {
             history.push_str(format!("{} ", a).as_str());
         }
 
-        write!(f, "{}", format!("side: {}\n{}\nhistory({}): {}\n",
-                                self.stone,
+        write!(f, "{}", format!("{}\nhistory({}): {}\n",
                                 self.board,
                                 self.history.len(),
                                 history

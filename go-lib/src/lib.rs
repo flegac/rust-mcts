@@ -10,7 +10,7 @@ pub mod action;
 pub mod gostate;
 pub mod constants;
 pub mod board;
-mod game;
+pub mod game;
 
 #[cfg(test)]
 mod tests {
@@ -20,11 +20,12 @@ mod tests {
     use rpool::{Pool, Poolable, PoolScaleMode};
 
     use board::goboard::GoBoard;
-    use board::grid::Grid;
+    use board::grid::{Grid, Graph};
     use constants::GOBAN_SIZE;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;
+    use board::graph::Graph;
 
     #[test]
     fn stone_groups() {
@@ -53,7 +54,7 @@ mod tests {
     fn board_cell_id() {
         let goban = Grid::new(GOBAN_SIZE);
 
-        for c in goban.cells.iter() {
+        for c in goban.vertices().iter() {
             let (x, y) = goban.xy(c);
             let c2 = goban.cell(x, y);
             let (x2, y2) = goban.xy(c2);
@@ -76,8 +77,8 @@ mod tests {
             let (x, y) = board.goban.xy(c);
             x == 2
         };
-        let mut cells1 = board.goban.flood(board.goban.cell(0, 0), &test1);
-        cells1.union_with(&board.goban.flood(board.goban.cell(2, 0), &test2));
+        let mut cells1 = board.flood(board.goban.cell(0, 0), &test1);
+        cells1.union_with(&board.flood(board.goban.cell(2, 0), &test2));
         let g = board.new_group(GoGroup {
             stone: Stone::White,
             cells: cells1,

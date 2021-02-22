@@ -7,7 +7,9 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use bit_set::BitSet;
-use itertools::{iproduct, Itertools};
+use itertools::{iproduct, Iterate, Itertools};
+
+use board::graph::Graph;
 
 pub type GoCell = usize;
 
@@ -15,18 +17,20 @@ pub type GoCell = usize;
 #[derive(Hash, Eq, PartialEq)]
 pub struct Grid {
     pub size: usize,
-    pub cells: BitSet,
-    pub edges: Vec<BitSet>,
+    cells: BitSet,
+    links: Vec<BitSet>,
 }
+
 
 impl Grid {
     pub fn new(size: usize) -> Self {
+        let cells = 0..(size * size);
         Grid {
             size,
-            cells: BitSet::from_iter(0..(size * size)),
-            edges: (0..(size * size))
-                .map(|c| Grid::get_adjacents(size, c))
-                .collect_vec(),
+            cells: BitSet::from_iter(cells.clone()),
+            links: cells.clone()
+                .map(|c| Grid::links(size, c))
+                .collect(),
         }
     }
 
@@ -40,7 +44,54 @@ impl Grid {
         (x, y)
     }
 
-    pub fn flood<F>(&self, cell: GoCell, test: &F) -> BitSet
+    fn links(size: usize, cell: GoCell) -> BitSet {
+        let size = size as i32;
+        let limit = (size * size) as i32;
+        let c = cell as i32;
+
+        let same_line1 = |x: i32| (x % size - c % size).abs() <= 1;
+        let in_board = |x: i32| x >= 0 && x < limit;
+
+        let res = BitSet::from_iter([c - 1, c + 1, c - size, c + size].iter()
+            .filter(|&x| in_board(*x))
+            .filter(|&x| same_line1(*x))
+            .map(|&x| x as usize));
+
+        assert!(res.len() <= 4);
+        res
+    }
+
+    fn diagonals(size: usize, cell: GoCell) -> BitSet {
+        let size = size as i32;
+        let limit = (size * size) as i32;
+        let c = cell as i32;
+
+        let same_line1 = |x: i32| (x % size - c % size).abs() <= 1;
+        let in_board = |x: i32| x >= 0 && x < limit;
+
+        let res = BitSet::from_iter([c - 1 - size, c + 1 - size, c - 1 + size, c + 1 + size].iter()
+            .filter(|&x| in_board(*x))
+            .filter(|&x| same_line1(*x))
+            .map(|&x| x as usize));
+        assert!(res.len() <= 4);
+        res
+    }
+}
+
+impl Graph for Grid {
+    #[inline]
+    fn vertices(&self) -> &BitSet {
+        &self.cells
+    }
+
+
+    #[inline]
+    fn edges(&self, v: usize) -> &BitSet {
+        &self.links[v]
+    }
+
+
+    fn flood<F>(&self, cell: usize, test: &F) -> BitSet
         where F: Fn(GoCell) -> bool {
         let mut visited = BitSet::new();
         let mut to_visit = BitSet::new();
@@ -50,7 +101,8 @@ impl Grid {
         while !to_visit.is_empty() {
             let mut connected = BitSet::new();
             for c in to_visit.iter() {
-                self.edges[c].iter()
+                self.edges(c)
+                    .iter()
                     .filter(|&c| test(c))
                     .filter(|&a| !visited.contains(a))
                     .for_each(|c| {
@@ -63,19 +115,5 @@ impl Grid {
             to_visit = connected;
         }
         visited
-    }
-
-    fn get_adjacents(size: usize, cell: GoCell) -> BitSet {
-        let size = size as i32;
-        let limit = (size * size) as i32;
-        let c = cell as i32;
-
-        let same_line1 = |x: i32| (x % size - c % size).abs() <= 1;
-        let in_board = |x: i32| x >= 0 && x < limit;
-
-        BitSet::from_iter([c - 1, c + 1, c - size, c + size].iter()
-            .filter(|&x| in_board(*x))
-            .filter(|&x| same_line1(*x))
-            .map(|&x| x as usize))
     }
 }

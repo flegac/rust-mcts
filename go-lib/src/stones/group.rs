@@ -5,6 +5,7 @@ use std::iter::{FromIterator, once};
 use bit_set::BitSet;
 
 use board::goboard::GoBoard;
+use board::graph::Graph;
 use board::grid::{GoCell, Grid};
 use stones::stone::Stone;
 
@@ -53,7 +54,7 @@ impl GoGroup {
     pub fn adjacent_cells(&self, board: &GoBoard) -> BitSet {
         let mut adjacents = BitSet::new();
         for c in self.cells.iter() {
-            adjacents.union_with(&board.goban.edges[c]);
+            adjacents.union_with(&board.edges(c));
         }
         adjacents.difference_with(&self.cells);
         adjacents

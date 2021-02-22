@@ -1,9 +1,11 @@
+use std::borrow::Borrow;
 use std::fmt;
+use std::ops::Deref;
 
 use itertools::Itertools;
 
 use board::goboard::GoBoard;
-use stones::grouprc::GoGroupRc;
+use stones::group::GoGroup;
 use stones::stone::Stone;
 
 use crate::board::stats_color::ColorStats;
@@ -38,23 +40,23 @@ impl BoardStats {
         }
     }
 
-    pub fn capture_group(&mut self, group: GoGroupRc) {
-        self.rem_group(group.clone());
-        match group.borrow().stone {
+    pub fn capture_group(&mut self, group: &mut GoGroup) {
+        self.rem_group(group);
+        match group.stone {
             Stone::None => {}
-            Stone::Black => self.black.captured += group.borrow().size(),
-            Stone::White => self.white.captured += group.borrow().size(),
+            Stone::Black => self.black.captured += group.size(),
+            Stone::White => self.white.captured += group.size(),
         }
-        group.borrow_mut().set_stone(Stone::None);
-        self.add_group(group.clone());
+        group.set_stone(Stone::None);
+        self.add_group(group);
 
         // the stones has been counted twice for None group
-        self.none.stones -= group.borrow().cells.len();
+        self.none.stones -= group.cells.len();
     }
 
-    pub(crate) fn add_group(&mut self, group: GoGroupRc) {
-        let n = group.borrow().cells.len();
-        match group.borrow().stone {
+    pub(crate) fn add_group(&mut self, group: &GoGroup) {
+        let n = group.cells.len();
+        match group.stone {
             Stone::Black => {
                 self.black.groups += 1;
                 self.black.stones += n;
@@ -73,9 +75,9 @@ impl BoardStats {
         log::trace!("add: {}\n{}\n{}", group, n, self);
     }
 
-    pub(crate) fn rem_group(&mut self, group: GoGroupRc) {
-        let n = group.borrow().cells.len();
-        match group.borrow().stone {
+    pub(crate) fn rem_group(&mut self, group: &GoGroup) {
+        let n = group.cells.len();
+        match group.stone {
             Stone::Black => {
                 self.black.groups -= 1;
                 self.black.stones -= n;
