@@ -21,27 +21,17 @@ pub(crate) struct GoBoard {
     pub(crate) groups: HashMap<GoCell, GoGroupRc>,
     pub(crate) stats: BoardStats,
     pub stone: Stone,
-}
-
-impl Graph for GoBoard {
-    #[inline]
-    fn vertices(&self) -> &BitSet<u32> {
-        self.goban.vertices()
-    }
-    #[inline]
-    fn edges(&self, v: usize) -> &BitSet<u32> {
-        self.goban.edges(v)
-    }
-    #[inline]
-    fn flood<F>(&self, cell: usize, test: &F) -> BitSet<u32>
-        where F: Fn(Vert) -> bool {
-        self.goban.flood(cell, &test)
-    }
+    pub(crate) empty_cells: GoGroup,
 }
 
 impl GoBoard {
     pub fn new(goban: Grid) -> Self {
         // let cell_number = goban.size * goban.size;
+        let empty_cells = GoGroup {
+            stone: Stone::None,
+            cells: goban.vertices().clone(),
+            liberties: 0,
+        };
         let mut board = GoBoard {
             arena: Arena::new(),
             goban,
@@ -49,19 +39,22 @@ impl GoBoard {
             groups: HashMap::new(),
             stats: BoardStats::init(),
             stone: Stone::Black,
+            empty_cells,
         };
 
-        let mut new_group = board.new_group(GoGroup {
+
+        let new_group = board.new_group(GoGroup {
             stone: Stone::None,
             cells: board.goban.vertices().clone(),
             liberties: 0,
         });
-
         board.update_group(new_group);
         board
     }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
+        assert!(self.stone_at(&cell) == Stone::None);
+
         log::trace!("board:\n{}", self);
         log::debug!("PLACE STONE: {} @ {:?}", stone, self.goban.xy(cell));
 
@@ -72,6 +65,9 @@ impl GoBoard {
         for part in old.borrow_mut().split(&self.goban) {
             self.update_group(self.new_group(part));
         }
+
+        self.empty_cells.remove_group(new_group.borrow().deref());
+
 
         // update board with new group
         self.goban.edges(cell)
@@ -99,6 +95,7 @@ impl GoBoard {
             g.borrow_mut().update_liberties(self);
             if g.borrow().is_dead() {
                 self.stats.capture_group(g.borrow_mut().deref_mut());
+                self.empty_cells.add_group(g.borrow().deref());
             }
         }
 
@@ -107,10 +104,12 @@ impl GoBoard {
         if new_group.borrow().is_dead() {
             log::debug!("AUTOKILL MOVE! {}", new_group);
             self.stats.capture_group(new_group.borrow_mut().deref_mut());
+            self.empty_cells.add_group(new_group.borrow().deref());
         }
 
         //TODO: remove this when all is ok !
         // self.stats.assert_eq(&BoardStats::new(self));
+        assert_eq!(self.empty_cells.size(), self.stats.none.stones);
     }
 
 
@@ -136,6 +135,22 @@ impl GoBoard {
     }
 }
 
+
+impl Graph for GoBoard {
+    #[inline]
+    fn vertices(&self) -> &BitSet<u32> {
+        self.goban.vertices()
+    }
+    #[inline]
+    fn edges(&self, v: usize) -> &BitSet<u32> {
+        self.goban.edges(v)
+    }
+    #[inline]
+    fn flood<F>(&self, cell: usize, test: &F) -> BitSet<u32>
+        where F: Fn(Vert) -> bool {
+        self.goban.flood(cell, &test)
+    }
+}
 
 impl fmt::Display for GoBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

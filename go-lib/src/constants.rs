@@ -9,6 +9,6 @@ pub struct Constants {
 pub const GOBAN_SIZE: usize = 13;
 
 pub const BENCH: Constants = Constants {
-    full_time: Duration::from_secs(5),
+    full_time: Duration::from_secs(6),
     round_time: Duration::from_secs(1),
 };

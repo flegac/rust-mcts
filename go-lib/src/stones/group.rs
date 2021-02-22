@@ -62,7 +62,7 @@ impl GoGroup {
 
 
     pub fn update_liberties(&mut self, board: &GoBoard) {
-        let mut adjacents = self.adjacent_cells(board);
+        let adjacents = self.adjacent_cells(board);
         let mut liberties = BitSet::new();
         for x in adjacents.iter()
             .filter(|c| board.stone_at(c) == Stone::None) {

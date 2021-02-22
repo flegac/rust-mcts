@@ -1,25 +1,24 @@
 use core::fmt;
+use std::borrow::Borrow;
 use std::cmp::Ordering;
 
 use itertools::Itertools;
 
 use board::goboard::GoBoard;
+use board::grid::Grid;
 use board::stats_board::BoardStats;
 use board::stats_color::ColorStats;
+use graph_lib::graph::Graph;
 use mcts_lib::state::{GameResult, State};
 use stones::stone::Stone;
 
 use crate::action::GoAction;
 use crate::constants::GOBAN_SIZE;
-use board::grid::Grid;
-use graph_lib::graph::Graph;
 
 pub struct GoState {
     board: GoBoard,
     pub history: Vec<GoAction>,
 }
-
-impl GoState {}
 
 
 impl State<GoAction> for GoState {
@@ -47,12 +46,10 @@ impl State<GoAction> for GoState {
 
 
     fn actions(&self) -> Vec<GoAction> {
-        self.board.vertices()
-            .iter()
-            .filter(|c| self.board.stone_at(c) == Stone::None)
+        self.board.empty_cells.cells.iter()
             .map(|c| self.board.goban.xy(c))
             .map(|(x, y)| GoAction::Cell(x, y))
-            .collect_vec()
+            .collect()
     }
 
     fn next(&mut self, action: &GoAction) {

@@ -26,6 +26,8 @@ Hum... Do not expect wonders !
 
 - optimise the state.actions() function
 
+- Implements GoEditor : command line interface to edit & visualise GoState/GoBoard 
+
 # Issues
 
 - suicide move : adding a stone that kill itself is possible.

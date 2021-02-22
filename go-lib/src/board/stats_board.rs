@@ -1,6 +1,4 @@
-use std::borrow::Borrow;
 use std::fmt;
-use std::ops::Deref;
 
 use itertools::Itertools;
 
