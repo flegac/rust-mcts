@@ -13,6 +13,10 @@ use stones::stone::Stone;
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {
+    pub(crate) fn from(group: GoGroup) -> GoGroupRc {
+        GoGroupRc(Rc::new(RefCell::new(group)))
+    }
+
     pub(crate) fn new(stone: Stone, cells: BitSet, liberties: usize) -> Self {
         let group = GoGroup { stone, cells, liberties };
         GoGroupRc(Rc::new(RefCell::new(group)))

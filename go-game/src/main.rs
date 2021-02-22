@@ -5,7 +5,7 @@ extern crate log;
 extern crate mcts_lib;
 
 use std::io::Write;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use chrono::Local;
 use env_logger::Builder;
@@ -49,7 +49,11 @@ pub fn main() {
     mcts.explore(&mut state);
     log::info!("Board:\n{}", state);
 
-
+    log::info!("results: {} wins, {} defeats, {} draws",
+               mcts.root.value.borrow().wins,
+               mcts.root.value.borrow().defeats(),
+               mcts.root.value.borrow().draws,
+    );
     log::info!("duration: {:?}", duration);
     log::info!("Speed: {} games {:?} sec", total_games, duration);
 }

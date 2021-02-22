@@ -16,7 +16,7 @@ pub(crate) struct ColorStats {
 }
 
 impl ColorStats {
-    pub(crate) fn init(stone: Stone) -> ColorStats {
+    pub fn init(stone: Stone) -> ColorStats {
         ColorStats {
             stone,
             stones: 0,
@@ -25,7 +25,7 @@ impl ColorStats {
             territory: 0,
         }
     }
-    pub(crate) fn new(stone: Stone, board: &GoBoard) -> ColorStats {
+    pub fn new(stone: Stone, board: &GoBoard) -> ColorStats {
         ColorStats {
             stone,
             stones: ColorStats::count_stones(stone, board),
@@ -34,12 +34,28 @@ impl ColorStats {
             territory: 0,
         }
     }
+
+
+    pub fn score(&self, board: &GoBoard) -> usize {
+        let territory = ColorStats::count_territory(self.stone, board);
+        self.captured + territory
+    }
+
+    pub fn count_territory(stone: Stone, board: &GoBoard) -> usize {
+        board.groups.values()
+            .filter(|&g| g.borrow().stone == Stone::None)
+            .unique()
+            .filter(|&g| ColorStats::get_owner(board, g.clone()) == stone)
+            .map(|g| g.borrow().size())
+            .sum()
+    }
+
     pub(crate) fn assert_eq(&self, other: &ColorStats) {
         assert_eq!(self.stones, other.stones, "[{}] stones", self.stone);
         assert_eq!(self.groups, other.groups, "[{}] groups", self.stone);
     }
 
-    pub fn count_stones(stone: Stone, board: &GoBoard) -> usize {
+    fn count_stones(stone: Stone, board: &GoBoard) -> usize {
         board.groups.values()
             .filter(|&g| g.borrow().stone == stone)
             .unique()
@@ -47,7 +63,7 @@ impl ColorStats {
             .sum()
     }
 
-    pub fn count_groups(stone: Stone, board: &GoBoard) -> usize {
+    fn count_groups(stone: Stone, board: &GoBoard) -> usize {
         board.groups.values()
             .filter(|&g| g.borrow().stone == stone)
             .unique()
@@ -58,7 +74,7 @@ impl ColorStats {
     fn get_owner(board: &GoBoard, group: GoGroupRc) -> Stone {
         assert!(group.borrow().stone == Stone::None);
 
-        let adjacents = board.adjacent_cells(group.clone());
+        let adjacents = group.borrow().adjacent_cells(board);
         let border = adjacents.iter()
             .map(|c| board.stone_at(&c))
             .unique()
@@ -75,15 +91,6 @@ impl ColorStats {
             Stone::Black
         };
         owner
-    }
-
-    pub fn count_territory(stone: Stone, board: &GoBoard) -> usize {
-        board.groups.values()
-            .filter(|&g| g.borrow().stone == Stone::None)
-            .unique()
-            .filter(|&g| ColorStats::get_owner(board, g.clone()) == stone)
-            .map(|g| g.borrow().size())
-            .sum()
     }
 }
 

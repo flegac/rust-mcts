@@ -1,6 +1,7 @@
 use core::fmt;
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::iter::{FromIterator, once};
 use std::ops::Deref;
 
 use bit_set::BitSet;
@@ -32,26 +33,14 @@ impl GoBoard {
             stats: BoardStats::init(),
         };
 
-        let mut new_group = board.board_group();
-        board.update_board_with_group(&mut new_group);
+        let mut new_group = board.new_group(GoGroup {
+            stone: Stone::None,
+            cells: board.goban.cells.clone(),
+            liberties: 0,
+        });
+
+        board.update_group(new_group);
         board
-    }
-
-
-    pub fn cell_group(&self, stone: Stone, cell: GoCell) -> GoGroupRc {
-        let mut cells = BitSet::new();
-        cells.insert(cell);
-        let g = self.new_group(stone, cells, 4);
-        g
-    }
-
-    pub fn board_group(&self) -> GoGroupRc {
-        self.new_group(Stone::None, self.goban.cells.clone(), 0)
-    }
-
-    pub fn new_group(&self, stone: Stone, cells: BitSet, liberties: usize) -> GoGroupRc {
-        // self.arena.alloc(GoGroup {stone, cells, liberties})
-        GoGroupRc::new(stone, cells, liberties)
     }
 
 
@@ -59,12 +48,12 @@ impl GoBoard {
         log::trace!("board:\n{}", self);
         log::debug!("PLACE STONE: {} @ {:?}", stone, self.goban.xy(cell));
 
-        let new_group = self.cell_group(stone, cell);
+        let new_group = self.new_group(GoGroup::from_cell(stone, cell));
         let old = self.group_at(&cell).clone();
         old.borrow_mut().remove_group(&new_group.borrow());
-        self.stats.rem_group(&old);
-        for part in self.split(old) {
-            self.update_board_with_group(&part);
+        self.stats.rem_group(old.clone());
+        for part in old.borrow_mut().split(&self.goban) {
+            self.update_group(self.new_group(part));
         }
 
         // update board with new group
@@ -76,12 +65,12 @@ impl GoBoard {
             .dedup()
             .for_each(|g| {
                 new_group.borrow_mut().add_group(g.borrow().deref());
-                self.stats.rem_group(&g);
+                self.stats.rem_group(g.clone());
             });
-        self.update_board_with_group(&new_group);
+        self.update_group(new_group.clone());
 
         // kill groups
-        let deads = self.goban.edges[cell]
+        let deads: Vec<GoGroupRc> = self.goban.edges[cell]
             .iter()
             .filter(|c| self.stone_at(c) == stone.switch())
             .map(|c| self.group_at(&c))
@@ -90,17 +79,17 @@ impl GoBoard {
             .collect_vec();
 
         for g in deads {
-            self.update_group_liberties(&g);
-            if self.is_dead(&g) {
-                self.capture_group(&g);
+            g.borrow_mut().update_liberties(self);
+            if g.borrow().is_dead() {
+                self.stats.capture_group(g.clone());
             }
         }
 
         //FIXME: do not allow this case to happen !
-        self.update_group_liberties(&new_group);
-        if self.is_dead(&new_group) {
+        new_group.borrow_mut().update_liberties(self);
+        if new_group.borrow().is_dead() {
             log::debug!("AUTOKILL MOVE! {}", new_group);
-            self.capture_group(&new_group);
+            self.stats.capture_group(new_group.clone());
         }
 
         //TODO: remove this when all is ok !
@@ -117,78 +106,16 @@ impl GoBoard {
         self.group_at(cell).borrow().stone
     }
 
-    fn split(&self, g: GoGroupRc) -> Vec<GoGroupRc> {
-        let mut res = vec![];
-
-        while !g.borrow().is_empty() {
-            let g1 = self.next_split(&g);
-            g.borrow_mut().remove_group(&g1.borrow());
-            res.push(g1);
-        }
-        res
-    }
-
-
-    fn capture_group(&mut self, group: &GoGroupRc) {
-        self.stats.rem_group(&group);
-        match group.borrow().stone {
-            Stone::None => {}
-            Stone::Black => self.stats.black.captured += group.borrow().size(),
-            Stone::White => self.stats.white.captured += group.borrow().size(),
-        }
-        group.borrow_mut().set_stone(Stone::None);
-        self.stats.add_group(&group);
-
-        // the stones has been counted twice for None group
-        self.stats.none.stones -= group.borrow().cells.len();
-    }
-
-    fn is_dead(&self, group: &GoGroupRc) -> bool {
-        group.borrow().liberties == 0
-    }
-
-
-    pub fn adjacent_cells(&self, group: GoGroupRc) -> BitSet {
-        let mut adjacents = BitSet::new();
-        for c in group.borrow().cells.iter() {
-            adjacents.union_with(&self.goban.edges[c]);
-        }
-        adjacents.difference_with(&group.borrow().cells);
-        adjacents
-    }
-
-
-    fn count_liberties(&self, group: &GoGroupRc) -> usize {
-        let mut adjacents = self.adjacent_cells(group.clone());
-
-        let mut liberties = BitSet::new();
-        for x in adjacents.iter()
-            .filter(|c| self.group_at(c).borrow().stone == Stone::None) {
-            liberties.insert(x);
-        }
-        liberties.len()
-    }
-
-    fn update_group_liberties(&self, group: &GoGroupRc) {
-        group.borrow_mut().liberties = self.count_liberties(group);
-    }
-
-
-    fn update_board_with_group(&mut self, group: &GoGroupRc) {
+    fn update_group(&mut self, group: GoGroupRc) {
         for c in group.borrow().cells.iter() {
             self.groups.insert(c, group.clone());
         }
-        self.stats.add_group(&group);
+        self.stats.add_group(group.clone());
     }
 
-    fn next_split(&self, group: &GoGroupRc) -> GoGroupRc {
-        let to_visit = &group.borrow().cells;
-        let test = |c: GoCell| to_visit.contains(c);
-
-        let cell = to_visit.iter().next().unwrap();
-        let cells = self.goban.flood(cell, &test);
-        let liberties = 0;
-        self.new_group(group.borrow().stone, cells, liberties)
+    fn new_group(&self, group: GoGroup) -> GoGroupRc {
+        // self.arena.alloc(group)
+        GoGroupRc::from(group)
     }
 }
 

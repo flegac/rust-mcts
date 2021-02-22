@@ -1,8 +1,11 @@
 use std::fmt;
 use std::fmt::Formatter;
+use std::iter::{FromIterator, once};
 
 use bit_set::BitSet;
 
+use board::goboard::GoBoard;
+use board::grid::{GoCell, Grid};
 use stones::stone::Stone;
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
@@ -13,6 +16,14 @@ pub(crate) struct GoGroup {
 }
 
 impl GoGroup {
+    pub fn from_cell(stone: Stone, cell: GoCell) -> GoGroup {
+        GoGroup {
+            stone,
+            cells: BitSet::from_iter(once(cell)),
+            liberties: 4,
+        }
+    }
+
     pub(crate) fn size(&self) -> usize {
         self.cells.len()
     }
@@ -33,6 +44,52 @@ impl GoGroup {
 
     pub(crate) fn set_stone(&mut self, stone: Stone) {
         self.stone = stone;
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.liberties == 0
+    }
+
+    pub fn adjacent_cells(&self, board: &GoBoard) -> BitSet {
+        let mut adjacents = BitSet::new();
+        for c in self.cells.iter() {
+            adjacents.union_with(&board.goban.edges[c]);
+        }
+        adjacents.difference_with(&self.cells);
+        adjacents
+    }
+
+
+    pub fn update_liberties(&mut self, board: &GoBoard) {
+        let mut adjacents = self.adjacent_cells(board);
+        let mut liberties = BitSet::new();
+        for x in adjacents.iter()
+            .filter(|c| board.stone_at(c) == Stone::None) {
+            liberties.insert(x);
+        }
+        self.liberties = liberties.len();
+    }
+
+
+    pub fn split(&mut self, grid: &Grid) -> Vec<GoGroup> {
+        let mut res = vec![];
+        while !self.is_empty() {
+            res.push(self.next_split(grid));
+        }
+        res
+    }
+
+    fn next_split(&mut self, grid: &Grid) -> GoGroup {
+        let to_visit = &self.cells;
+        let test = |c: GoCell| to_visit.contains(c);
+        let cell = to_visit.iter().next().unwrap();
+        let res = GoGroup {
+            stone: self.stone,
+            cells: grid.flood(cell, &test),
+            liberties: 0,
+        };
+        self.remove_group(&res);
+        res
     }
 }
 

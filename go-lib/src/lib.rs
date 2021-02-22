@@ -19,8 +19,8 @@ mod tests {
     use bit_set::BitSet;
     use rpool::{Pool, Poolable, PoolScaleMode};
 
-    use board::grid::Grid;
     use board::goboard::GoBoard;
+    use board::grid::Grid;
     use constants::GOBAN_SIZE;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
@@ -40,7 +40,11 @@ mod tests {
             cells.insert(*cell);
         }
 
-        let group = board.new_group(Stone::None, cells);
+        let group = board.new_group(GoGroup {
+            stone: Stone::None,
+            cells,
+            liberties: 0,
+        });
 
         assert_eq!(group.size(), 3);
     }
@@ -74,7 +78,11 @@ mod tests {
         };
         let mut cells1 = board.goban.flood(board.goban.cell(0, 0), &test1);
         cells1.union_with(&board.goban.flood(board.goban.cell(2, 0), &test2));
-        let g = board.new_group(Stone::White, cells1);
+        let g = board.new_group(GoGroup {
+            stone: Stone::White,
+            cells: cells1,
+            liberties: 0,
+        });
         println!("big group: {}", g);
 
 
