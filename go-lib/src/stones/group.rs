@@ -6,8 +6,8 @@ use bit_set::BitSet;
 
 use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
-use stones::stone::Stone;
 use graph_lib::graph::Graph;
+use stones::stone::Stone;
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub(crate) struct GoGroup {
@@ -72,15 +72,15 @@ impl GoGroup {
     }
 
 
-    pub fn split(&mut self, grid: &Grid) -> Vec<GoGroup> {
+    pub fn split<G: Graph>(&mut self, graph: &G) -> Vec<GoGroup> {
         let mut res = vec![];
         while !self.is_empty() {
-            res.push(self.next_split(grid));
+            res.push(self.next_split(graph));
         }
         res
     }
 
-    fn next_split(&mut self, grid: &Grid) -> GoGroup {
+    fn next_split<G: Graph>(&mut self, grid: &G) -> GoGroup {
         let to_visit = &self.cells;
         let test = |c: GoCell| to_visit.contains(c);
         let cell = to_visit.iter().next().unwrap();

@@ -17,10 +17,6 @@ impl GoGroupRc {
         GoGroupRc(Rc::new(RefCell::new(group)))
     }
 
-    pub(crate) fn new(stone: Stone, cells: BitSet, liberties: usize) -> Self {
-        let group = GoGroup { stone, cells, liberties };
-        GoGroupRc(Rc::new(RefCell::new(group)))
-    }
     pub(crate) fn clone(&self) -> Self {
         GoGroupRc(Rc::clone(&self.0))
     }
@@ -28,6 +24,7 @@ impl GoGroupRc {
     pub(crate) fn borrow(&self) -> Ref<GoGroup> {
         self.0.borrow()
     }
+
     pub(crate) fn borrow_mut(&self) -> RefMut<GoGroup> {
         self.0.borrow_mut()
     }
