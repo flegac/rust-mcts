@@ -7,7 +7,6 @@ use bit_set::BitSet;
 use fixed_typed_arena::Arena;
 use itertools::{Itertools, sorted};
 
-use board::graph::{Graph, Vert};
 use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
 use stones::group::GoGroup;
