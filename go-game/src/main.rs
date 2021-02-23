@@ -4,13 +4,15 @@ extern crate go_lib;
 extern crate log;
 extern crate mcts_lib;
 
+use std::fmt::{Display, Formatter};
+use std::fmt;
 use std::io::Write;
-use std::time::Instant;
 
 use chrono::Local;
 use env_logger::Builder;
 use log::LevelFilter;
 
+use bench::Bench;
 use go_lib::action::GoAction;
 use go_lib::constants::BENCH;
 use go_lib::gostate::GoState;
@@ -20,46 +22,41 @@ use mcts_lib::random_policy::RandomPolicy;
 use mcts_lib::state::State;
 
 mod editor;
+mod bench;
+
 
 pub fn main() {
     init_logs();
-    let bench = Instant::now();
 
     let policy = RandomPolicy::new(451);
     let mut mcts = MyMcts::new(policy);
-
-    let mut total_games = 0;
     let mut state = GoState::new();
 
-    while bench.elapsed() < BENCH.full_time {
-        let round = Instant::now();
-        let mut roud_games = 0;
-        while round.elapsed() < BENCH.round_time {
+    let mut bench = Bench::new(BENCH.full_time);
+    while bench.looping() {
+        let mut round = Bench::new(BENCH.round_time);
+        while round.looping() {
             state.reset();
             mcts.explore(&mut state);
-            roud_games += 1;
+            round.inc(1);
         }
+        bench.inc_bench(&round);
         log::info!(
-            "Speed: {} games {:?} sec | results: {} wins, {} defeats, {} draws",
-            roud_games,
-            round.elapsed(),
+            "{} | results: {} wins, {} defeats, {} draws",
+            round,
             mcts.root.value.borrow().wins,
             mcts.root.value.borrow().defeats(),
             mcts.root.value.borrow().draws,
         );
-        total_games += roud_games;
     }
-
-    let duration = bench.elapsed();
 
     state.reset();
     mcts.explore(&mut state);
     log::info!("Board:\n{}", state);
 
     log::info!(
-        "Speed: {} games {:?} sec | results: {} wins, {} defeats, {} draws",
-        total_games,
-        duration,
+        "{} | results: {} wins, {} defeats, {} draws",
+        bench,
         mcts.root.value.borrow().wins,
         mcts.root.value.borrow().defeats(),
         mcts.root.value.borrow().draws,
