@@ -6,8 +6,8 @@ pub enum GameResult {
 }
 
 pub trait State<A> {
-    fn initial() -> Self;
+    fn reset(&mut self);
     fn result(&self) -> Option<GameResult>;
     fn actions(&self) -> Vec<A>;
-    fn next(&mut self, action: &A);
+    fn apply(&mut self, action: &A);
 }

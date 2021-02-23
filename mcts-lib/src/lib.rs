@@ -7,6 +7,8 @@ pub mod mcts;
 pub mod state;
 pub mod mymcts;
 mod stats;
+pub mod policy;
+pub mod random_policy;
 
 #[cfg(test)]
 mod tests {

@@ -16,6 +16,7 @@ use go_lib::constants::BENCH;
 use go_lib::gostate::GoState;
 use mcts_lib::mcts::Mcts;
 use mcts_lib::mymcts::MyMcts;
+use mcts_lib::random_policy::RandomPolicy;
 use mcts_lib::state::State;
 
 mod editor;
@@ -24,15 +25,17 @@ pub fn main() {
     init_logs();
     let bench = Instant::now();
 
-    let mut mcts: MyMcts<GoAction> = MyMcts::new(1234);
+    let policy = RandomPolicy::new(451);
+    let mut mcts = MyMcts::new(policy);
 
     let mut total_games = 0;
+    let mut state = GoState::new();
 
     while bench.elapsed() < BENCH.full_time {
         let round = Instant::now();
         let mut roud_games = 0;
         while round.elapsed() < BENCH.round_time {
-            let mut state = GoState::initial();
+            state.reset();
             mcts.explore(&mut state);
             roud_games += 1;
         }
@@ -49,7 +52,7 @@ pub fn main() {
 
     let duration = bench.elapsed();
 
-    let mut state = GoState::initial();
+    state.reset();
     mcts.explore(&mut state);
     log::info!("Board:\n{}", state);
 

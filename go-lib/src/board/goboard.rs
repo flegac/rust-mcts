@@ -43,13 +43,28 @@ impl GoBoard {
         };
 
 
-        let new_group = board.new_group(GoGroup {
+        board.update_group(board.new_group(GoGroup {
             stone: Stone::None,
             cells: board.goban.vertices().clone(),
             liberties: 0,
-        });
-        board.update_group(new_group);
+        }));
         board
+    }
+
+    pub fn reset(&mut self) {
+        self.groups.clear();
+        self.stats = BoardStats::init();
+        self.stone = Stone::Black;
+        self.empty_cells = GoGroup {
+            stone: Stone::None,
+            cells: self.goban.vertices().clone(),
+            liberties: 0,
+        };
+        self.update_group(self.new_group(GoGroup {
+            stone: Stone::None,
+            cells: self.goban.vertices().clone(),
+            liberties: 0,
+        }));
     }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {

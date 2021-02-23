@@ -20,13 +20,20 @@ pub struct GoState {
     pub history: Vec<GoAction>,
 }
 
-
-impl State<GoAction> for GoState {
-    fn initial() -> GoState {
+impl GoState {
+    pub fn new() -> GoState {
         GoState {
             board: GoBoard::new(Grid::new(GOBAN_SIZE)),
             history: vec![],
         }
+    }
+}
+
+
+impl State<GoAction> for GoState {
+    fn reset(&mut self) {
+        self.history.clear();
+        self.board.reset();
     }
 
     fn result(&self) -> Option<GameResult> {
@@ -52,7 +59,7 @@ impl State<GoAction> for GoState {
             .collect()
     }
 
-    fn next(&mut self, action: &GoAction) {
+    fn apply(&mut self, action: &GoAction) {
         match action {
             GoAction::Pass => {}
             GoAction::Cell(x, y) => {
