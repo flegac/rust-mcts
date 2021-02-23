@@ -21,9 +21,9 @@ Build & run go-game to look at some auto-generated games.
 Hum... Do not expect wonders !
 
 # TODO
-- implement proper MCTS
 - Implements GoEditor : command line interface to edit & visualise GoState/GoBoard 
 
 # Issues
 
 - suicide move : adding a stone that kill itself is possible.
+- Fix Mcts

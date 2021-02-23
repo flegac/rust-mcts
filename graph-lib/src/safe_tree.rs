@@ -2,9 +2,11 @@ use core::cell::RefCell;
 use core::fmt;
 use core::fmt::{Display, Formatter};
 use core::option::Option;
-use crate::node::Node;
+use std::borrow::Borrow;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
+
+use crate::node::Node;
 use crate::tree::Tree;
 
 pub struct SafeTree<T>(Rc<Node<T>>);
@@ -13,12 +15,26 @@ impl<T> SafeTree<T> {
     pub fn clone(&self) -> SafeTree<T> {
         SafeTree(Rc::clone(&self.0))
     }
+
+    pub fn from_node(node: Rc<Node<T>>) -> SafeTree<T> {
+        SafeTree(node)
+    }
+
     pub fn new(value: T) -> SafeTree<T> {
         SafeTree(Rc::new(Node {
             value: RefCell::new(value),
             parent: RefCell::new(Weak::new()),
             children: RefCell::new(vec![]),
         }))
+    }
+
+    pub fn max_by_key<B: Ord, F>(&self, f: F) -> Option<SafeTree<T>>
+        where F: Fn(&T) -> B {
+        let x = self.children.borrow()
+            .iter()
+            .max_by_key(|x| f(x.value.borrow().deref()))
+            ?.clone();
+        Some(SafeTree::from_node(x))
     }
 }
 

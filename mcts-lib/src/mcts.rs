@@ -2,6 +2,9 @@ use policy::Policy;
 
 use crate::state::State;
 
-pub trait Mcts<A: Copy> {
-    fn explore<S: State<A>>(&mut self, state: &mut S);
+pub trait Mcts {
+    fn selection(&mut self);
+    fn expansion(&mut self);
+    fn simulation(&mut self);
+    fn backpropagation(&mut self);
 }

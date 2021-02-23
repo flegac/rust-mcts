@@ -71,7 +71,7 @@ impl GoBoard {
         assert!(self.stone_at(&cell) == Stone::None);
 
         log::trace!("board:\n{}", self);
-        log::debug!("PLACE STONE: {} @ {:?}", stone, self.goban.xy(cell));
+        log::trace!("PLACE STONE: {} @ {:?}", stone, self.goban.xy(cell));
 
         let new_group = self.new_group(GoGroup::from_cell(stone, cell));
         let old = self.group_at(&cell).clone();
@@ -119,7 +119,7 @@ impl GoBoard {
         //FIXME: do not allow this case to happen !
         new_group.borrow_mut().update_liberties(self);
         if new_group.borrow().is_dead() {
-            log::debug!("AUTOKILL MOVE! {}", new_group);
+            log::trace!("AUTOKILL MOVE! {}", new_group);
             self.stats.capture_group(new_group.borrow_mut().deref_mut());
             self.empty_cells.add_group(new_group.borrow().deref());
         }

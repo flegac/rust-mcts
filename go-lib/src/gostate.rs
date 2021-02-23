@@ -37,10 +37,17 @@ impl State<GoAction> for GoState {
     }
 
     fn result(&self) -> Option<GameResult> {
-        if self.history.len() == 150 || self.actions().is_empty() {
+        if self.history.len() >= 150 || self.actions().is_empty() {
             let blacks = &self.board.stats.black.score(&self.board);
             let whites = &self.board.stats.white.score(&self.board);
-            let res = match blacks.cmp(&whites) {
+
+            let ordering = match self.board.stone {
+                Stone::Black => blacks.cmp(&whites),
+                Stone::White => whites.cmp(&blacks),
+                Stone::None => Ordering::Equal
+            };
+
+            let res = match ordering {
                 Ordering::Less => GameResult::Defeat,
                 Ordering::Equal => GameResult::Draw,
                 Ordering::Greater => GameResult::Victory
