@@ -4,10 +4,8 @@ use std::fmt::Formatter;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
-use bit_set::BitSet;
 
 use stones::group::GoGroup;
-use stones::stone::Stone;
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);

@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 use std::fmt;
 use std::fmt::{Display, Formatter};
-use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
 pub struct Node<T> {

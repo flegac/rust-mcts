@@ -5,7 +5,7 @@ use action::GoAction;
 use game::gogame::Sequence::{Cons, Nil, Variation};
 
 #[derive(Debug)]
-enum Sequence {
+pub enum Sequence {
     Nil,
     Cons(Box<Sequence>, GoAction),
     Variation(Box<Sequence>, Box<Sequence>),

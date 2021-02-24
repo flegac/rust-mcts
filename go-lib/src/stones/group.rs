@@ -5,7 +5,7 @@ use std::iter::{FromIterator, once};
 use bit_set::BitSet;
 
 use board::goboard::GoBoard;
-use board::grid::{GoCell, Grid};
+use board::grid::{GoCell};
 use graph_lib::graph::Graph;
 use stones::stone::Stone;
 

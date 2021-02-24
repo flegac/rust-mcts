@@ -21,7 +21,7 @@ impl Stone {
 impl fmt::Display for Stone {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", match self {
-            Stone::Black => "*",
+            Stone::Black => "X",
             Stone::White => "O",
             Stone::None => "."
         })

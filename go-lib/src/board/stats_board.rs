@@ -1,7 +1,5 @@
 use std::fmt;
 
-use itertools::Itertools;
-
 use board::goboard::GoBoard;
 use stones::group::GoGroup;
 use stones::stone::Stone;
@@ -30,7 +28,7 @@ impl BoardStats {
         }
     }
 
-    pub(crate) fn new(board: &GoBoard) -> BoardStats {
+    pub fn new(board: &GoBoard) -> BoardStats {
         BoardStats {
             black: ColorStats::new(Stone::Black, board),
             white: ColorStats::new(Stone::White, board),

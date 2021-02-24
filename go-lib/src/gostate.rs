@@ -1,13 +1,9 @@
 use core::fmt;
-use std::borrow::Borrow;
 use std::cmp::Ordering;
-
-use itertools::Itertools;
 
 use board::goboard::GoBoard;
 use board::grid::Grid;
-use board::stats_board::BoardStats;
-use board::stats_color::ColorStats;
+use game::gogame::Sequence;
 use graph_lib::graph::Graph;
 use mcts_lib::state::{GameResult, State};
 use stones::stone::Stone;
@@ -37,7 +33,9 @@ impl State<GoAction> for GoState {
     }
 
     fn result(&self) -> Option<GameResult> {
-        if self.history.len() >= 150 || self.actions().is_empty() {
+        let limit = self.board.vertices().len();
+
+        if self.history.len() > limit || self.actions().is_empty() {
             let blacks = &self.board.stats.black.score(&self.board);
             let whites = &self.board.stats.white.score(&self.board);
 
@@ -81,15 +79,10 @@ impl State<GoAction> for GoState {
 
 impl fmt::Display for GoState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut history = String::new();
-        for a in self.history.iter() {
-            history.push_str(format!("{} ", a).as_str());
-        }
-
-        write!(f, "{}", format!("{}\nhistory({}): {}\n",
+        write!(f, "{}", format!("{}\nhistory({}):\n{}\n",
                                 self.board,
                                 self.history.len(),
-                                history
+                                Sequence::build(self.history.as_slice())
         ).as_str())
     }
 }

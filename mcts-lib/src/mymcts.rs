@@ -1,18 +1,10 @@
-use std::borrow::Borrow;
-use std::cell::RefCell;
-use std::fmt::{Display, Formatter};
-use std::fmt;
-use std::ops::{Deref, DerefMut};
-use std::rc::Rc;
+use std::fmt::Display;
+use std::ops::Deref;
 
-use ordered_float::OrderedFloat;
-
-use graph_lib::node::Node;
 use graph_lib::safe_tree::SafeTree;
 use graph_lib::tree::Tree;
 use mcts_state::MctsState;
 use policy::Policy;
-use state::GameResult;
 
 use crate::mcts::Mcts;
 use crate::mcts_stats::MctsStats;
@@ -66,14 +58,12 @@ impl<A, S, P> Mcts for MyMcts<A, S, P>
           P: Policy<A> {
     fn selection(&mut self) {
         let mut current = self.state.current.clone();
-        let mut res = None;
 
         let is_leaf = |x: &MctsStats<A>| x.explored == 0;
-
         self.state.extend_node(self.state.state.actions());
         while !is_leaf(current.value.borrow().deref()) {
-            let N = current.value.borrow().explored;
-            let found = current.max_by_key(|a| a.selection_score(N));
+            let parent_explored = current.value.borrow().explored;
+            let found = current.max_by_key(|a| a.selection_score(parent_explored));
 
             match found {
                 None => break,
@@ -82,7 +72,6 @@ impl<A, S, P> Mcts for MyMcts<A, S, P>
                     let a = current.value.borrow().action.unwrap();
                     self.state.state.apply(&a);
                     self.state.depth += 1;
-                    res = self.state.state.result();
                 }
             }
         }

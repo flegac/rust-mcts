@@ -41,7 +41,9 @@ impl fmt::Display for GoAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             GoAction::Pass => write!(f, "Pass"),
-            GoAction::Cell(x, y) => write!(f, "({},{})", x, y)
+            GoAction::Cell(x, y) => write!(f, "{}{}",
+                                           char::from((x + 'A' as usize) as u8),
+                                           char::from((y + 'a' as usize) as u8))
         }
     }
 }

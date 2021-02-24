@@ -1,13 +1,7 @@
-use std::borrow::Borrow;
-use std::cell::RefCell;
 use std::hash::Hash;
 use std::iter::FromIterator;
-use std::mem::swap;
-use std::ops::Deref;
-use std::rc::Rc;
 
 use bit_set::BitSet;
-use itertools::{iproduct, Iterate, Itertools};
 
 use graph_lib::graph::Graph;
 

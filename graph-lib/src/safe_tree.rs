@@ -2,7 +2,6 @@ use core::cell::RefCell;
 use core::fmt;
 use core::fmt::{Display, Formatter};
 use core::option::Option;
-use std::borrow::Borrow;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 

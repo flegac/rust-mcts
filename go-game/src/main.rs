@@ -4,7 +4,6 @@ extern crate go_lib;
 extern crate log;
 extern crate mcts_lib;
 
-use std::fmt::{Display, Formatter};
 use std::io::Write;
 
 use chrono::Local;
@@ -22,10 +21,10 @@ mod bench;
 
 
 pub fn main() {
-    init_logs(LevelFilter::Debug);
+    init_logs(LevelFilter::Info);
 
     let policy = RandomPolicy::new(453);
-    let mut state = GoState::new();
+    let state = GoState::new();
     let mut mcts = MyMcts::new(state, policy);
 
     let mut bench = Bench::new(BENCH.full_time);
@@ -36,6 +35,7 @@ pub fn main() {
             round.inc(1);
         }
         bench.inc_bench(&round);
+        log::info!("Board:\n{}", mcts.state.state);
         log::info!("{} | results: {}", round, mcts.root);
     }
 

@@ -1,11 +1,10 @@
 use core::fmt;
 use std::collections::HashMap;
-use std::iter::{FromIterator, once};
 use std::ops::{Deref, DerefMut};
 
 use bit_set::BitSet;
 use fixed_typed_arena::Arena;
-use itertools::{Itertools, sorted};
+use itertools::Itertools;
 
 use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
@@ -174,13 +173,24 @@ impl fmt::Display for GoBoard {
         let size = self.goban.size;
 
         let mut res = String::new();
+        GoBoard::draw_line(size, &mut res);
+        GoBoard::draw_line_separator(size, &mut res);
+        let a = 'a' as usize;
         for y in 0..size {
+            res.push_str(format!("{} | ", char::from((y + a) as u8)).as_str());
             for x in 0..size {
                 let g = self.stone_at(&self.goban.cell(x, y));
                 res.push_str(format!("{} ", g).as_str());
             }
+            res.push_str(format!("| {}", char::from((y + a) as u8)).as_str());
+
             res.push_str("\n");
         }
+
+
+        GoBoard::draw_line_separator(size, &mut res);
+        GoBoard::draw_line(size, &mut res);
+
         write!(f, "{}", format!("side: {}\n{}{}\n{}",
                                 self.stone,
                                 res,
@@ -189,6 +199,7 @@ impl fmt::Display for GoBoard {
         ))
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -270,5 +281,24 @@ mod tests {
         for ga in gg {
             println!("- {}", ga)
         }
+    }
+}
+
+impl GoBoard {
+    fn draw_line_separator(size: usize, res: &mut String) {
+        res.push_str("  + ");
+        for _x in 0..size {
+            res.push_str("--");
+        }
+        res.push_str("+  \n");
+    }
+    fn draw_line(size: usize, res: &mut String) {
+        let a = 'A' as usize;
+
+        res.push_str("    ");
+        for x in 0..size {
+            res.push_str(format!("{} ", char::from((x + a) as u8)).as_str());
+        }
+        res.push_str("\n");
     }
 }
