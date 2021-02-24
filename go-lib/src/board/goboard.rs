@@ -1,5 +1,6 @@
 use core::fmt;
 use std::collections::HashMap;
+use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 
 use bit_set::BitSet;
@@ -16,7 +17,7 @@ use stones::stone::Stone;
 pub struct GoBoard {
     arena: Arena<GoGroup>,
     pub(crate) goban: Grid,
-    groups: HashMap<GoCell, GoGroupRc>,
+    groups: Vec<GoGroupRc>,
     pub(crate) stats: BoardStats,
     pub stone: Stone,
     pub(crate) empty_cells: GoGroup,
@@ -32,24 +33,53 @@ impl GoBoard {
         let mut board = GoBoard {
             arena: Arena::new(),
             goban,
-            groups: HashMap::new(),
+            groups: vec![],
             stats: BoardStats::new(),
             stone: Stone::Black,
             empty_cells,
         };
-
-
-        board.update_group(board.new_group(GoGroup {
+        let board_group = board.new_group(GoGroup {
             stone: Stone::None,
             cells: board.goban.vertices().clone(),
             liberties: 0,
-        }));
+        });
+        let cell_number = board.goban.vertices().len();
+        board.groups.resize_with(cell_number, || board_group.clone());
+        board.stats.none.groups = 1;
+        board.stats.none.stones = cell_number;
+
         board
+    }
+
+    pub fn reset(&mut self) {
+        let before = self.groups.capacity();
+        self.groups.clear();
+        let after = self.groups.capacity();
+        assert_eq!(before, after);
+
+        self.stats = BoardStats::new();
+        self.stone = Stone::Black;
+        self.empty_cells = GoGroup {
+            stone: Stone::None,
+            cells: self.goban.vertices().clone(),
+            liberties: 0,
+        };
+        let board_group = self.new_group(GoGroup {
+            stone: Stone::None,
+            cells: self.goban.vertices().clone(),
+            liberties: 0,
+        });
+        let cell_number = self.goban.vertices().len();
+        self.groups.resize_with(cell_number, || board_group.clone());
+        self.stats.none.groups = 1;
+        self.stats.none.stones = cell_number;
     }
 
     #[inline(always)]
     pub fn group_at(&self, cell: &GoCell) -> GoGroupRc {
-        self.groups.get(&cell).unwrap().clone()
+        self.groups[*cell].clone()
+
+        // self.groups.get(&cell).unwrap().clone()
     }
 
     #[inline(always)]
@@ -58,7 +88,7 @@ impl GoBoard {
     }
     #[inline(always)]
     pub fn groups_by_stone(&self, stone: Stone) -> Vec<GoGroupRc> {
-        self.groups.values()
+        self.groups.iter()
             .filter(|&g| g.borrow().stone == stone)
             .unique()
             .map(|g| g.clone())
@@ -70,21 +100,6 @@ impl GoBoard {
         self.stats.round > limit || self.stats.none.groups == 0
     }
 
-    pub fn reset(&mut self) {
-        self.groups.clear();
-        self.stats = BoardStats::new();
-        self.stone = Stone::Black;
-        self.empty_cells = GoGroup {
-            stone: Stone::None,
-            cells: self.goban.vertices().clone(),
-            liberties: 0,
-        };
-        self.update_group(self.new_group(GoGroup {
-            stone: Stone::None,
-            cells: self.goban.vertices().clone(),
-            liberties: 0,
-        }));
-    }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
         assert!(self.stone_at(&cell) == Stone::None);
@@ -167,7 +182,13 @@ impl GoBoard {
 
     fn update_group(&mut self, group: GoGroupRc) {
         for c in group.borrow().cells.iter() {
-            self.groups.insert(c, group.clone());
+            if c >= self.groups.len() {
+                self.groups.reserve(c + 10);
+                // self.groups.push(group.clone());
+            }
+            self.groups[c] = group.clone();
+
+            // self.groups.insert(c, group.clone());
         }
         self.stats.add_group(group.borrow().deref());
     }
