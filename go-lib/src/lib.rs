@@ -22,7 +22,7 @@ mod tests {
 
     use board::goboard::GoBoard;
     use board::grid::Grid;
-    use graph_lib::graph::Graph;
+    use graph_lib::topology::Topology;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;

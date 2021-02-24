@@ -1,6 +1,10 @@
+use bit_set::BitSet;
 use itertools::Itertools;
 
 use board::goboard::GoBoard;
+use board::grid::Grid;
+use graph_lib::topology::Topology;
+use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
@@ -8,6 +12,16 @@ pub struct Go {}
 
 
 impl Go {
+    pub fn adjacent_cells<G: Topology>(board: &G, cells: &BitSet) -> BitSet {
+        let mut adjacents = BitSet::new();
+        for c in cells.iter() {
+            adjacents.union_with(&board.edges(c));
+        }
+        adjacents.difference_with(cells);
+        adjacents
+    }
+
+
     pub fn count_stones(stone: Stone, board: &GoBoard) -> usize {
         board.groups_by_stone(stone)
             .iter()
@@ -30,9 +44,9 @@ impl Go {
     pub fn get_owner(board: &GoBoard, group: GoGroupRc) -> Stone {
         assert!(group.borrow().stone == Stone::None);
 
-        let adjacents = group.borrow().adjacent_cells(board);
+        let adjacents = Go::adjacent_cells(board, &group.borrow().cells);
         let border = adjacents.iter()
-            .map(|c| board.stone_at(&c))
+            .map(|c| board.stone_at(c))
             .unique()
             .collect_vec();
 

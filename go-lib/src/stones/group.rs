@@ -4,19 +4,30 @@ use std::iter::{FromIterator, once};
 
 use bit_set::BitSet;
 
+use board::go::Go;
 use board::goboard::GoBoard;
-use board::grid::GoCell;
-use graph_lib::graph::Graph;
+use board::grid::{GoCell, Grid};
+use graph_lib::topology::Topology;
 use stones::stone::Stone;
+use graph_lib::graph::Graph;
+use graph_lib::flood::Flood;
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
-pub(crate) struct GoGroup {
+pub struct GoGroup {
     pub(crate) stone: Stone,
     pub(crate) liberties: usize,
     pub(crate) cells: BitSet,
 }
 
 impl GoGroup {
+    pub fn from_goban(goban: &Grid) -> GoGroup {
+        GoGroup {
+            stone: Stone::None,
+            cells: goban.vertices().clone(),
+            liberties: 0,
+        }
+    }
+
     pub fn from_cell(stone: Stone, cell: GoCell) -> GoGroup {
         GoGroup {
             stone,
@@ -51,28 +62,14 @@ impl GoGroup {
         self.liberties == 0
     }
 
-    pub fn adjacent_cells(&self, board: &GoBoard) -> BitSet {
-        let mut adjacents = BitSet::new();
-        for c in self.cells.iter() {
-            adjacents.union_with(&board.edges(c));
-        }
-        adjacents.difference_with(&self.cells);
-        adjacents
-    }
-
-
     pub fn update_liberties(&mut self, board: &GoBoard) {
-        let adjacents = self.adjacent_cells(board);
-        let mut liberties = BitSet::new();
-        for x in adjacents.iter()
-            .filter(|c| board.stone_at(c) == Stone::None) {
-            liberties.insert(x);
-        }
-        self.liberties = liberties.len();
+        let mut adjacents = Go::adjacent_cells(board, &self.cells);
+        adjacents.intersect_with(&board.empty_cells.cells);
+        self.liberties = adjacents.len();
     }
 
 
-    pub fn split<G: Graph>(&mut self, graph: &G) -> Vec<GoGroup> {
+    pub fn split<G: Topology>(&mut self, graph: &G) -> Vec<GoGroup> {
         let mut res = vec![];
         while !self.is_empty() {
             res.push(self.next_split(graph));
@@ -80,13 +77,14 @@ impl GoGroup {
         res
     }
 
-    fn next_split<G: Graph>(&mut self, grid: &G) -> GoGroup {
+    fn next_split<G: Topology>(&mut self, grid: &G) -> GoGroup {
         let to_visit = &self.cells;
         let test = |c: GoCell| to_visit.contains(c);
         let cell = to_visit.iter().next().unwrap();
+        let graph = Graph::new();
         let res = GoGroup {
             stone: self.stone,
-            cells: grid.flood(cell, &test),
+            cells: graph.flood(grid, cell, &test),
             liberties: 0,
         };
         self.remove_group(&res);

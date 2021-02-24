@@ -11,17 +11,17 @@ pub enum GoAction {
 
 
 impl GoAction {
-    pub fn x(&self) -> Option<&usize> {
+    pub fn x(&self) -> Option<usize> {
         match self {
             GoAction::Pass => { None }
-            GoAction::Cell(x, _y) => Some(x)
+            GoAction::Cell(x, _y) => Some(*x)
         }
     }
 
-    pub fn y(self) -> Option<usize> {
+    pub fn y(&self) -> Option<usize> {
         match self {
             GoAction::Pass => None,
-            GoAction::Cell(_x, y) => Some(y)
+            GoAction::Cell(_x, y) => Some(*y)
         }
     }
 

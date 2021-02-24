@@ -92,7 +92,7 @@ impl BoardStats {
     }
 
     pub(crate) fn rem_group(&mut self, group: &GoGroup) {
-        let n = group.cells.len();
+        let n = group.stones();
         match group.stone {
             Stone::Black => {
                 self.black.groups -= 1;

@@ -40,8 +40,6 @@ pub fn main() {
         log::info!("Board:\n{}", mcts.state.state);
         log::info!("{} | results: {}", round, mcts.root);
     }
-
-    mcts.explore();
     mcts.state.state.board.update_score(Go::count_territory);
     log::info!("Board:\n{}", mcts.state.state);
     log::info!("{} | results: {}", bench, mcts.root);

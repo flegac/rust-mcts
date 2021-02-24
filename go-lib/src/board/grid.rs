@@ -1,9 +1,11 @@
 use std::hash::Hash;
 use std::iter::FromIterator;
+use std::mem;
 
 use bit_set::BitSet;
+use itertools::Itertools;
 
-use graph_lib::graph::Graph;
+use graph_lib::topology::Topology;
 
 pub type GoCell = usize;
 
@@ -72,45 +74,13 @@ impl Grid {
     }
 }
 
-impl Graph for Grid {
-    #[inline]
+
+impl Topology for Grid {
     fn vertices(&self) -> &BitSet {
         &self.cells
     }
 
-
-    #[inline]
     fn edges(&self, v: usize) -> &BitSet {
         &self.links[v]
-    }
-
-
-    fn flood<F>(&self, cell: usize, test: &F) -> BitSet
-        where F: Fn(GoCell) -> bool {
-        let mut visited = BitSet::new();
-        let mut to_visit = BitSet::new();
-        let mut connected = BitSet::new();
-
-        to_visit.insert(cell);
-        visited.insert(cell);
-
-        while !to_visit.is_empty() {
-            for c in to_visit.iter() {
-                self.edges(c)
-                    .iter()
-                    .filter(|&c| test(c))
-                    .filter(|&a| !visited.contains(a))
-                    .for_each(|c| {
-                        connected.insert(c);
-                    });
-            }
-
-            visited.union_with(&connected);
-            let tmp = to_visit;
-            to_visit = connected;
-            connected = tmp;
-            connected.clear();
-        }
-        visited
     }
 }
