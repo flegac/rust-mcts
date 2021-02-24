@@ -170,11 +170,23 @@ impl Graph for GoBoard {
 
 impl fmt::Display for GoBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let size = self.goban.size;
+        write!(f, "{}", format!("{}{}\n{}",
+                                self.draw_board(),
+                                self.stats.score_string(),
+                                self.stats
+        ))
+    }
+}
 
+
+const BIG_A: usize = 'A' as usize;
+
+impl GoBoard {
+    fn draw_board(&self) -> String {
+        let size = self.goban.size;
         let mut res = String::new();
-        GoBoard::draw_line(size, &mut res);
-        GoBoard::draw_line_separator(size, &mut res);
+        self.draw_line(&mut res, true);
+        self.draw_line_separator(&mut res);
         let a = 'a' as usize;
         for y in 0..size {
             res.push_str(format!("{} | ", char::from((y + a) as u8)).as_str());
@@ -186,17 +198,34 @@ impl fmt::Display for GoBoard {
 
             res.push_str("\n");
         }
+        self.draw_line_separator(&mut res);
+        self.draw_line(&mut res, true);
+        res
+    }
+    fn draw_line_separator(&self, res: &mut String) {
+        let size = self.goban.size;
 
+        res.push_str("  + ");
+        for _x in 0..size {
+            res.push_str("--");
+        }
+        res.push_str("+  \n");
+    }
 
-        GoBoard::draw_line_separator(size, &mut res);
-        GoBoard::draw_line(size, &mut res);
-
-        write!(f, "{}", format!("side: {}\n{}{}\n{}",
-                                self.stone,
-                                res,
-                                self.stats.score_string(),
-                                self.stats
-        ))
+    fn draw_line(&self, res: &mut String, with_side: bool) {
+        let size = self.goban.size;
+        match with_side {
+            true => res.push_str(format!("[{}] ", self.stone).as_str()),
+            false => res.push_str("    ")
+        }
+        for x in 0..size {
+            res.push_str(format!("{} ", char::from((x + BIG_A) as u8)).as_str());
+        }
+        match with_side {
+            true => res.push_str(format!("[{}]", self.stone).as_str()),
+            false => res.push_str("   ")
+        }
+        res.push_str("\n");
     }
 }
 
@@ -281,24 +310,5 @@ mod tests {
         for ga in gg {
             println!("- {}", ga)
         }
-    }
-}
-
-impl GoBoard {
-    fn draw_line_separator(size: usize, res: &mut String) {
-        res.push_str("  + ");
-        for _x in 0..size {
-            res.push_str("--");
-        }
-        res.push_str("+  \n");
-    }
-    fn draw_line(size: usize, res: &mut String) {
-        let a = 'A' as usize;
-
-        res.push_str("    ");
-        for x in 0..size {
-            res.push_str(format!("{} ", char::from((x + a) as u8)).as_str());
-        }
-        res.push_str("\n");
     }
 }
