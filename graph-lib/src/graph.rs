@@ -2,18 +2,18 @@ use std::mem;
 
 use bit_set::BitSet;
 
-use crate::topology::{Topology, Vert};
 use crate::flood::Flood;
+use crate::topology::{Topology, Vert};
 
-pub struct Graph {
+pub struct GFlood {
     visited: BitSet,
     to_visit: BitSet,
     connected: BitSet,
 }
 
-impl Graph {
-    pub fn new() -> Graph {
-        Graph {
+impl GFlood {
+    pub fn new() -> GFlood {
+        GFlood {
             visited: BitSet::new(),
             to_visit: BitSet::new(),
             connected: BitSet::new(),
@@ -21,8 +21,8 @@ impl Graph {
     }
 }
 
-impl Flood for Graph {
-    fn flood<F, G>(mut self, graph: &G, v: usize, topology: &F) -> BitSet
+impl Flood for GFlood {
+    fn flood<F, G>(&mut self, graph: &G, v: usize, topology: &F) -> BitSet
         where
             F: Fn(Vert) -> bool,
             G: Topology {
@@ -30,7 +30,7 @@ impl Flood for Graph {
         self.flood_check(graph, v, topology, &cond)
     }
 
-    fn flood_check<F, T, G>(mut self, graph: &G, v: usize, topology: &F, stop_condition: &T) -> BitSet
+    fn flood_check<F, T, G>(&mut self, graph: &G, v: usize, topology: &F, stop_condition: &T) -> BitSet
         where
             F: Fn(Vert) -> bool,
             T: Fn(&BitSet) -> bool,

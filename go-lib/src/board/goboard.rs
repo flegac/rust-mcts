@@ -1,5 +1,6 @@
 use core::fmt;
 use std::borrow::Borrow;
+use std::cell::RefCell;
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 
@@ -9,12 +10,12 @@ use itertools::Itertools;
 
 use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
+use graph_lib::flood::Flood;
+use graph_lib::graph::GFlood;
 use graph_lib::topology::{Topology, Vert};
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
-use graph_lib::graph::Graph;
-use graph_lib::flood::Flood;
 
 pub struct GoBoard {
     arena: Arena<GoGroup>,
@@ -23,6 +24,7 @@ pub struct GoBoard {
     pub(crate) stats: BoardStats,
     pub stone: Stone,
     pub(crate) empty_cells: GoGroup,
+    pub(crate) flood: RefCell<GFlood>,
 }
 
 impl GoBoard {
@@ -35,6 +37,7 @@ impl GoBoard {
             stats: BoardStats::new(),
             stone: Stone::Black,
             empty_cells,
+            flood: RefCell::new(GFlood::new()),
         };
         board.reset();
         board
@@ -136,8 +139,7 @@ impl GoBoard {
                 let to_visit = old.borrow().cells.clone();
                 let old_cell = to_visit.iter().next().unwrap();
                 let topology = |c: GoCell| to_visit.contains(c);
-                let graph = Graph::new();
-                let visited = graph.flood_check(
+                let visited = self.flood.borrow_mut().flood_check(
                     self,
                     old_cell,
                     &topology,
@@ -145,7 +147,7 @@ impl GoBoard {
                 );
                 if !check_connection(&visited) {
                     self.stats.rem_group(old.borrow().deref());
-                    for part in old.borrow_mut().split(&self.goban) {
+                    for part in old.borrow_mut().split(&self) {
                         self.update_group(&self.new_group(part));
                     }
                 }

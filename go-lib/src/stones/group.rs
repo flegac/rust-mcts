@@ -7,10 +7,10 @@ use bit_set::BitSet;
 use board::go::Go;
 use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
+use graph_lib::flood::Flood;
+use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 use stones::stone::Stone;
-use graph_lib::graph::Graph;
-use graph_lib::flood::Flood;
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
@@ -69,22 +69,21 @@ impl GoGroup {
     }
 
 
-    pub fn split<G: Topology>(&mut self, graph: &G) -> Vec<GoGroup> {
+    pub fn split(&mut self, board: &GoBoard) -> Vec<GoGroup> {
         let mut res = vec![];
         while !self.is_empty() {
-            res.push(self.next_split(graph));
+            res.push(self.next_split(board));
         }
         res
     }
 
-    fn next_split<G: Topology>(&mut self, grid: &G) -> GoGroup {
+    fn next_split(&mut self, board: &GoBoard) -> GoGroup {
         let to_visit = &self.cells;
         let test = |c: GoCell| to_visit.contains(c);
         let cell = to_visit.iter().next().unwrap();
-        let graph = Graph::new();
         let res = GoGroup {
             stone: self.stone,
-            cells: graph.flood(grid, cell, &test),
+            cells: board.flood.borrow_mut().flood(board, cell, &test),
             liberties: 0,
         };
         self.remove_group(&res);
