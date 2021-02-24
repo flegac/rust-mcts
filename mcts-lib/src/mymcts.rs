@@ -68,7 +68,7 @@ impl<A, S, P> Mcts for MyMcts<A, S, P>
             match found {
                 None => break,
                 Some(xx) => {
-                    current = xx;
+                    current = SafeTree::from_node(xx);
                     let a = current.value.borrow().action.unwrap();
                     self.state.state.apply(&a);
                     self.state.depth += 1;
@@ -91,23 +91,28 @@ impl<A, S, P> Mcts for MyMcts<A, S, P>
 
     fn simulation(&mut self) {
         let mut res = self.state.state.result();
+        let mut n = 0;
         while res.is_none() {
             let a = self.policy.select(&self.state.state);
             self.state.state.apply(&a);
             self.state.depth += 1;
             res = self.state.state.result();
+            n += 1;
         }
 
-        log::debug!("Simulation: {:?}", res);
+        log::debug!("Simulation: {:?} length={}", res, n);
     }
 
     fn backpropagation(&mut self) {
         let mut result = self.state.state.result().unwrap();
         self.state.current.value.borrow_mut().update_score(result);
-        for c in self.state.current.parents() {
+
+        let parents = self.state.current.parents();
+        let n = parents.len();
+        for c in parents {
             c.value.borrow_mut().update_score(result);
             result = result.switch();
         }
-        log::debug!("Backpropagation: {:?} {}", result, self.state);
+        log::debug!("Backpropagation: ({} parents) {}", n, self.state);
     }
 }

@@ -11,35 +11,38 @@ use env_logger::Builder;
 use log::LevelFilter;
 
 use bench::Bench;
-use go_lib::constants::BENCH;
+use constants::{BENCH, GOBAN_SIZE, LOG_LEVEL};
+use go_lib::board::go::Go;
 use go_lib::gostate::GoState;
 use mcts_lib::mymcts::MyMcts;
 use mcts_lib::random_policy::RandomPolicy;
 
 mod editor;
 mod bench;
+mod constants;
 
 
 pub fn main() {
-    init_logs(LevelFilter::Info);
+    init_logs(LOG_LEVEL);
 
     let policy = RandomPolicy::new(453);
-    let state = GoState::new();
+    let state = GoState::new(GOBAN_SIZE);
     let mut mcts = MyMcts::new(state, policy);
 
     let mut bench = Bench::new(BENCH.full_time);
     while bench.looping() {
-        let mut round = Bench::new(BENCH.round_time);
-        while round.looping() {
+        let mut round = bench.spawn(BENCH.round_time);
+        while round.looping_inc(None) {
             mcts.explore();
-            round.inc(1);
         }
         bench.inc_bench(&round);
+        mcts.state.state.board.update_score(Go::count_territory);
         log::info!("Board:\n{}", mcts.state.state);
         log::info!("{} | results: {}", round, mcts.root);
     }
 
     mcts.explore();
+    mcts.state.state.board.update_score(Go::count_territory);
     log::info!("Board:\n{}", mcts.state.state);
     log::info!("{} | results: {}", bench, mcts.root);
 }

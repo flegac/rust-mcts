@@ -5,7 +5,7 @@ use std::iter::{FromIterator, once};
 use bit_set::BitSet;
 
 use board::goboard::GoBoard;
-use board::grid::{GoCell};
+use board::grid::GoCell;
 use graph_lib::graph::Graph;
 use stones::stone::Stone;
 
@@ -25,7 +25,7 @@ impl GoGroup {
         }
     }
 
-    pub(crate) fn size(&self) -> usize {
+    pub(crate) fn stones(&self) -> usize {
         self.cells.len()
     }
 

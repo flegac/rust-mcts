@@ -3,13 +3,13 @@ extern crate core;
 extern crate fixed_typed_arena;
 extern crate graph_lib;
 extern crate itertools;
+extern crate log;
 extern crate mcts_lib;
 extern crate rpool;
 
 pub mod stones;
 pub mod action;
 pub mod gostate;
-pub mod constants;
 pub mod board;
 pub mod game;
 
@@ -22,7 +22,6 @@ mod tests {
 
     use board::goboard::GoBoard;
     use board::grid::Grid;
-    use constants::GOBAN_SIZE;
     use graph_lib::graph::Graph;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
@@ -30,7 +29,7 @@ mod tests {
 
     #[test]
     fn board_cell_id() {
-        let goban = Grid::new(GOBAN_SIZE);
+        let goban = Grid::new(7);
 
         for c in goban.vertices().iter() {
             let (x, y) = goban.xy(c);

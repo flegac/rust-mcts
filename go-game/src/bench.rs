@@ -2,9 +2,8 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::time::{Duration, Instant};
 
-// TODO: use a struct for stats recording (in place of games attribute)
 pub struct Bench {
-    games: usize,
+    iterations: usize,
     start: Instant,
     time_limit: Duration,
     duration: Option<Duration>,
@@ -13,7 +12,15 @@ pub struct Bench {
 impl Bench {
     pub fn new(time_limit: Duration) -> Bench {
         Bench {
-            games: 0,
+            iterations: 0,
+            start: Instant::now(),
+            time_limit,
+            duration: None,
+        }
+    }
+    pub fn spawn(&mut self, time_limit: Duration) -> Bench {
+        Bench {
+            iterations: 0,
             start: Instant::now(),
             time_limit,
             duration: None,
@@ -21,26 +28,52 @@ impl Bench {
     }
 
     pub fn inc_bench(&mut self, other: &Bench) {
-        self.inc(other.games);
+        self.inc(other.iterations);
     }
 
     pub fn inc(&mut self, value: usize) {
-        self.games += value;
+        self.iterations += value;
+    }
+
+    pub fn inc_easy(&mut self, other: Option<Bench>) {
+        match other {
+            None => self.inc(1),
+            Some(o) => self.inc_bench(&o)
+        }
+    }
+
+
+    pub fn looping_inc(&mut self, round: Option<Bench>) -> bool {
+        let duration = self.start.elapsed();
+        let finished = duration >= self.time_limit;
+        match self.duration {
+            None => match finished {
+                true => self.duration = Some(duration),
+                false => self.inc_easy(round)
+            }
+            Some(_) => {}
+        }
+
+        !finished
     }
 
     pub fn looping(&mut self) -> bool {
-        let res = self.start.elapsed() < self.time_limit;
-        if !res && self.duration.is_none() {
-            self.duration = Some(self.start.elapsed());
+        let duration = self.start.elapsed();
+        let finished = duration >= self.time_limit;
+        match self.duration {
+            None => if finished {
+                self.duration = Some(duration);
+            }
+            Some(_) => {}
         }
-        res
+        !finished
     }
 }
 
 impl Display for Bench {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Speed: {} games {:?} sec",
-               self.games,
+        write!(f, "Speed: {} iter {:?} sec",
+               self.iterations,
                self.duration.unwrap_or(self.start.elapsed())
         )
     }

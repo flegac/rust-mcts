@@ -11,6 +11,7 @@ pub(crate) struct BoardStats {
     pub(crate) black: ColorStats,
     pub(crate) white: ColorStats,
     pub(crate) none: ColorStats,
+    pub(crate) round: usize,
 }
 
 impl BoardStats {
@@ -20,28 +21,47 @@ impl BoardStats {
         self.none.assert_eq(&other.none);
     }
 
-    pub(crate) fn init() -> BoardStats {
+
+    pub(crate) fn new() -> BoardStats {
         BoardStats {
             black: ColorStats::init(Stone::Black),
             white: ColorStats::init(Stone::White),
             none: ColorStats::init(Stone::None),
+            round: 0,
         }
     }
 
-    pub fn new(board: &GoBoard) -> BoardStats {
+    pub fn from_board(board: &GoBoard) -> BoardStats {
         BoardStats {
             black: ColorStats::new(Stone::Black, board),
             white: ColorStats::new(Stone::White, board),
             none: ColorStats::new(Stone::None, board),
+            round: board.stats.round,
         }
+    }
+
+
+    #[inline]
+    pub fn for_stone(&self, stone: Stone) -> ColorStats {
+        match stone {
+            Stone::Black => self.black,
+            Stone::White => self.white,
+            Stone::None => self.none
+        }
+    }
+
+    pub fn compute_round(&self) -> usize {
+        let blacks = self.black.stones + self.black.captured;
+        let whites = self.white.stones + self.white.captured;
+        blacks + whites
     }
 
     pub fn capture_group(&mut self, group: &mut GoGroup) {
         self.rem_group(group);
         match group.stone {
             Stone::None => {}
-            Stone::Black => self.black.captured += group.size(),
-            Stone::White => self.white.captured += group.size(),
+            Stone::Black => self.black.captured += group.stones(),
+            Stone::White => self.white.captured += group.stones(),
         }
         group.set_stone(Stone::None);
         self.add_group(group);
@@ -107,10 +127,10 @@ impl BoardStats {
 
 impl fmt::Display for BoardStats {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", format!("{}\n{}\n{}",
-                                self.black,
-                                self.white,
-                                self.none
-        ))
+        write!(f, "{}\n{}\n{}",
+               self.black,
+               self.white,
+               self.none
+        )
     }
 }

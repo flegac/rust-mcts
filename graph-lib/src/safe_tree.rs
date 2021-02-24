@@ -26,15 +26,6 @@ impl<T> SafeTree<T> {
             children: RefCell::new(vec![]),
         }))
     }
-
-    pub fn max_by_key<B: Ord, F>(&self, f: F) -> Option<SafeTree<T>>
-        where F: Fn(&T) -> B {
-        let x = self.children.borrow()
-            .iter()
-            .max_by_key(|x| f(x.value.borrow().deref()))
-            ?.clone();
-        Some(SafeTree::from_node(x))
-    }
 }
 
 impl<T> Deref for SafeTree<T> {
@@ -48,15 +39,14 @@ impl<T> Deref for SafeTree<T> {
 impl<T> fmt::Display for SafeTree<T>
     where T: Display {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", format!("{}", self.0))
+        write!(f, "{}", self.0)
     }
 }
 
-impl<T> Tree for SafeTree<T> {
+impl<T> Tree<usize> for SafeTree<T> {
     fn parent(&self) -> Option<Self> {
         self.parent.borrow().upgrade().map(|c| SafeTree(Rc::clone(&c)))
     }
-
 
     fn set_child(&self, index: usize, value: &Self) {
         self.0.children.borrow_mut().as_mut_slice()[index] = Rc::clone(&value.0);
@@ -65,22 +55,6 @@ impl<T> Tree for SafeTree<T> {
     fn remove(&self, index: usize) {
         self.0.children.borrow_mut().remove(index);
     }
-
-    fn get_child(&self, index: usize) -> Option<Self> {
-        self.0.children.borrow().get(index)
-            .map(|c| SafeTree(Rc::clone(c)))
-    }
-
-    fn parents(&self) -> Vec<Self> {
-        let mut res = vec![];
-        let mut t = self.clone();
-        while t.parent().is_some() {
-            t = t.parent().unwrap().clone();
-            res.push(t.clone());
-        }
-        res
-    }
-
 
     fn add_child(&self, tree: &Self) {
         self.0.children.borrow_mut().push(Rc::clone(&tree.0));

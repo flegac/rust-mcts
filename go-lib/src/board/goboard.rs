@@ -13,11 +13,10 @@ use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
-pub(crate) struct GoBoard {
+pub struct GoBoard {
     arena: Arena<GoGroup>,
     pub(crate) goban: Grid,
-    // groups: Vec<GoGroupRc>,
-    pub(crate) groups: HashMap<GoCell, GoGroupRc>,
+    groups: HashMap<GoCell, GoGroupRc>,
     pub(crate) stats: BoardStats,
     pub stone: Stone,
     pub(crate) empty_cells: GoGroup,
@@ -25,7 +24,6 @@ pub(crate) struct GoBoard {
 
 impl GoBoard {
     pub fn new(goban: Grid) -> Self {
-        // let cell_number = goban.size * goban.size;
         let empty_cells = GoGroup {
             stone: Stone::None,
             cells: goban.vertices().clone(),
@@ -34,9 +32,8 @@ impl GoBoard {
         let mut board = GoBoard {
             arena: Arena::new(),
             goban,
-            // groups: Vec::with_capacity(cell_number),
             groups: HashMap::new(),
-            stats: BoardStats::init(),
+            stats: BoardStats::new(),
             stone: Stone::Black,
             empty_cells,
         };
@@ -50,9 +47,32 @@ impl GoBoard {
         board
     }
 
+    #[inline(always)]
+    pub fn group_at(&self, cell: &GoCell) -> GoGroupRc {
+        self.groups.get(&cell).unwrap().clone()
+    }
+
+    #[inline(always)]
+    pub fn stone_at(&self, cell: &GoCell) -> Stone {
+        self.group_at(cell).borrow().stone
+    }
+    #[inline(always)]
+    pub fn groups_by_stone(&self, stone: Stone) -> Vec<GoGroupRc> {
+        self.groups.values()
+            .filter(|&g| g.borrow().stone == stone)
+            .unique()
+            .map(|g| g.clone())
+            .collect_vec()
+    }
+
+    pub fn end_game(&self) -> bool {
+        let limit = self.vertices().len();
+        self.stats.round > limit || self.stats.none.groups == 0
+    }
+
     pub fn reset(&mut self) {
         self.groups.clear();
-        self.stats = BoardStats::init();
+        self.stats = BoardStats::new();
         self.stone = Stone::Black;
         self.empty_cells = GoGroup {
             stone: Stone::None,
@@ -123,19 +143,26 @@ impl GoBoard {
             self.empty_cells.add_group(new_group.borrow().deref());
         }
 
+        self.stats.round += 1;
+        assert_eq!(self.stats.round, self.stats.compute_round());
+
         //TODO: remove this when all is ok !
         // self.stats.assert_eq(&BoardStats::new(self));
-        assert_eq!(self.empty_cells.size(), self.stats.none.stones);
+        assert_eq!(self.empty_cells.stones(), self.stats.none.stones);
     }
 
-
-    pub fn group_at(&self, cell: &GoCell) -> GoGroupRc {
-        self.groups.get(&cell).unwrap().clone()
+    pub fn update_score<F>(&mut self, scorer: F)
+        where F: Fn(Stone, &GoBoard) -> usize
+    {
+        self.stats.black.territory = scorer(Stone::Black, self);
+        self.stats.white.territory = scorer(Stone::White, self);
     }
 
-
-    pub fn stone_at(&self, cell: &GoCell) -> Stone {
-        self.group_at(cell).borrow().stone
+    pub fn score(&self, stone: Stone) -> usize {
+        let stats = self.stats.for_stone(stone);
+        let territory = stats.territory;
+        let captures = stats.captured;
+        territory + captures
     }
 
     fn update_group(&mut self, group: GoGroupRc) {
@@ -170,11 +197,11 @@ impl Graph for GoBoard {
 
 impl fmt::Display for GoBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", format!("{}{}\n{}",
-                                self.draw_board(),
-                                self.stats.score_string(),
-                                self.stats
-        ))
+        write!(f, "{}{}\n{}",
+               self.draw_board(),
+               self.stats.score_string(),
+               self.stats
+        )
     }
 }
 
@@ -239,7 +266,6 @@ mod tests {
 
     use board::goboard::GoBoard;
     use board::grid::Grid;
-    use constants::GOBAN_SIZE;
     use graph_lib::graph::Graph;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
@@ -247,7 +273,7 @@ mod tests {
 
     #[test]
     fn stone_groups() {
-        let goban = Grid::new(GOBAN_SIZE);
+        let goban = Grid::new(7);
         let board = GoBoard::new(goban);
 
         let mut cells = BitSet::new();
@@ -265,12 +291,12 @@ mod tests {
             liberties: 0,
         });
 
-        assert_eq!(group.borrow().size(), 3);
+        assert_eq!(group.borrow().stones(), 3);
     }
 
     #[test]
     fn board_cell_id() {
-        let goban = Grid::new(GOBAN_SIZE);
+        let goban = Grid::new(7);
 
         for c in goban.vertices().iter() {
             let (x, y) = goban.xy(c);
@@ -286,7 +312,7 @@ mod tests {
 
     #[test]
     fn test_group_splitting() {
-        let board = GoBoard::new(Grid::new(GOBAN_SIZE));
+        let board = GoBoard::new(Grid::new(7));
         let test1 = |c| {
             let (x, y) = board.goban.xy(c);
             x == 0
