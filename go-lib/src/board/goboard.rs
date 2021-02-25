@@ -1,7 +1,5 @@
 use core::fmt;
-use std::borrow::Borrow;
 use std::cell::RefCell;
-use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 
 use bit_set::BitSet;
@@ -12,7 +10,7 @@ use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
 use graph_lib::flood::Flood;
 use graph_lib::graph::GFlood;
-use graph_lib::topology::{Topology, Vert};
+use graph_lib::topology::Topology;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;

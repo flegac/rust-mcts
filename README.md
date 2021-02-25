@@ -8,10 +8,11 @@
 
 # About
 
-The project is composed of three crates :
+The project is composed of the followings crates :
 
+- graph-lib: tree & graph structures
 - mcts-lib: MCTS API & implementation
-- go-lib: Go game library
+- go-lib: Go game library & data structures
 - go-game: playing go with Monte-Carlo Tree Search
 
 # Usage
@@ -21,12 +22,15 @@ Build & run go-game to look at some auto-generated games.
 Hum... Do not expect wonders !
 
 # TODO
+
 - Implements GoEditor : command line interface to edit & visualise GoState/GoBoard 
+- multi-threading : simulations
+- State copy
 
 # Issues
 
+- Correct end game (pass/pass) 
 - suicide move : adding a stone that kill itself is possible.
-- Fix Mcts
 
 
 # Exemples

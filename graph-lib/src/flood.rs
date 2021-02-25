@@ -1,5 +1,3 @@
-use std::mem;
-
 use bit_set::BitSet;
 
 use crate::topology::{Topology, Vert};

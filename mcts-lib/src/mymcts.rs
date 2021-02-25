@@ -1,118 +1,135 @@
 use std::fmt::Display;
-use std::ops::Deref;
 
-use graph_lib::safe_tree::SafeTree;
+use ordered_float::OrderedFloat;
+
 use graph_lib::tree::Tree;
-use mcts_state::MctsState;
+use mcts::{MctsNode, MState};
+use mystate::MyState;
 use policy::Policy;
+use sim_result::SimResult;
+use state::GameResult;
 
+use crate::action_stats::ActionStats;
 use crate::mcts::Mcts;
-use crate::mcts_stats::MctsStats;
 use crate::state::State;
 
-pub struct MyMcts<A, S, P>
-    where A: Copy,
-          S: State<A>,
-          P: Policy<A> {
-    pub root: SafeTree<MctsStats<A>>,
-    policy: P,
-    pub state: MctsState<A, S>,
+pub struct MyMcts<A: Copy, S, SS> {
+    pub root: MctsNode<A>,
+    simulation_factor: usize,
+    _foo: Option<(S, SS)>,
 }
 
-impl<A, S, P> MyMcts<A, S, P>
-    where A: Copy,
-          A: Eq,
-          A: Display,
-          S: State<A>,
-          S: Display,
-          P: Policy<A> {
-    pub fn new(state: S, policy: P) -> MyMcts<A, S, P> {
-        let root = SafeTree::new(MctsStats::new(None));
+
+impl<A, S, SS> MyMcts<A, S, SS>
+    where
+        A: Copy,
+        A: Eq,
+        S: State<A>,
+        S: Display,
+        SS: MState<A, S>,
+{
+    pub fn new(simulation_factor: usize) -> MyMcts<A, S, SS> {
+        let root = ActionStats::node(None);
         MyMcts {
             root: root.clone(),
-            policy,
-            state: MctsState {
-                current: root.clone(),
-                state,
-                depth: 0,
-            },
+            simulation_factor,
+            _foo: None,
         }
     }
+    pub fn get_state(&self, state: S) -> MyState<A, S> {
+        MyState::new(state, self.root.clone())
+    }
 
-    pub fn explore(&mut self) {
-        log::debug!("* Exploration:");
+    fn sim_once<P: Policy<A>>(&self, state: &mut SS, policy: &P) -> GameResult {
+        let mut res = state.state().result();
+        while state.state().result().is_none() {
+            let a = policy.select(state.state());
+            state.apply_action(a);
+            res = state.state().result();
+        }
+        res.unwrap()
+    }
 
-        self.state.reset(&self.root);
-        self.selection();
-        self.expansion();
-        self.simulation();
-        self.backpropagation();
+    pub fn explore<P: Policy<A>>(&mut self, state: &mut SS, policy: &P) {
+        log::trace!("* Exploration:");
+        state.setup_node(self.root.clone());
+
+        self.selection(state);
+        let selection_depth = state.depth();
+        log::trace!("Selection: depth={}", selection_depth);
+        self.expansion(state, policy);
+        log::trace!("Expansion: {}", state.state());
+
+        // let before_score = <MyMcts<A, S>>::compute_score(state);
+        let res = self.simulation(state, policy);
+        log::trace!("Simulation: {}", res);
+        self.backpropagation(state, res);
+        let n = state.node().parents().len();
+        log::trace!("Backpropagation: ({} parents) {}", n, state.state());
+        // let after_score = <MyMcts<A, S>>::compute_score(state);
+        // log::debug!("Exploration: from depth {}, score: {} -> {}",
+        //            selection_depth,
+        //            before_score,
+        //            after_score)
     }
 }
 
-impl<A, S, P> Mcts for MyMcts<A, S, P>
-    where A: Copy,
-          A: Display,
-          S: State<A>,
-          S: Display,
-          P: Policy<A> {
-    fn selection(&mut self) {
-        let mut current = self.state.current.clone();
+impl<A, S, SS> Mcts<A, S, SS> for MyMcts<A, S, SS>
+    where
+        A: Copy,
+        A: Eq,
+        S: State<A>,
+        S: Display,
+        SS: MState<A, S>
+{
+    fn selection(&self, state: &mut SS) {
+        while !state.node().value.borrow().is_leaf() {
+            let found = state.node().max_by_key(
+                |a| a.score(&state.node().value.borrow()));
 
-        let is_leaf = |x: &MctsStats<A>| x.explored == 0;
-        self.state.extend_node(self.state.state.actions());
-        while !is_leaf(current.value.borrow().deref()) {
-            let parent_explored = current.value.borrow().explored;
-            let found = current.max_by_key(|a| a.selection_score(parent_explored));
+            // target = SafeTree<ActionStats<A>>
 
             match found {
                 None => break,
                 Some(xx) => {
-                    current = SafeTree::from_node(xx);
-                    let a = current.value.borrow().action.unwrap();
-                    self.state.state.apply(&a);
-                    self.state.depth += 1;
+                    let current = xx;
+                    state.add_node(current);
                 }
             }
         }
-        self.state.current = current;
-        log::debug!("Selection: {}", self.state);
     }
 
-    fn expansion(&mut self) {
-        let a = self.policy.select(&self.state.state);
-        let next_current = SafeTree::new(MctsStats::new(Some(a)));
-        self.state.current.add_child(&next_current);
-        self.state.state.apply(&a);
-        self.state.current = next_current;
-        self.state.depth += 1;
-        log::debug!("Expansion: {}", self.state);
+    fn expansion<P: Policy<A>>(&self, state: &mut SS, policy: &P) {
+        let a = policy.select(state.state());
+        let next_current = ActionStats::node(Some(a));
+        state.node().add_child(&next_current);
+        state.add_node(next_current);
     }
 
-    fn simulation(&mut self) {
-        let mut res = self.state.state.result();
-        let mut n = 0;
-        while res.is_none() {
-            let a = self.policy.select(&self.state.state);
-            self.state.state.apply(&a);
-            self.state.depth += 1;
-            res = self.state.state.result();
-            n += 1;
+    fn simulation<P: Policy<A>>(&self, state: &mut SS, policy: &P) -> SimResult {
+        let mut res = SimResult::new();
+        match self.simulation_factor {
+            1 => {
+                res.update(self.sim_once(state, policy));
+            }
+            _ => {
+                let node = state.node().clone();
+                for _ in 0..self.simulation_factor {
+                    state.setup_node(node.clone());
+                    res.update(self.sim_once(state, policy));
+                }
+            }
         }
-
-        log::debug!("Simulation: {:?} length={}", res, n);
+        res
     }
 
-    fn backpropagation(&mut self) {
-        let mut result = self.state.state.result().unwrap();
-        self.state.current.value.borrow_mut().update_score(result);
 
-        let parents = self.state.current.parents();
-        let n = parents.len();
+    fn backpropagation(&self, state: &mut SS, mut res: SimResult) {
+        state.node().value.borrow_mut().stats.merge(&res);
+        let parents = state.node().parents();
         for c in parents {
-            c.value.borrow_mut().update_score(result);
-            result = result.switch();
+            c.value.borrow_mut().stats.merge(&res);
+            res.swap();
         }
-        log::debug!("Backpropagation: ({} parents) {}", n, self.state);
     }
 }

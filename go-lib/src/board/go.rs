@@ -2,9 +2,7 @@ use bit_set::BitSet;
 use itertools::Itertools;
 
 use board::goboard::GoBoard;
-use board::grid::Grid;
 use graph_lib::topology::Topology;
-use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 

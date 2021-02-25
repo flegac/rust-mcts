@@ -27,6 +27,10 @@ impl Bench {
         }
     }
 
+    pub fn speed(&self) -> f32 {
+        self.iterations as f32 / self.duration.unwrap().as_secs_f32()
+    }
+
     pub fn inc_bench(&mut self, other: &Bench) {
         self.inc(other.iterations);
     }

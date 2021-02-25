@@ -7,8 +7,10 @@ pub struct Constants {
     pub round_time: Duration,
 }
 
+pub const SEED: u64 = 645;
 
-pub const GOBAN_SIZE: usize = 13;
+pub const SIM_FACTOR: usize = 10;
+pub const GOBAN_SIZE: usize = 9;
 pub const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 pub const BENCH: Constants = Constants {

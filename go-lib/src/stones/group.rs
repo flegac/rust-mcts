@@ -8,7 +8,6 @@ use board::go::Go;
 use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
 use graph_lib::flood::Flood;
-use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 use stones::stone::Stone;
 

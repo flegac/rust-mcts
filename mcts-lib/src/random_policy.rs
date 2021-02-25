@@ -22,7 +22,9 @@ impl RandomPolicy {
 
 impl<A: Copy> Policy<A> for RandomPolicy {
     fn select<S: State<A>>(&self, state: &S) -> A {
-        let mut actions = state.actions();
-        actions.choose(self.rng.borrow_mut().deref_mut()).unwrap().clone()
+        state.actions()
+            .choose(self.rng.borrow_mut().deref_mut())
+            .unwrap()
+            .clone()
     }
 }

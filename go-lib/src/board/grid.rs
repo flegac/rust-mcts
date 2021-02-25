@@ -1,9 +1,7 @@
 use std::hash::Hash;
 use std::iter::FromIterator;
-use std::mem;
 
 use bit_set::BitSet;
-use itertools::Itertools;
 
 use graph_lib::topology::Topology;
 

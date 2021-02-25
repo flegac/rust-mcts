@@ -5,5 +5,6 @@ pub trait Tree<K> where Self: Sized {
     // fn get_child(&self, index: usize) -> Option<Self>;
     // fn parents(&self) -> Vec<Self>;
     fn add_child(&self, tree: &Self);
+
 }
 
