@@ -1,8 +1,10 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::hash::Hash;
+use std::rc::Rc;
 
 use action_stats::ActionStats;
+use graph_lib::node::Node;
 use mcts::{MctsNode, MState};
 use state::State;
 
@@ -39,37 +41,32 @@ impl<A, S> MyState<A, S>
         self.depth = 0;
 
         let parents = self.node.parents();
-        for n in parents.iter().rev() {
-            match n.value.borrow().action {
-                None => {}
-                Some(action) => self.apply_action(action)
-            }
+        let n = parents.len();
+        for (action, _value) in parents.iter().rev() {
+            self.apply_action(action.clone())
         }
-        let last_action = self.node.value.borrow().action;
-        match last_action {
-            None => {}
-            Some(action) => self.apply_action(action)
-        }
+
         if !parents.is_empty() {
             log::debug!("{} parents", parents.len());
         } else {
             self.extend_node()
         }
     }
-    pub(crate) fn add_node(&mut self, node: MctsNode<A>) {
-        let a = node.value.borrow().action.unwrap();
+    pub(crate) fn add_node(&mut self, action: A, node: MctsNode<A>) {
         self.node = node;
-        self.apply_action(a);
+        self.apply_action(action);
     }
 
     fn extend_node(&mut self) {
         let actions = self.the_state.actions();
-
+        let n = actions.len();
         if self.node.children.borrow().is_empty() {
-            for a in actions {
-                let next_current = ActionStats::node(Some(a));
+            for (i,&a) in actions.iter().enumerate() {
+                let next_current = ActionStats::node();
                 self.node.set_child(a, &next_current);
+                println!("{}/{}", i,n)
             }
+            println!("ok node");
         }
     }
 }

@@ -1,5 +1,5 @@
 use std::fmt;
-use std::fmt::{Display, Formatter};
+use std::fmt::Formatter;
 use std::hash::Hash;
 
 use ordered_float::OrderedFloat;
@@ -8,27 +8,23 @@ use graph_lib::safe_tree::Tree;
 use mcts::MctsNode;
 use sim_result::SimResult;
 
-pub struct ActionStats<A>
-    where
-        A: Eq {
-    pub action: Option<A>,
+pub struct ActionStats {
     pub stats: SimResult,
 }
 
-impl<A> ActionStats<A> where
-    A: Eq,
-    A: Hash
-{
-    pub fn node(action: Option<A>) -> MctsNode<A> {
-        Tree::new(ActionStats::new(action))
+impl ActionStats {
+    pub fn node<A>() -> MctsNode<A>
+        where
+            A: Copy, A: Eq, A: Hash {
+        Tree::new(ActionStats::new())
     }
 
-    pub(crate) fn new(action: Option<A>) -> Self {
+    pub(crate) fn new() -> Self {
         ActionStats {
-            action,
             stats: SimResult::new(),
         }
     }
+
     pub fn is_leaf(&self) -> bool {
         self.stats.tries == 0
     }
@@ -49,16 +45,8 @@ impl<A> ActionStats<A> where
     }
 }
 
-impl<A> fmt::Display for ActionStats<A> where
-    A: Eq,
-    A: Hash,
-    A: Display {
+impl fmt::Display for ActionStats {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let mut action = String::new();
-        match &self.action {
-            None => action.push_str("pass"),
-            Some(a) => action.push_str(&a.to_string())
-        }
-        write!(f, "[{} | {}]", action, self.stats)
+        write!(f, "{}", self.stats)
     }
 }

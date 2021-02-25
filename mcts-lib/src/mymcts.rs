@@ -27,15 +27,15 @@ pub struct MyMcts<A, S, SS>
 
 impl<A, S> MyMcts<A, S, MyState<A, S>>
     where
+        A: Display,
         A: Copy,
         A: Eq,
         A: Hash,
         S: State<A>,
 {
     pub fn new(simulation_factor: usize) -> MyMcts<A, S, MyState<A, S>> {
-        let root = ActionStats::node(None);
         MyMcts {
-            root: root.clone(),
+            root: ActionStats::node(),
             simulation_factor,
             _foo: None,
         }
@@ -55,21 +55,21 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
     }
 
     pub fn explore<P: Policy<A>>(&mut self, state: &mut MyState<A, S>, policy: &P) {
-        log::trace!("* Exploration:");
+        log::debug!("* Exploration:");
         state.setup_node(self.root.clone());
 
         self.selection(state);
         let selection_depth = state.depth();
-        log::trace!("Selection: depth={}", selection_depth);
-        self.expansion(state, policy);
-        // log::trace!("Expansion: {}", state.state());
+        log::debug!("Selection: depth={}", selection_depth);
+        let action = self.expansion(state, policy);
+        log::debug!("Expansion: {}", action);
 
         // let before_score = <MyMcts<A, S>>::compute_score(state);
         let res = self.simulation(state, policy);
-        log::trace!("Simulation: {}", res);
+        log::debug!("Simulation: {}", res);
         self.backpropagation(state, res);
         let n = state.node().parents().len();
-        // log::trace!("Backpropagation: ({} parents) {}", n, state.state());
+        log::debug!("Backpropagation: ({} parents)", n);
         // let after_score = <MyMcts<A, S>>::compute_score(state);
         // log::debug!("Exploration: from depth {}, score: {} -> {}",
         //            selection_depth,
@@ -80,6 +80,7 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
 
 impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
     where
+        A: Display,
         A: Copy,
         A: Eq,
         A: Hash,
@@ -94,22 +95,22 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
 
             match found {
                 None => break,
-                Some(xx) => {
-                    let current = xx;
-                    state.add_node(current);
+                Some((action, node)) => {
+                    state.add_node(action, node);
                 }
             }
         }
     }
 
-    fn expansion<P: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &P) {
-        let a = policy.select(state.state());
-        let next_current = ActionStats::node(Some(a));
-        state.node().set_child(a, &next_current);
-        state.add_node(next_current);
+    fn expansion<P: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &P) -> A {
+        let action = policy.select(state.state());
+        let next_current = ActionStats::node();
+        state.node().set_child(action, &next_current);
+        state.add_node(action, next_current);
+        action
     }
 
-    fn simulation<P: Policy<A>>(&self, state: &mut MyState<A,S>, policy: &P) -> SimResult {
+    fn simulation<P: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &P) -> SimResult {
         let mut res = SimResult::new();
         match self.simulation_factor {
             1 => {
@@ -117,8 +118,10 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
             }
             _ => {
                 let node = state.node().clone();
-                for _ in 0..self.simulation_factor {
-                    state.setup_node(node.clone());
+                for i in 0..self.simulation_factor {
+                    println!("sim #{}", i);
+                    let the_node = node.clone();
+                    state.setup_node(the_node);
                     res.update(self.sim_once(state, policy));
                 }
             }
@@ -127,11 +130,11 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
     }
 
 
-    fn backpropagation(&self, state: &mut MyState<A,S>, mut res: SimResult) {
+    fn backpropagation(&self, state: &mut MyState<A, S>, mut res: SimResult) {
         state.node().value.borrow_mut().stats.merge(&res);
         let parents = state.node().parents();
-        for c in parents {
-            c.value.borrow_mut().stats.merge(&res);
+        for (key, value) in parents {
+            value.value.borrow_mut().stats.merge(&res);
             res.swap();
         }
     }

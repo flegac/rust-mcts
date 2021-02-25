@@ -4,7 +4,7 @@ use policy::Policy;
 use sim_result::SimResult;
 use state::State;
 
-pub(crate) type MctsNode<A> = Tree<A, ActionStats<A>>;
+pub(crate) type MctsNode<A> = Tree<A, ActionStats>;
 
 
 //FIXME: remove MctsNode from API : ActionStats<A> should be sufficient !
@@ -18,7 +18,7 @@ pub trait MState<A, S> {
 
 pub trait Mcts<A: Copy, S: State<A>, SS: MState<A, S>> {
     fn selection(&self, state: &mut SS);
-    fn expansion<P: Policy<A>>(&self, state: &mut SS, policy: &P);
+    fn expansion<P: Policy<A>>(&self, state: &mut SS, policy: &P) -> A;
     fn simulation<P: Policy<A>>(&self, state: &mut SS, policy: &P) -> SimResult;
     fn backpropagation(&self, state: &mut SS, res: SimResult);
 }
