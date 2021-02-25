@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::{Display, Formatter};
+use std::hash::Hash;
 
 use ordered_float::OrderedFloat;
 
@@ -7,12 +8,17 @@ use graph_lib::safe_tree::Tree;
 use mcts::MctsNode;
 use sim_result::SimResult;
 
-pub struct ActionStats<A> {
+pub struct ActionStats<A>
+    where
+        A: Eq {
     pub action: Option<A>,
     pub stats: SimResult,
 }
 
-impl<A> ActionStats<A> {
+impl<A> ActionStats<A> where
+    A: Eq,
+    A: Hash
+{
     pub fn node(action: Option<A>) -> MctsNode<A> {
         Tree::new(ActionStats::new(action))
     }
@@ -44,6 +50,8 @@ impl<A> ActionStats<A> {
 }
 
 impl<A> fmt::Display for ActionStats<A> where
+    A: Eq,
+    A: Hash,
     A: Display {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut action = String::new();

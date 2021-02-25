@@ -1,50 +1,41 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
+use std::hash::Hash;
 
 use action_stats::ActionStats;
 use mcts::{MctsNode, MState};
 use state::State;
 
-pub struct MyState<A, S: State<A>> {
-    state: S,
+pub struct MyState<A, S>
+    where
+        A: Eq,
+        A: Hash,
+        S: State<A> {
+    the_state: S,
     pub(crate) node: MctsNode<A>,
     depth: usize,
 }
 
 
-impl<A, S: State<A>> MyState<A, S> {
+impl<A, S> MyState<A, S>
+    where
+        A: Copy,
+        A: Eq,
+        A: Hash,
+        S: State<A> {
     pub fn new(state: S, node: MctsNode<A>) -> MyState<A, S> {
         MyState {
-            state,
+            the_state: state,
             node,
             depth: 0,
         }
     }
-
-    fn extend_node(&mut self) {
-        let actions = self.state.actions();
-
-        if self.node.children.borrow().is_empty() {
-            for a in actions {
-                let next_current = ActionStats::node(Some(a));
-                self.node.add_child(&next_current);
-            }
-        }
+    pub(crate) fn node(&self) -> MctsNode<A> {
+        self.node.clone()
     }
-}
-
-impl<A, S> Display for MyState<A, S>
-    where A: Copy, A: Display, S: State<A> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "(depth={}) {}", self.depth, self.node, )
-    }
-}
-
-impl<A, S> MState<A, S> for MyState<A, S>
-    where A: Copy, A: Display, S: State<A>, S: Display {
-    fn setup_node(&mut self, root: MctsNode<A>) {
+    pub(crate) fn setup_node(&mut self, root: MctsNode<A>) {
         self.node = root;
-        self.state.reset();
+        self.the_state.reset();
         self.depth = 0;
 
         let parents = self.node.parents();
@@ -65,28 +56,56 @@ impl<A, S> MState<A, S> for MyState<A, S>
             self.extend_node()
         }
     }
-
-    fn add_node(&mut self, node: MctsNode<A>) {
+    pub(crate) fn add_node(&mut self, node: MctsNode<A>) {
         let a = node.value.borrow().action.unwrap();
         self.node = node;
         self.apply_action(a);
     }
 
+    fn extend_node(&mut self) {
+        let actions = self.the_state.actions();
+
+        if self.node.children.borrow().is_empty() {
+            for a in actions {
+                let next_current = ActionStats::node(Some(a));
+                self.node.set_child(a, &next_current);
+            }
+        }
+    }
+}
+
+impl<A, S> Display for MyState<A, S>
+    where
+        A: Display,
+        A: Copy,
+        A: Eq,
+        A: Hash,
+        S: State<A>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "(depth={}) {}", self.depth, self.node)
+    }
+}
+
+impl<A, S> MState<A, S> for MyState<A, S>
+    where
+        A: Copy,
+        A: Eq,
+        A: Hash,
+        S: State<A>
+{
     fn apply_action(&mut self, a: A) {
-        self.state.apply(a);
+        self.the_state.apply(a);
         self.depth += 1;
     }
 
     fn state(&self) -> &S {
-        &self.state
+        &self.the_state
     }
     fn state_mut(&mut self) -> &mut S {
-        &mut self.state
+        &mut self.the_state
     }
 
-    fn node(&self) -> MctsNode<A> {
-        self.node.clone()
-    }
 
     fn depth(&self) -> usize {
         self.depth
