@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 
 use ordered_float::OrderedFloat;
 
-use graph_lib::safe_tree::SafeTree;
+use graph_lib::safe_tree::Tree;
 use mcts::MctsNode;
 use sim_result::SimResult;
 
@@ -14,7 +14,7 @@ pub struct ActionStats<A> {
 
 impl<A> ActionStats<A> {
     pub fn node(action: Option<A>) -> MctsNode<A> {
-        SafeTree::new(ActionStats::new(action))
+        Tree::new(ActionStats::new(action))
     }
 
     pub(crate) fn new(action: Option<A>) -> Self {

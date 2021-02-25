@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use ordered_float::OrderedFloat;
 
-use graph_lib::tree::Tree;
 use mcts::{MctsNode, MState};
 use mystate::MyState;
 use policy::Policy;

@@ -5,62 +5,61 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use crate::node::{Node, NodeRc};
-use crate::tree::Tree;
 
-pub struct SafeTree<T>(NodeRc<T>);
+pub struct Tree<V>(NodeRc<V>);
 
-impl<T> SafeTree<T> {
-    pub fn clone(&self) -> SafeTree<T> {
-        SafeTree(Rc::clone(&self.0))
+impl<V> Tree<V> {
+    pub fn clone(&self) -> Tree<V> {
+        Tree(Rc::clone(&self.0))
     }
 
-    pub fn from_node(node: NodeRc<T>) -> SafeTree<T> {
-        SafeTree(node)
+    pub fn from_node(node: NodeRc<V>) -> Tree<V> {
+        Tree(node)
     }
 
-    pub fn new(value: T) -> SafeTree<T> {
-        SafeTree(Rc::new(Node::new(value)))
+    pub fn new(value: V) -> Tree<V> {
+        Tree(Rc::new(Node::new(value)))
+    }
+    pub fn parent(&self) -> Option<Self> {
+        self.parent.borrow().upgrade().map(|c| Tree(Rc::clone(&c)))
+    }
+
+    pub fn set_child(&self, index: usize, value: &Self) {
+        // self.0.children.borrow_mut().as_mut_slice()[index] = Rc::clone(&value.0);
+        self.0.children.borrow_mut().insert(index, Rc::clone(&value.0));
+    }
+
+    pub fn remove(&self, index: usize) {
+        self.0.children.borrow_mut().remove(&index);
+    }
+
+    pub fn add_child(&self, tree: &Self) {
+        let index = self.children.borrow().len();
+        self.children.borrow_mut().insert(index, Rc::clone(tree));
+        // self.0.children.borrow_mut().push(Rc::clone(&tree.0));
+        *tree.0.parent.borrow_mut() = Rc::downgrade(&self.0);
     }
 }
 
-impl<T> Deref for SafeTree<T> {
-    type Target = NodeRc<T>;
+impl<V> Deref for Tree<V> {
+    type Target = NodeRc<V>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<T> fmt::Display for SafeTree<T>
-    where T: Display {
+impl<V> fmt::Display for Tree<V>
+    where V: Display {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl<T> Tree<usize> for SafeTree<T> {
-    fn parent(&self) -> Option<Self> {
-        self.parent.borrow().upgrade().map(|c| SafeTree(Rc::clone(&c)))
-    }
-
-    fn set_child(&self, index: usize, value: &Self) {
-        self.0.children.borrow_mut().as_mut_slice()[index] = Rc::clone(&value.0);
-    }
-
-    fn remove(&self, index: usize) {
-        self.0.children.borrow_mut().remove(index);
-    }
-
-    fn add_child(&self, tree: &Self) {
-        self.0.children.borrow_mut().push(Rc::clone(&tree.0));
-        *tree.0.parent.borrow_mut() = Rc::downgrade(&self.0);
-    }
-
-}
 
 #[test]
 fn test_it() {
-    let root = SafeTree::new(1);
+    let root = Tree::new(1);
 
     // root.add_child(&SafeTree::new(10));
     // root.add_child(&SafeTree::new(11));

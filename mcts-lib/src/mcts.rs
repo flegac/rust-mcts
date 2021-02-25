@@ -1,13 +1,13 @@
-use graph_lib::safe_tree::SafeTree;
+use graph_lib::safe_tree::Tree;
 use action_stats::ActionStats;
 use policy::Policy;
 use sim_result::SimResult;
 use state::State;
 
-pub(crate) type MctsNode<A> = SafeTree<ActionStats<A>>;
+pub(crate) type MctsNode<A> = Tree<ActionStats<A>>;
 
 
-//FIXME: remove MctsNode from API : MyStats<A> should be sufficient !
+//FIXME: remove MctsNode from API : ActionStats<A> should be sufficient !
 pub trait MState<A, S> {
     fn setup_node(&mut self, root: MctsNode<A>);
 

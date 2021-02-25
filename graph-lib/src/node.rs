@@ -1,30 +1,31 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
-use crate::safe_tree::SafeTree;
+use crate::safe_tree::Tree;
 
-pub type NodeRc<T> = Rc<Node<T>>;
-pub type NodeWeak<T> = Weak<Node<T>>;
+pub type NodeRc<V> = Rc<Node<V>>;
+pub type NodeWeak<V> = Weak<Node<V>>;
 
-pub struct Node<T> {
-    pub value: RefCell<T>,
-    pub parent: RefCell<NodeWeak<T>>,
-    pub children: RefCell<Vec<NodeRc<T>>>,
+pub struct Node<V> {
+    pub value: RefCell<V>,
+    pub parent: RefCell<NodeWeak<V>>,
+    pub children: RefCell<HashMap<usize, NodeRc<V>>>,
 }
 
-impl<T> Node<T> {
-    pub fn new(value: T) -> Node<T> {
+impl<V> Node<V> {
+    pub fn new(value: V) -> Node<V> {
         Node {
             value: RefCell::new(value),
             parent: RefCell::new(Weak::new()),
-            children: RefCell::new(vec![]),
+            children: RefCell::new(HashMap::new()),
         }
     }
 
-    pub fn parent_value(&self) -> Rc<Node<T>> {
+    pub fn parent_value(&self) -> Rc<Node<V>> {
         match self.parent.borrow().upgrade() {
             None => panic!(),
             Some(parent) => {
@@ -52,22 +53,22 @@ impl<T> Node<T> {
         res
     }
 
-    pub fn max_by_key<B: Ord, F>(&self, f: F) -> Option<SafeTree<T>>
-        where F: Fn(&T) -> B {
+    pub fn max_by_key<B: Ord, F>(&self, f: F) -> Option<Tree<V>>
+        where F: Fn(&V) -> B {
         let x = self.children.borrow()
-            .iter()
+            .values()
             .max_by_key(|x| f(x.value.borrow().deref()))
             .map(Rc::clone);
-        x.map(|rc: Rc<Node<T>>| SafeTree::from_node(rc))
+        x.map(|rc: Rc<Node<V>>| Tree::from_node(rc))
     }
 
     pub(crate) fn child_at(&self, index: usize) -> Option<Rc<Self>> {
-        self.children.borrow().get(index)
+        self.children.borrow().get(&index)
             .map(|c| Rc::clone(c))
     }
 }
 
-impl<T> fmt::Display for Node<T> where T: Display {
+impl<V> fmt::Display for Node<V> where V: Display {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "[{}: {} childs]",
                self.value.borrow(),

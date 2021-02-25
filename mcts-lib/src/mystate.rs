@@ -2,7 +2,6 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 
 use action_stats::ActionStats;
-use graph_lib::tree::Tree;
 use mcts::{MctsNode, MState};
 use state::State;
 

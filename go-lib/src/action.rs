@@ -3,7 +3,7 @@ use std::fmt::Formatter;
 
 use board::grid::{GoCell, Grid};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Hash, Clone, Eq, PartialEq)]
 pub enum GoAction {
     Pass,
     Cell(usize, usize),
