@@ -10,8 +10,8 @@ pub struct Constants {
 pub const SEED: u64 = 645;
 
 pub const SIM_FACTOR: usize = 10;
-pub const GOBAN_SIZE: usize = 9;
-pub const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
+pub const GOBAN_SIZE: usize = 13;
+pub const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 pub const BENCH: Constants = Constants {
     full_time: Duration::from_secs(6),

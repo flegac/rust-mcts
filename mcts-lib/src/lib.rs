@@ -7,7 +7,6 @@ extern crate rand_pcg;
 pub mod mcts;
 pub mod state;
 pub mod mymcts;
-mod action_stats;
 pub mod policy;
 pub mod random_policy;
 mod mystate;

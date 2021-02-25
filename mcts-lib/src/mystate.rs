@@ -1,11 +1,9 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::hash::Hash;
-use std::rc::Rc;
 
-use action_stats::ActionStats;
-use graph_lib::node::Node;
-use mcts::{MctsNode, MState};
+use mcts::MState;
+use sim_result::{MctsNode, SimResult};
 use state::State;
 
 pub struct MyState<A, S>
@@ -61,12 +59,10 @@ impl<A, S> MyState<A, S>
         let actions = self.the_state.actions();
         let n = actions.len();
         if self.node.children.borrow().is_empty() {
-            for (i,&a) in actions.iter().enumerate() {
-                let next_current = ActionStats::node();
+            for (i, &a) in actions.iter().enumerate() {
+                let next_current = SimResult::node();
                 self.node.set_child(a, &next_current);
-                println!("{}/{}", i,n)
             }
-            println!("ok node");
         }
     }
 }

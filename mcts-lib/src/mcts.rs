@@ -1,10 +1,8 @@
-use action_stats::ActionStats;
 use graph_lib::safe_tree::Tree;
 use policy::Policy;
 use sim_result::SimResult;
 use state::State;
 
-pub(crate) type MctsNode<A> = Tree<A, ActionStats>;
 
 
 //FIXME: remove MctsNode from API : ActionStats<A> should be sufficient !

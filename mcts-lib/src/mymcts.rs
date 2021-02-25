@@ -1,15 +1,12 @@
 use std::fmt::Display;
 use std::hash::Hash;
 
-use ordered_float::OrderedFloat;
-
-use mcts::{MctsNode, MState};
+use mcts::MState;
 use mystate::MyState;
 use policy::Policy;
-use sim_result::SimResult;
+use sim_result::{MctsNode, SimResult};
 use state::GameResult;
 
-use crate::action_stats::ActionStats;
 use crate::mcts::Mcts;
 use crate::state::State;
 
@@ -35,7 +32,7 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
 {
     pub fn new(simulation_factor: usize) -> MyMcts<A, S, MyState<A, S>> {
         MyMcts {
-            root: ActionStats::node(),
+            root: SimResult::node(),
             simulation_factor,
             _foo: None,
         }
@@ -104,7 +101,7 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
 
     fn expansion<P: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &P) -> A {
         let action = policy.select(state.state());
-        let next_current = ActionStats::node();
+        let next_current = SimResult::node();
         state.node().set_child(action, &next_current);
         state.add_node(action, next_current);
         action
@@ -119,7 +116,6 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
             _ => {
                 let node = state.node().clone();
                 for i in 0..self.simulation_factor {
-                    println!("sim #{}", i);
                     let the_node = node.clone();
                     state.setup_node(the_node);
                     res.update(self.sim_once(state, policy));
@@ -131,10 +127,10 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
 
 
     fn backpropagation(&self, state: &mut MyState<A, S>, mut res: SimResult) {
-        state.node().value.borrow_mut().stats.merge(&res);
+        state.node().value.borrow_mut().merge(&res);
         let parents = state.node().parents();
         for (key, value) in parents {
-            value.value.borrow_mut().stats.merge(&res);
+            value.value.borrow_mut().merge(&res);
             res.swap();
         }
     }

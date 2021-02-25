@@ -1,7 +1,13 @@
 use std::{fmt, mem};
 use std::fmt::Formatter;
+use std::hash::Hash;
 
+use ordered_float::OrderedFloat;
+
+use graph_lib::safe_tree::Tree;
 use state::GameResult;
+
+pub(crate) type MctsNode<A> = Tree<A, SimResult>;
 
 pub struct SimResult {
     pub tries: usize,
@@ -11,6 +17,13 @@ pub struct SimResult {
 }
 
 impl SimResult {
+    pub fn node<A>() -> MctsNode<A>
+        where
+            A: Copy, A: Eq, A: Hash {
+        Tree::new(SimResult::new())
+    }
+
+
     pub fn new() -> SimResult {
         SimResult {
             tries: 0,
@@ -38,6 +51,26 @@ impl SimResult {
 
     pub fn swap(&mut self) {
         mem::swap(&mut self.wins, &mut self.loses);
+    }
+
+
+    pub fn is_leaf(&self) -> bool {
+        self.tries == 0
+    }
+
+    pub fn score(&self, parent: &Self) -> OrderedFloat<f32> {
+        let xxx = (parent.tries as f32).ln();
+
+        let x = match self.tries {
+            0 => xxx.sqrt(),
+            n => {
+                let w = self.wins as f32;
+                let exploitation = w / n as f32;
+                let exploration = (2. * xxx / n as f32).sqrt();
+                exploitation + exploration
+            }
+        };
+        OrderedFloat(x)
     }
 }
 

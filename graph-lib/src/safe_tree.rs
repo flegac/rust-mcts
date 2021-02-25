@@ -1,8 +1,6 @@
 use core::fmt;
 use core::fmt::{Display, Formatter};
 use core::option::Option;
-use std::borrow::Borrow;
-use std::cell::RefCell;
 use std::hash::Hash;
 use std::ops::Deref;
 use std::rc::Rc;

@@ -1,5 +1,4 @@
-use std::borrow::Borrow;
-use std::cell::{Ref, RefCell};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -44,7 +43,7 @@ impl<K, V> Node<K, V> where K: Copy, K: Eq, K: Hash {
     pub fn max_by_key<B: Ord, F>(&self, f: F) -> Option<(K, Tree<K, V>)>
         where F: Fn(&V) -> B {
         self.children.borrow().iter()
-            .max_by_key(|(&key, value)| f(value.value.borrow().deref()))
+            .max_by_key(|(&_key, value)| f(value.value.borrow().deref()))
             .map(|(k, v)| (k.clone(), Tree::from_node(v.clone())))
     }
 
