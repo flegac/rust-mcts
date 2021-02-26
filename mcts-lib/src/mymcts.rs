@@ -11,10 +11,10 @@ use crate::mcts::Mcts;
 use crate::state::State;
 
 pub struct MyMcts<A, S, SS>
-    where A: Copy,
-          A: Eq,
-          A: Hash,
-          SS: MState<A, S>
+    where
+        A: Eq,
+        A: Hash,
+        SS: MState<A, S>
 {
     pub root: MctsNode<A>,
     simulation_factor: usize,
@@ -85,15 +85,15 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
 {
     fn selection(&self, state: &mut MyState<A, S>) {
         while !state.node().value.borrow().is_leaf() {
-            let found = state.node().max_by_key(
-                |a| a.score(&state.node().value.borrow()));
-
-            // target = SafeTree<ActionStats<A>>
-
+            //TODO: use a selection policy
+            let found = state
+                .node()
+                .max_by_key(
+                    |a| a.score(&state.node().value.borrow()));
             match found {
                 None => break,
                 Some((action, node)) => {
-                    state.add_node(action, node);
+                    state.move_to_node(action, node);
                 }
             }
         }
@@ -101,9 +101,7 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
 
     fn expansion<P: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &P) -> A {
         let action = policy.select(state.state());
-        let next_current = SimResult::node();
-        state.node().set_child(action, &next_current);
-        state.add_node(action, next_current);
+        state.move_to_node(action, SimResult::node());
         action
     }
 

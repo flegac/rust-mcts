@@ -50,7 +50,8 @@ impl<A, S> MyState<A, S>
             self.extend_node()
         }
     }
-    pub(crate) fn add_node(&mut self, action: A, node: MctsNode<A>) {
+    pub(crate) fn move_to_node(&mut self, action: A, node: MctsNode<A>) {
+        self.node.set_child(action, &node);
         self.node = node;
         self.apply_action(action);
     }
@@ -69,8 +70,6 @@ impl<A, S> MyState<A, S>
 
 impl<A, S> Display for MyState<A, S>
     where
-        A: Display,
-        A: Copy,
         A: Eq,
         A: Hash,
         S: State<A>
@@ -82,7 +81,6 @@ impl<A, S> Display for MyState<A, S>
 
 impl<A, S> MState<A, S> for MyState<A, S>
     where
-        A: Copy,
         A: Eq,
         A: Hash,
         S: State<A>
