@@ -8,8 +8,9 @@ use bit_set::BitSet;
 use board::go::Go;
 use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
+use go_display::GoDisplay;
 use graph_lib::algo::flood::Flood;
-use graph_lib::topology::{Topology, SubGraph};
+use graph_lib::topology::{SubGraph, Topology};
 use stones::stone::Stone;
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -81,13 +82,13 @@ impl GoGroup {
         let to_visit = self.cells.clone();
         let cell = to_visit.iter().next().unwrap();
 
-        let test = |x | self.cells.contains(x);
+        let test = |x| self.cells.contains(x);
         let res = GoGroup {
             stone: self.stone,
             cells: board.flood.borrow_mut().flood(board, cell, &test),
             liberties: 0,
         };
-        log::trace!("found split: {} {}", res.stones(), res);
+        log::trace!("found split: {}", GoDisplay::group(board, &res));
         self.remove_group(&res);
         res
     }
@@ -101,19 +102,5 @@ impl Hash for GoGroup {
         // let x = format!("{}:{}-{}", stone, min, max);
         // x.hash(state)
         min.hash(state)
-    }
-}
-
-impl fmt::Display for GoGroup {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let mut res = String::new();
-        res.push_str(&self.stone.to_string());
-        res.push_str("[");
-        for c in self.cells.iter() {
-            res.push_str(format!("{} ", c).as_str());
-        }
-        res.push_str("]");
-
-        write!(f, "{}", res)
     }
 }

@@ -55,13 +55,7 @@ impl State<GoAction> for GoState {
     }
 
     fn apply(&mut self, action: GoAction) {
-        match action {
-            GoAction::Pass => {}
-            GoAction::Cell(x, y) => {
-                let cell = self.board.goban.cell(x, y);
-                self.board.place_stone(cell, self.board.stone);
-            }
-        }
+        self.board.play(action);
         self.board.stone = self.board.stone.switch();
         self.history.push(action.clone());
     }

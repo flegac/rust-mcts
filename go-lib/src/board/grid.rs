@@ -7,7 +7,6 @@ use graph_lib::topology::Topology;
 
 pub type GoCell = usize;
 
-
 #[derive(Hash, Eq, PartialEq)]
 pub struct Grid {
     pub size: usize,

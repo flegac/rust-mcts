@@ -1,6 +1,7 @@
 use std::fmt;
 
 use board::goboard::GoBoard;
+use go_display::GoDisplay;
 use stones::group::GoGroup;
 use stones::stone::Stone;
 

@@ -10,8 +10,10 @@ use bit_set::BitSet;
 use fixed_typed_arena::Arena;
 use itertools::Itertools;
 
+use action::GoAction;
 use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
+use go_display::GoDisplay;
 use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
@@ -109,10 +111,20 @@ impl GoBoard {
     }
 
 
+    pub fn play(&mut self, action: GoAction) {
+        log::trace!("board:\n{}", self);
+        log::trace!("NEW PLAY: {} @ {}", self.stone, action);
+        match action {
+            GoAction::Pass => {}
+            GoAction::Cell(x, y) => {
+                let cell = self.goban.cell(x, y);
+                self.place_stone(cell, self.stone);
+            }
+        }
+    }
+
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
         assert!(self.stone_at(cell) == Stone::None);
-        log::trace!("board:\n{}", self);
-        log::trace!("PLACE STONE: {} @ {:?}", stone, self.goban.xy(cell));
 
         self.handle_old_empty_group(cell);
 
@@ -162,7 +174,7 @@ impl GoBoard {
         old_connections.intersect_with(&old.borrow().cells);
         old_connections.remove(cell); // TODO: useless ?
 
-        log::trace!("handle_old_empty_group: {} {:?}", old_connections.len(), old_connections);
+        log::trace!("handle_old_empty_group: {}", GoDisplay::cells(self, &old_connections));
 
         match old_connections.len() {
             0 => {
@@ -191,7 +203,7 @@ impl GoBoard {
 
                     let parts = old.borrow_mut().split(&self);
                     for part in parts {
-                        log::trace!("- new empty group: {} {}", part.stones(), part);
+                        log::trace!("- new empty group: {}", GoDisplay::group(self,&part));
                         self.update_group(self.new_group(part));
                     }
                 }
@@ -345,22 +357,19 @@ impl fmt::Display for GoBoard {
 }
 
 
-const BIG_A: usize = 'A' as usize;
-
 impl GoBoard {
     fn draw_board(&self) -> String {
         let size = self.goban.size;
         let mut res = String::new();
         self.draw_line(&mut res, true);
         self.draw_line_separator(&mut res);
-        let a = 'a' as usize;
         for y in 0..size {
-            res.push_str(format!("{} | ", char::from((y + a) as u8)).as_str());
+            res.push_str(format!("{} | ", GoDisplay::from_y(y)).as_str());
             for x in 0..size {
                 let g = self.stone_at(self.goban.cell(x, y));
                 res.push_str(format!("{} ", g).as_str());
             }
-            res.push_str(format!("| {}", char::from((y + a) as u8)).as_str());
+            res.push_str(format!("| {}", GoDisplay::from_y(y)).as_str());
 
             res.push_str("\n");
         }
@@ -385,7 +394,8 @@ impl GoBoard {
             false => res.push_str("    ")
         }
         for x in 0..size {
-            res.push_str(format!("{} ", char::from((x + BIG_A) as u8)).as_str());
+            res.push_str(&GoDisplay::from_x(x));
+            res.push_str(" ");
         }
         match with_side {
             true => res.push_str(format!("[{}]", self.stone).as_str()),

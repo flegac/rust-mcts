@@ -1,7 +1,9 @@
 use std::fmt;
 use std::fmt::Formatter;
 
+use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
+use go_display::GoDisplay;
 
 #[derive(Debug, Copy, Hash, Clone, Eq, PartialEq)]
 pub enum GoAction {
@@ -39,11 +41,6 @@ impl GoAction {
 
 impl fmt::Display for GoAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            GoAction::Pass => write!(f, "Pass"),
-            GoAction::Cell(x, y) => write!(f, "{}{}",
-                                           char::from((x + 'A' as usize) as u8),
-                                           char::from((y + 'a' as usize) as u8))
-        }
+        write!(f, "{}", GoDisplay::action(self))
     }
 }

@@ -13,6 +13,7 @@ pub mod action;
 pub mod gostate;
 pub mod board;
 pub mod game;
+pub mod go_display;
 
 #[cfg(test)]
 mod tests {
