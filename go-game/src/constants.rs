@@ -9,7 +9,7 @@ pub struct Constants {
 
 pub const SEED: u64 = 645;
 
-pub const SIM_FACTOR: usize = 10;
+pub const SIM_FACTOR: usize = 1;
 pub const GOBAN_SIZE: usize = 13;
 pub const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 

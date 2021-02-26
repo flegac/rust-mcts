@@ -56,22 +56,8 @@ impl BoardStats {
         blacks + whites
     }
 
-    pub fn capture_group(&mut self, group: &mut GoGroup) {
-        self.rem_group(group);
-        match group.stone {
-            Stone::None => {}
-            Stone::Black => self.black.captured += group.stones(),
-            Stone::White => self.white.captured += group.stones(),
-        }
-        group.set_stone(Stone::None);
-        self.add_group(group);
-
-        // the stones has been counted twice for None group
-        self.none.stones -= group.cells.len();
-    }
-
     pub(crate) fn add_group(&mut self, group: &GoGroup) {
-        let n = group.cells.len();
+        let n = group.stones();
         match group.stone {
             Stone::Black => {
                 self.black.groups += 1;
@@ -88,7 +74,7 @@ impl BoardStats {
                 self.none.stones += n;
             }
         }
-        log::trace!("add: {}\n{}\n{}", group, n, self);
+        log::trace!("add {}: {}\n{}", n, group, self);
     }
 
     pub(crate) fn rem_group(&mut self, group: &GoGroup) {
@@ -109,7 +95,7 @@ impl BoardStats {
                 self.none.stones -= n;
             }
         }
-        log::trace!("rem: {}\n{}\n{}", group, n, self);
+        log::trace!("rem {}: {}\n{}", n, group, self);
     }
 
 

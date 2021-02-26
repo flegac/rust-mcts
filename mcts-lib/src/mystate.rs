@@ -2,7 +2,8 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::hash::Hash;
 
-use mcts::MState;
+use graph_lib::tree::TheTree;
+use mcts::{MState, Action};
 use sim_result::{MctsNode, SimResult};
 use state::State;
 
@@ -19,9 +20,7 @@ pub struct MyState<A, S>
 
 impl<A, S> MyState<A, S>
     where
-        A: Copy,
-        A: Eq,
-        A: Hash,
+        A: Action,
         S: State<A> {
     pub fn new(state: S, node: MctsNode<A>) -> MyState<A, S> {
         MyState {
@@ -30,11 +29,11 @@ impl<A, S> MyState<A, S>
             depth: 0,
         }
     }
-    pub(crate) fn node(&self) -> MctsNode<A> {
+    pub(crate) fn get_node(&self) -> MctsNode<A> {
         self.node.clone()
     }
     pub(crate) fn setup_node(&mut self, root: MctsNode<A>) {
-        self.node = root;
+        self.node = root.clone();
         self.the_state.reset();
         self.depth = 0;
 
@@ -70,8 +69,7 @@ impl<A, S> MyState<A, S>
 
 impl<A, S> Display for MyState<A, S>
     where
-        A: Eq,
-        A: Hash,
+        A: Action,
         S: State<A>
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -81,8 +79,7 @@ impl<A, S> Display for MyState<A, S>
 
 impl<A, S> MState<A, S> for MyState<A, S>
     where
-        A: Eq,
-        A: Hash,
+        A: Action,
         S: State<A>
 {
     fn apply_action(&mut self, a: A) {
@@ -100,5 +97,13 @@ impl<A, S> MState<A, S> for MyState<A, S>
 
     fn depth(&self) -> usize {
         self.depth
+    }
+
+    fn is_selectable(&self) -> bool {
+        !self.get_node().value.borrow().is_leaf()
+    }
+
+    fn is_terminal(&self) -> bool {
+        self.state().result().is_some()
     }
 }

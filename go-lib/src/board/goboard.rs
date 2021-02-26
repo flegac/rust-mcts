@@ -1,5 +1,9 @@
 use core::fmt;
+use proc_macro::Group;
+use std::borrow::Borrow;
 use std::cell::RefCell;
+use std::collections::{HashSet, LinkedList};
+use std::collections::hash_map::RandomState;
 use std::ops::{Deref, DerefMut};
 
 use bit_set::BitSet;
@@ -8,7 +12,7 @@ use itertools::Itertools;
 
 use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
-use graph_lib::flood::Flood;
+use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 use stones::group::GoGroup;
@@ -17,11 +21,21 @@ use stones::stone::Stone;
 
 pub struct GoBoard {
     arena: Arena<GoGroup>,
-    pub(crate) goban: Grid,
-    groups: Vec<GoGroupRc>,
-    pub(crate) stats: BoardStats,
     pub stone: Stone,
+
+    //groups
+    groups: Vec<GoGroupRc>,
+
+    blacks: HashSet<GoGroupRc>,
+    whites: HashSet<GoGroupRc>,
+    nones: HashSet<GoGroupRc>,
+
     pub(crate) empty_cells: GoGroup,
+
+    //graph
+    pub(crate) goban: Grid,
+
+    pub(crate) stats: BoardStats,
     pub(crate) flood: RefCell<GFlood>,
 }
 
@@ -32,6 +46,11 @@ impl GoBoard {
             arena: Arena::new(),
             goban,
             groups: vec![],
+
+            blacks: HashSet::new(),
+            whites: HashSet::new(),
+            nones: HashSet::new(),
+
             stats: BoardStats::new(),
             stone: Stone::Black,
             empty_cells,
@@ -46,11 +65,11 @@ impl GoBoard {
         self.stone = Stone::Black;
         self.empty_cells = GoGroup::from_goban(&self.goban);
         let board_group = self.new_group(GoGroup::from_goban(&self.goban));
-        let cell_number = self.goban.vertices().len();
         self.groups.clear();
-        self.groups.resize_with(cell_number, || board_group.clone());
-        self.stats.none.groups = 1;
-        self.stats.none.stones = cell_number;
+        self.whites.clear();
+        self.blacks.clear();
+        self.nones.clear();
+        self.update_group(board_group);
     }
 
     pub fn group_at(&self, cell: GoCell) -> &GoGroupRc {
@@ -61,16 +80,31 @@ impl GoBoard {
         self.group_at(cell).borrow().stone
     }
 
-    pub fn groups_by_stone(&self, stone: Stone) -> Vec<GoGroupRc> {
-        self.groups.iter()
-            .filter(|&g| g.borrow().stone == stone)
-            .unique()
-            .map(|g| g.clone())
-            .collect_vec()
+    pub fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc, RandomState> {
+        match stone {
+            Stone::None => &mut self.nones,
+            Stone::Black => &mut self.blacks,
+            Stone::White => &mut self.whites
+        }
+    }
+
+
+    pub fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc, RandomState> {
+        match stone {
+            Stone::None => &self.nones,
+            Stone::Black => &self.blacks,
+            Stone::White => &self.whites
+        }
+
+        // self.groups.iter()
+        //     .filter(|&g| g.borrow().stone == stone)
+        //     .unique()
+        //     .map(|g| g.clone())
+        //     .collect_vec()
     }
 
     pub fn end_game(&self) -> bool {
-        let limit = self.vertices().len();
+        let limit = self.vertex_number();
         self.stats.round > limit || self.stats.none.groups == 0
     }
 
@@ -91,10 +125,19 @@ impl GoBoard {
         self.check_autokill(new_group);
 
         self.stats.round += 1;
+        self.check_correctness();
+    }
+
+    pub fn check_correctness(&self) {
         assert_eq!(self.stats.round, self.stats.compute_round());
-        //TODO: remove this when all is ok !
-        // self.stats.assert_eq(&BoardStats::from_board(self));
         assert_eq!(self.empty_cells.stones(), self.stats.none.stones);
+        assert_eq!(
+            self.stats.black.stones
+                + self.stats.white.stones
+                + self.stats.none.stones,
+            self.vertex_number()
+        );
+        self.stats.assert_eq(&BoardStats::from_board(self));
     }
 
     pub fn update_score<F>(&mut self, scorer: F)
@@ -115,42 +158,60 @@ impl GoBoard {
         self.empty_cells.cells.remove(cell);
 
         let old = self.group_at(cell).clone();
-        old.borrow_mut().cells.remove(cell);
+        let mut old_connections = self.goban.edges(cell).clone();
+        old_connections.intersect_with(&old.borrow().cells);
+        old_connections.remove(cell); // TODO: useless ?
 
+        log::trace!("handle_old_empty_group: {} {:?}", old_connections.len(), old_connections);
 
-        let mut to_check = self.goban.edges(cell).clone();
-        to_check.intersect_with(&old.borrow().cells);
-
-        match to_check.len() {
+        match old_connections.len() {
             0 => {
                 // old group was only the last placed cell
-                self.stats.rem_group(old.borrow().deref());
+                // self.stats.rem_group(old.borrow().deref());
+                self.stats.none.groups -= 1;
+                self.clear_group_color(&old);
+                old.borrow_mut().cells.remove(cell);
             }
             1 => {
                 // old group connexity is preserved !
+                old.borrow_mut().cells.remove(cell);
             }
             _ => {
+                old.borrow_mut().cells.remove(cell);
+
                 // maybe we have cut the old group
-                let check_connection = |visited: &BitSet| {
-                    to_check.is_subset(visited)
-                };
-                let to_visit = old.borrow().cells.clone();
-                let old_cell = to_visit.iter().next().unwrap();
-                let topology = |c: GoCell| to_visit.contains(c);
-                let visited = self.flood.borrow_mut().flood_check(
-                    self,
-                    old_cell,
-                    &topology,
-                    &check_connection,
-                );
-                if !check_connection(&visited) {
+                let need_split = self.fast_split_check(&old, &old_connections);
+
+                if need_split {
+                    old.borrow_mut().cells.insert(cell);
+                    self.clear_group_color(&old);
+                    old.borrow_mut().cells.remove(cell);
+
                     self.stats.rem_group(old.borrow().deref());
-                    for part in old.borrow_mut().split(&self) {
-                        self.update_group(&self.new_group(part));
+
+                    let parts = old.borrow_mut().split(&self);
+                    for part in parts {
+                        log::trace!("- new empty group: {} {}", part.stones(), part);
+                        self.update_group(self.new_group(part));
                     }
                 }
             }
         }
+    }
+
+    fn fast_split_check(&self, old: &GoGroupRc, old_connections: &BitSet) -> bool {
+        let to_visit = old.borrow().cells.clone();
+        let topology = |c: GoCell| to_visit.contains(c);
+        let old_cell = to_visit.iter().next().unwrap();
+        let check_connection = |visited: &BitSet| {
+            // false
+            old_connections.is_subset(visited)
+        };
+        let visited = self.flood.borrow_mut().flood_check(
+            &self.goban, old_cell, &topology, &check_connection,
+        );
+        let split_needed = !check_connection(&visited);
+        split_needed
     }
 
 
@@ -165,22 +226,22 @@ impl GoBoard {
             .dedup()
             .for_each(|g: GoGroupRc| {
                 new_group.borrow_mut().add_group(g.borrow().deref());
+                self.clear_group_color(&g);
                 self.stats.rem_group(&g.borrow());
             });
-        self.update_group(&new_group);
+        self.update_group(new_group.clone());
         new_group
     }
 
     fn check_autokill(&mut self, new_group: GoGroupRc) {
-        new_group.borrow_mut().update_liberties(self);
-        if new_group.borrow().is_dead() {
+        log::trace!("check_autokill...");
+        if self.try_capture(new_group.clone()) {
             log::trace!("AUTOKILL MOVE! {}", new_group);
-            self.stats.capture_group(new_group.borrow_mut().deref_mut());
-            self.empty_cells.add_group(new_group.borrow().deref());
         }
     }
 
     fn kill_ennemy_groups(&mut self, cell: usize, stone: Stone) {
+        log::trace!("kill_ennemy_groups");
         self.goban.edges(cell).iter()
             .filter(|&c| self.stone_at(c) == stone.switch())
             .map(|c| self.group_at(c))
@@ -188,28 +249,73 @@ impl GoBoard {
             .sorted()
             .dedup()
             .for_each(|g: GoGroupRc| {
-                //TODO: this is sufficient ?
-                // g.borrow_mut().liberties -= 1;
-                // let libs = g.borrow_mut().liberties - 1;
-                g.borrow_mut().update_liberties(self);
-                // assert_eq!(libs, g.borrow().liberties);
-
-                if g.borrow().is_dead() {
-                    self.stats.capture_group(g.borrow_mut().deref_mut());
-                    self.empty_cells.add_group(g.borrow().deref());
-                }
+                self.try_capture(g.clone());
             });
     }
 
+    fn try_capture(&mut self, group: GoGroupRc) -> bool {
+        //TODO: this is sufficient ?
+        // g.borrow_mut().liberties -= 1;
+        // let libs = g.borrow_mut().liberties - 1;
+        group.borrow_mut().update_liberties(self);
+        // assert_eq!(libs, g.borrow().liberties);
 
-    fn update_group(&mut self, group: &GoGroupRc) {
-        for c in group.borrow().cells.iter() {
-            if c >= self.groups.len() {
-                self.groups.reserve(c + 10);
+        if group.borrow().is_dead() {
+            log::trace!("captured {} stones: {:?}",
+                        group.borrow().stones(),
+                        group.borrow().cells);
+            match group.borrow().stone {
+                Stone::None => {}
+                Stone::Black => self.stats.black.captured += group.borrow().stones(),
+                Stone::White => self.stats.white.captured += group.borrow().stones(),
             }
-            self.groups[c] = group.clone();
+
+            //update ancient color group
+            self.clear_group_color(&group);
+            self.stats.rem_group(group.borrow().deref());
+
+            // remove stone from group & update None groups
+            group.borrow_mut().set_stone(Stone::None);
+            self.empty_cells.add_group(group.borrow().deref());
+
+            self.update_group_color(&group);
+            self.stats.none.groups += 1;
+
+            true
+        } else {
+            false
         }
-        self.stats.add_group(group.borrow().deref());
+    }
+
+    fn clear_group_color(&mut self, group: &GoGroupRc) {
+        self.blacks.remove(group);
+        self.whites.remove(group);
+        self.nones.remove(group);
+    }
+
+
+    fn update_group(&mut self, group: GoGroupRc) {
+        assert!(!group.borrow().cells.is_empty());
+
+        let cell_number = self.vertex_number();
+        if group.borrow().stones() == cell_number {
+            self.groups.resize_with(cell_number, || group.clone());
+        } else {
+            for c in group.borrow().cells.iter() {
+                self.groups[c] = group.clone();
+            }
+        }
+        self.update_group_color(&group);
+        self.stats.add_group(group.clone().borrow().deref());
+    }
+
+    fn update_group_color(&mut self, group: &GoGroupRc) {
+        assert!(!group.borrow().is_empty());
+
+        self.blacks.remove(group);
+        self.whites.remove(group);
+        self.nones.remove(group);
+        self.groups_by_stone_mut(group.borrow().stone).insert(group.clone());
     }
 
     fn new_group(&self, group: GoGroup) -> GoGroupRc {
@@ -330,7 +436,8 @@ mod tests {
     fn board_cell_id() {
         let goban = Grid::new(7);
 
-        for c in goban.vertices().iter() {
+
+        goban.apply(|c| {
             let (x, y) = goban.xy(c);
             let c2 = goban.cell(x, y);
             let (x2, y2) = goban.xy(c2);
@@ -338,7 +445,7 @@ mod tests {
             assert_eq!(c, c2);
             assert_eq!(x, x2);
             assert_eq!(y, y2);
-        }
+        });
     }
 
 

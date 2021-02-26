@@ -3,13 +3,11 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
-use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
-use crate::safe_tree::Tree;
+use crate::safe_tree::NodeRc;
 
-pub type NodeRc<K, V> = Rc<Node<K, V>>;
-pub type NodeWeak<K, V> = Weak<Node<K, V>>;
+type NodeWeak<K, V> = Weak<Node<K, V>>;
 
 pub struct Node<K, V> {
     pub value: RefCell<V>,
@@ -39,16 +37,8 @@ impl<K, V> Node<K, V> where K: Copy, K: Eq, K: Hash {
         self.children.borrow().is_empty()
     }
 
-
-    pub fn max_by_key<B: Ord, F>(&self, f: F) -> Option<(K, Tree<K, V>)>
-        where F: Fn(&V) -> B {
-        self.children.borrow().iter()
-            .max_by_key(|(&_key, value)| f(value.value.borrow().deref()))
-            .map(|(k, v)| (k.clone(), Tree::from_node(v.clone())))
-    }
-
-    pub(crate) fn child_at(&self, index: &K) -> Option<Rc<Self>> {
-        self.children.borrow().get(index)
+    pub(crate) fn child_at(&self, index: K) -> Option<Rc<Self>> {
+        self.children.borrow().get(&index)
             .map(|c| Rc::clone(c))
     }
 }

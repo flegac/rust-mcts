@@ -16,17 +16,21 @@ use go_lib::board::go::Go;
 use go_lib::gostate::GoState;
 use mcts_lib::mcts::MState;
 use mcts_lib::mymcts::MyMcts;
-use mcts_lib::random_policy::RandomPolicy;
+use mcts_lib::policy::win_score::WinScore;
+use mcts_lib::policy::random_policy::RandomPolicy;
 
 mod editor;
 mod bench;
 mod constants;
 
 
+
 pub fn main() {
     init_logs(LOG_LEVEL);
 
-    let policy = RandomPolicy::new(SEED);
+    let selection_score = WinScore::new();
+    let sim_policy = RandomPolicy::new(SEED);
+
     let mut mcts = MyMcts::new(SIM_FACTOR);
     let mut root = mcts.get_state(GoState::new(GOBAN_SIZE));
 
@@ -34,7 +38,9 @@ pub fn main() {
     while bench.looping() {
         let mut round = bench.spawn(BENCH.round_time);
         while round.looping_inc(None) {
-            mcts.explore(&mut root, &policy);
+            mcts.explore(&mut root,
+                         &sim_policy,
+                         &selection_score);
         }
         bench.inc_bench(&round);
         root.state_mut().board.update_score(Go::count_territory);

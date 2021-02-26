@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Formatter;
+use std::hash::{Hash, Hasher};
 use std::iter::{FromIterator, once};
 
 use bit_set::BitSet;
@@ -7,11 +8,11 @@ use bit_set::BitSet;
 use board::go::Go;
 use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
-use graph_lib::flood::Flood;
-use graph_lib::topology::Topology;
+use graph_lib::algo::flood::Flood;
+use graph_lib::topology::{Topology, SubGraph};
 use stones::stone::Stone;
 
-#[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
     pub(crate) stone: Stone,
     pub(crate) liberties: usize,
@@ -77,16 +78,29 @@ impl GoGroup {
     }
 
     fn next_split(&mut self, board: &GoBoard) -> GoGroup {
-        let to_visit = &self.cells;
-        let test = |c: GoCell| to_visit.contains(c);
+        let to_visit = self.cells.clone();
         let cell = to_visit.iter().next().unwrap();
+
+        let test = |x | self.cells.contains(x);
         let res = GoGroup {
             stone: self.stone,
             cells: board.flood.borrow_mut().flood(board, cell, &test),
             liberties: 0,
         };
+        log::trace!("found split: {} {}", res.stones(), res);
         self.remove_group(&res);
         res
+    }
+}
+
+impl Hash for GoGroup {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // let stone = self.borrow().stone;
+        let min = self.cells.iter().min().unwrap();
+        // let max = self.cells.iter().max().unwrap();
+        // let x = format!("{}:{}-{}", stone, min, max);
+        // x.hash(state)
+        min.hash(state)
     }
 }
 

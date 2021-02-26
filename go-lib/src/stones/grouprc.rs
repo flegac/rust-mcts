@@ -4,7 +4,6 @@ use std::fmt::Formatter;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
-
 use stones::group::GoGroup;
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -37,6 +36,6 @@ impl fmt::Display for GoGroupRc {
 
 impl Hash for GoGroupRc {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        return self.borrow().hash(state);
+        self.borrow().hash(state)
     }
 }

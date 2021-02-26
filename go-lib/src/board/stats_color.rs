@@ -28,7 +28,11 @@ impl ColorStats {
             stone,
             stones: Go::count_stones(stone, board),
             groups: Go::count_groups(stone, board),
-            captured: 0,
+            captured: match stone {
+                Stone::None => board.stats.none.captured,
+                Stone::Black => board.stats.black.captured,
+                Stone::White => board.stats.white.captured,
+            },
             territory: match stone {
                 Stone::None => 0,
                 _ => Go::count_territory(stone, board)
@@ -37,6 +41,7 @@ impl ColorStats {
     }
 
     pub(crate) fn assert_eq(&self, other: &ColorStats) {
+        assert_eq!(self.captured, other.captured, "[{}] captures", self.stone);
         assert_eq!(self.stones, other.stones, "[{}] stones", self.stone);
         assert_eq!(self.groups, other.groups, "[{}] groups", self.stone);
     }
@@ -45,10 +50,11 @@ impl ColorStats {
 
 impl fmt::Display for ColorStats {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {} stones, {} groups",
+        write!(f, "{}: {} stones, {} groups, {} captured",
                &self.stone,
                &self.stones,
-               &self.groups
+               &self.groups,
+               &self.captured
         )
     }
 }

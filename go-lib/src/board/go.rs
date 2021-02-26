@@ -21,6 +21,17 @@ impl Go {
 
 
     pub fn count_stones(stone: Stone, board: &GoBoard) -> usize {
+        // if stone == Stone::None {
+        //     println!("count {}:", stone);
+        //     board.groups_by_stone(stone)
+        //         .iter().enumerate()
+        //         .for_each(|(i,g)| {
+        //             println!("- {}:  {} stones", i,g.borrow().stones())
+        //         });
+        //
+        // }
+
+
         board.groups_by_stone(stone)
             .iter()
             .map(|g| g.borrow().stones())

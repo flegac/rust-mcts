@@ -2,7 +2,6 @@ use std::{fmt, mem};
 use std::fmt::Formatter;
 use std::hash::Hash;
 
-use ordered_float::OrderedFloat;
 
 use graph_lib::safe_tree::Tree;
 use state::GameResult;
@@ -33,6 +32,17 @@ impl SimResult {
         }
     }
 
+    pub fn from_game(result: GameResult) -> SimResult {
+        let mut res = SimResult {
+            tries: 0,
+            wins: 0,
+            draws: 0,
+            loses: 0,
+        };
+        res.update(result);
+        res
+    }
+
     pub fn update(&mut self, result: GameResult) {
         match result {
             GameResult::Win => self.wins += 1,
@@ -58,19 +68,16 @@ impl SimResult {
         self.tries == 0
     }
 
-    pub fn score(&self, parent: &Self) -> OrderedFloat<f32> {
-        let xxx = (parent.tries as f32).ln();
+    pub fn exploration(&self, child: &Self) -> f32 {
+        let xxx = (self.tries as f32).ln();
 
-        let x = match self.tries {
-            0 => xxx.sqrt(),
+        let x = match child.tries {
+            0 => xxx,
             n => {
-                let w = self.wins as f32;
-                let exploitation = w / n as f32;
-                let exploration = (2. * xxx / n as f32).sqrt();
-                exploitation + exploration
+                (2. * xxx / n as f32)
             }
         };
-        OrderedFloat(x)
+        x.sqrt()
     }
 }
 

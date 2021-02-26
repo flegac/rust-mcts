@@ -2,7 +2,7 @@ use std::mem;
 
 use bit_set::BitSet;
 
-use crate::flood::Flood;
+use crate::algo::flood::Flood;
 use crate::topology::{Topology, Vert};
 
 pub struct GFlood {

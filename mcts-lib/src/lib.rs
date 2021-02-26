@@ -8,7 +8,6 @@ pub mod mcts;
 pub mod state;
 pub mod mymcts;
 pub mod policy;
-pub mod random_policy;
 mod mystate;
 pub mod sim_result;
 

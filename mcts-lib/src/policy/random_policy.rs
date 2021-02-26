@@ -5,7 +5,7 @@ use rand::prelude::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
-use policy::Policy;
+use policy::policy::Policy;
 use state::State;
 
 pub struct RandomPolicy {
@@ -21,8 +21,8 @@ impl RandomPolicy {
 }
 
 impl<A: Copy> Policy<A> for RandomPolicy {
-    fn select<S: State<A>>(&self, state: &S) -> A {
-        state.actions()
+    fn select(&self, items: &[A]) -> A {
+        items
             .choose(self.rng.borrow_mut().deref_mut())
             .unwrap()
             .clone()

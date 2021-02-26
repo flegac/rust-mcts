@@ -5,6 +5,7 @@ extern crate graph_lib;
 extern crate itertools;
 extern crate log;
 extern crate mcts_lib;
+extern crate proc_macro;
 extern crate rpool;
 
 pub mod stones;
@@ -31,7 +32,7 @@ mod tests {
     fn board_cell_id() {
         let goban = Grid::new(7);
 
-        for c in goban.vertices().iter() {
+        goban.apply(|c| {
             let (x, y) = goban.xy(c);
             let c2 = goban.cell(x, y);
             let (x2, y2) = goban.xy(c2);
@@ -40,5 +41,6 @@ mod tests {
             assert_eq!(x, x2);
             assert_eq!(y, y2);
         }
+        );
     }
 }
