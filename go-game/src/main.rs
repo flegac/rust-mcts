@@ -16,13 +16,12 @@ use go_lib::board::go::Go;
 use go_lib::gostate::GoState;
 use mcts_lib::mcts::MState;
 use mcts_lib::mymcts::MyMcts;
-use mcts_lib::policy::win_score::WinScore;
 use mcts_lib::policy::random_policy::RandomPolicy;
+use mcts_lib::policy::win_score::WinScore;
 
 mod editor;
 mod bench;
 mod constants;
-
 
 
 pub fn main() {

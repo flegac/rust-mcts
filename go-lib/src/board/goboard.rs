@@ -17,6 +17,7 @@ use go_display::GoDisplay;
 use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
+use screen::Screen;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
@@ -112,8 +113,8 @@ impl GoBoard {
 
 
     pub fn play(&mut self, action: GoAction) {
-        log::trace!("board:\n{}", self);
         log::trace!("NEW PLAY: {} @ {}", self.stone, action);
+
         match action {
             GoAction::Pass => {}
             GoAction::Cell(x, y) => {
@@ -121,9 +122,12 @@ impl GoBoard {
                 self.place_stone(cell, self.stone);
             }
         }
+
     }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
+        let before = self.screen(true);
+
         assert!(self.stone_at(cell) == Stone::None);
 
         self.handle_old_empty_group(cell);
@@ -137,6 +141,13 @@ impl GoBoard {
         self.check_autokill(new_group);
 
         self.stats.round += 1;
+
+        let after = self.screen(true);
+        let mut full = Screen::new(before.width * 2 + 1, before.height);
+        full.draw(0, 0, &before);
+        full.draw(before.width as i32 + 1 , 0, &after);
+        log::trace!("\n{}", full.to_string());
+
         self.check_correctness();
     }
 
@@ -203,7 +214,7 @@ impl GoBoard {
 
                     let parts = old.borrow_mut().split(&self);
                     for part in parts {
-                        log::trace!("- new empty group: {}", GoDisplay::group(self,&part));
+                        log::trace!("- new empty group: {}", GoDisplay::group(self, &part));
                         self.update_group(self.new_group(part));
                     }
                 }
@@ -346,68 +357,10 @@ impl Topology for GoBoard {
     }
 }
 
-impl fmt::Display for GoBoard {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}\n{}",
-               self.draw_board(),
-               self.stats.score_string(),
-               self.stats
-        )
-    }
-}
-
-
-impl GoBoard {
-    fn draw_board(&self) -> String {
-        let size = self.goban.size;
-        let mut res = String::new();
-        self.draw_line(&mut res, true);
-        self.draw_line_separator(&mut res);
-        for y in 0..size {
-            res.push_str(format!("{} | ", GoDisplay::from_y(y)).as_str());
-            for x in 0..size {
-                let g = self.stone_at(self.goban.cell(x, y));
-                res.push_str(format!("{} ", g).as_str());
-            }
-            res.push_str(format!("| {}", GoDisplay::from_y(y)).as_str());
-
-            res.push_str("\n");
-        }
-        self.draw_line_separator(&mut res);
-        self.draw_line(&mut res, true);
-        res
-    }
-    fn draw_line_separator(&self, res: &mut String) {
-        let size = self.goban.size;
-
-        res.push_str("  + ");
-        for _x in 0..size {
-            res.push_str("--");
-        }
-        res.push_str("+  \n");
-    }
-
-    fn draw_line(&self, res: &mut String, with_side: bool) {
-        let size = self.goban.size;
-        match with_side {
-            true => res.push_str(format!("[{}] ", self.stone).as_str()),
-            false => res.push_str("    ")
-        }
-        for x in 0..size {
-            res.push_str(&GoDisplay::from_x(x));
-            res.push_str(" ");
-        }
-        match with_side {
-            true => res.push_str(format!("[{}]", self.stone).as_str()),
-            false => res.push_str("   ")
-        }
-        res.push_str("\n");
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
+    use std::ops::Deref;
     use std::sync::Arc;
 
     use bit_set::BitSet;
@@ -415,6 +368,8 @@ mod tests {
 
     use board::goboard::GoBoard;
     use board::grid::Grid;
+    use graph_lib::algo::flood::Flood;
+    use graph_lib::graph::GFlood;
     use graph_lib::topology::Topology;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
@@ -436,7 +391,7 @@ mod tests {
 
         let group = board.new_group(GoGroup::from_cell(
             Stone::Black,
-            cell[0],
+            cells.iter().next().unwrap(),
         ));
 
         assert_eq!(group.borrow().stones(), 3);
@@ -456,34 +411,5 @@ mod tests {
             assert_eq!(x, x2);
             assert_eq!(y, y2);
         });
-    }
-
-
-    #[test]
-    fn test_group_splitting() {
-        let board = GoBoard::new(Grid::new(7));
-        let test1 = |c| {
-            let (x, y) = board.goban.xy(c);
-            x == 0
-        };
-        let test2 = |c| {
-            let (x, y) = board.goban.xy(c);
-            x == 2
-        };
-        let mut cells1 = board.flood(board.goban.cell(0, 0), &test1);
-        cells1.union_with(&board.flood(board.goban.cell(2, 0), &test2));
-        let g = board.new_group(GoGroup {
-            stone: Stone::White,
-            cells: cells1,
-            liberties: 0,
-        });
-        println!("big group: {}", g);
-
-
-        let gg = g.borrow_mut().split(&board);
-
-        for ga in gg {
-            println!("- {}", ga)
-        }
     }
 }

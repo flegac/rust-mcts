@@ -23,6 +23,8 @@ Hum... Do not expect wonders !
 
 # TODO
 
+- Move Screen class in its own crate
+
 - Implements GoEditor : command line interface to edit & visualise GoState/GoBoard 
 - multi-threading : simulations
 - State copy

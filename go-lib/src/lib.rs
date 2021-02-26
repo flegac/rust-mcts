@@ -14,6 +14,7 @@ pub mod gostate;
 pub mod board;
 pub mod game;
 pub mod go_display;
+pub mod screen;
 
 #[cfg(test)]
 mod tests {
