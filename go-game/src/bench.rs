@@ -72,6 +72,15 @@ impl Bench {
         }
         !finished
     }
+
+    pub fn log_speed(&self, speed_factor: f32) -> String {
+        let speed = self.speed();
+        let per_sec = (speed_factor * speed) as u32;
+        let per_min = (60. * speed_factor * speed) as u32;
+        let per_hour = (3600. * speed_factor * speed) as u32;
+        format!("{} iter/sec\n{} iter/min\n{} iter/hour",
+                per_sec, per_min, per_hour)
+    }
 }
 
 impl Display for Bench {

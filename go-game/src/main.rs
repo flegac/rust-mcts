@@ -44,10 +44,7 @@ pub fn main() {
     root.state_mut().board.update_score(Go::count_territory);
     log::info!("Board:\n{}", root.state());
     log::info!("results: {}", mcts.root);
-    log::info!("{}", bench);
-    let games_per_sec = (SIM_FACTOR as f32 * bench.speed()) as u32;
-    log::info!("{} games/sec", games_per_sec);
-    log::info!("{} games/min", games_per_sec * 60);
+    log::info!("{}\n{}", bench, bench.log_speed(SIM_FACTOR as f32));
 }
 
 
