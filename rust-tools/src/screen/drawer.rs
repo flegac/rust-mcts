@@ -20,7 +20,7 @@ pub trait Drawer where Self: Cursor {
         dst.clone_from_slice(src);
     }
 
-    fn put_str(&mut self, offset: usize, src: &String) {
+    fn put_str(&mut self, offset: usize, src: &str) {
         let vec = src.chars().collect_vec();
         let slice = vec.as_slice();
         self.put_slice(offset, slice);

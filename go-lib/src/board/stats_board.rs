@@ -1,5 +1,4 @@
 use board::goboard::GoBoard;
-
 use stones::group::GoGroup;
 use stones::stone::Stone;
 
@@ -49,11 +48,6 @@ impl BoardStats {
         }
     }
 
-    pub fn compute_round(&self) -> usize {
-        let blacks = self.black.stones + self.black.captured;
-        let whites = self.white.stones + self.white.captured;
-        blacks + whites
-    }
 
     pub(crate) fn add_group(&mut self, group: &GoGroup) {
         let n = group.stones();
@@ -73,7 +67,7 @@ impl BoardStats {
                 self.none.stones += n;
             }
         }
-        log::trace!("add: {}\n{}", group, self);
+        log::trace!("add: {}\n{}", group, self.stats_screen());
     }
 
     pub(crate) fn rem_group(&mut self, group: &GoGroup) {
@@ -94,8 +88,6 @@ impl BoardStats {
                 self.none.stones -= n;
             }
         }
-        log::trace!("rem {}: {}\n{}", n, group, self);
+        log::trace!("rem {}: {}\n{}", n, group, self.stats_screen());
     }
-
-
 }

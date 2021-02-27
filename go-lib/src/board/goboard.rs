@@ -15,14 +15,17 @@ use board::stats_board::BoardStats;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
 use rust_tools::screen::dimension::{Cursor, Dimension, ScreenIndex};
-use rust_tools::screen::drawer::Drawer;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
+use rust_tools::screen::layout_old::Layout;
 
 pub struct GoBoard {
+    //game state
     pub stone: Stone,
+    pass_sequence: usize,
+    ko: Option<GoCell>,
 
     //groups
     groups: Vec<GoGroupRc>,
@@ -44,6 +47,10 @@ impl GoBoard {
     pub fn new(goban: Grid) -> Self {
         let empty_cells = GoGroup::from_goban(&goban);
         let mut board = GoBoard {
+            stone: Stone::Black,
+            pass_sequence: 0,
+            ko: None,
+
             goban,
             groups: vec![],
 
@@ -52,7 +59,6 @@ impl GoBoard {
             nones: HashSet::new(),
 
             stats: BoardStats::new(),
-            stone: Stone::Black,
             empty_cells,
             flood: RefCell::new(GFlood::new()),
         };
@@ -105,52 +111,47 @@ impl GoBoard {
 
     pub fn end_game(&self) -> bool {
         let limit = self.vertex_number();
-        self.stats.round > limit || self.stats.none.groups == 0
+        let double_pass = self.pass_sequence >= 2;
+        if double_pass {
+            log::info!("DOUBLE PASS ! YEAAA");
+        }
+        self.stats.round > limit || self.stats.none.groups == 0 || double_pass
     }
 
 
     pub fn play(&mut self, action: GoAction) {
         log::trace!("NEW PLAY: {} @ {}", self.stone, action);
+        let before = GoDisplay::board(self);
 
         match action {
-            GoAction::Pass => {}
+            GoAction::Pass => {
+                self.pass_sequence += 1;
+            }
             GoAction::Cell(x, y) => {
+                self.pass_sequence = 0;
                 let cell = self.goban.cell(x, y);
                 self.place_stone(cell, self.stone);
             }
         }
-    }
-
-    pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
-        let before = GoDisplay::board(self);
-
-        assert!(self.stone_at(cell) == Stone::None);
-
-        self.handle_old_empty_group(cell);
-
-        //fusion allied groups
-        let new_group = self.fusion_allied_groups(cell, stone);
-
-        self.kill_ennemy_groups(cell, stone);
-
-        //FIXME: do not allow this case to happen !
-        self.check_autokill(new_group);
-
+        self.stone = self.stone.switch();
         self.stats.round += 1;
 
         let after = GoDisplay::board(self);
-        let padding = 5;
-        let mut full = Screen::new(before.width() * 2 + padding, before.height());
-        full.draw(&before);
-        full.move_to(full.index(before.width() + padding, 0));
-        full.draw(&after);
-        log::trace!("\n{}", full.to_string());
+        let mut full = Screen::halign(&[&before, &after], 5);
+        log::trace!("\n{}", full);
 
         self.check_correctness();
     }
 
-    pub fn check_correctness(&self) {
-        assert_eq!(self.stats.round, self.stats.compute_round());
+    pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
+        self.handle_old_empty_group(cell);
+        let new_group = self.fusion_allied_groups(cell, stone);
+        self.kill_ennemy_groups(cell, stone);
+        //FIXME: do not allow this case to happen !
+        self.check_autokill(new_group);
+    }
+
+    fn check_correctness(&self) {
         assert_eq!(self.empty_cells.stones(), self.stats.none.stones);
         assert_eq!(
             self.stats.black.stones
@@ -158,7 +159,8 @@ impl GoBoard {
                 + self.stats.none.stones,
             self.vertex_number()
         );
-        self.stats.assert_eq(&BoardStats::from_board(self));
+        //FIXME: remove this (costly) check !
+        // self.stats.assert_eq(&BoardStats::from_board(self));
     }
 
     pub fn update_score<F>(&mut self, scorer: F)

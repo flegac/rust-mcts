@@ -2,7 +2,7 @@ pub trait Dimension {
     fn width(&self) -> usize;
     fn height(&self) -> usize;
 
-    fn mirror(&mut self);
+    fn transpose(&mut self);
 
     fn is_mirror(&self)->bool;
 
@@ -73,24 +73,24 @@ mod tests {
 
     #[test]
     fn test_mirror() {
-        let mut scr = Screen::new(20, 15);
-        let mut x = Screen::fill('#', 10, 1);
+        let mut scr = Screen::new(40, 25);
+        let mut x = Screen::from_string("La vie est belle !");
 
 
-        scr.move_to(scr.index(5, 2));
+        scr.move_to(scr.index(7, 2));
         scr.draw(&x);
 
-        x.mirror();
+        x.transpose();
         scr.move_to(scr.index(3, 3));
         scr.draw(&x);
 
-        x.mirror();
-        scr.move_to(scr.index(5, 4));
+        x.transpose();
+        scr.move_to(scr.index(9, 4));
         scr.draw(&x);
 
         let mut scr = scr.border();
         scr.show();
-        scr.mirror();
+        scr.transpose();
         scr.show()
 
     }

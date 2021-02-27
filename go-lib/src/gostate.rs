@@ -58,7 +58,6 @@ impl State<GoAction> for GoState {
 
     fn apply(&mut self, action: GoAction) {
         self.board.play(action);
-        self.board.stone = self.board.stone.switch();
         self.history.push(action.clone());
     }
 }

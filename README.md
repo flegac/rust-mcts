@@ -27,15 +27,18 @@ Hum... Do not expect wonders !
 - multi-threading : simulations
 - State copy
 
-- Layout for Screen
-    - Screen.halign(scr1, scr2)
-    - Screen.valign(scr1, scr2)
+- Grid Layout
+- Optimise Screen buffers copies
+
+- Ko rules
 
 # Issues
 
 - Screen.mirror() & call it .transpose()
 
 - Correct end game (pass/pass)
+
+
 - suicide move : adding a stone that kill itself is possible.
 
 # Exemples

@@ -46,9 +46,6 @@ pub fn main() {
         log::info!("Board:\n{}", root.state());
         log::info!("{} x {} | results: {}", SIM_FACTOR, round, mcts.root);
     }
-    root.state_mut().board.update_score(Go::count_territory);
-    log::info!("Board:\n{}", root.state());
-    log::info!("results: {}", mcts.root);
     log::info!("{}\n{}", bench, bench.log_speed(SIM_FACTOR as f32));
 }
 

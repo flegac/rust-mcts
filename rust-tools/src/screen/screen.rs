@@ -12,69 +12,31 @@ pub struct Screen {
     pub(crate) buffer: Vec<char>,
 }
 
-impl Dimension for Screen {
-    fn width(&self) -> usize {
-        self.width
-    }
-
-    fn height(&self) -> usize {
-        self.height
-    }
-
-    fn mirror(&mut self) {
-        mem::swap(&mut self.width, &mut self.height);
-        self.is_mirror = !self.is_mirror;
-    }
-
-    fn is_mirror(&self) -> bool {
-        self.is_mirror
-    }
-}
-
-impl Cursor for Screen {
-    fn offset(&self) -> usize {
-        self.cursor
-    }
-
-    fn move_to(&mut self, offset: usize) {
-        self.cursor = offset;
-    }
-}
-
-impl Drawer for Screen {
-    fn put(&mut self, offset: usize, value: char) {
-        self.buffer[offset] = value;
-    }
-
-    fn read(&self, offset: usize, size: usize) -> &[char] {
-        let end = offset + size;
-        &self.buffer[offset..end]
-    }
-    fn read_mut(&mut self, offset: usize, size: usize) -> &mut [char] {
-        let end = offset + size;
-        &mut self.buffer[offset..end]
-    }
-}
-
 impl Screen {
-    pub fn from_string(value: &String) -> Screen {
+    pub fn from_string(value: &str) -> Screen {
         let mut res = Self::new(value.len(), 1);
         res.put_str(0, value);
         res
     }
 
     pub fn new(width: usize, height: usize) -> Self {
-        Self::fill(' ', width, height)
+        Screen {
+            is_mirror: false,
+            cursor: 0,
+            width,
+            height,
+            buffer: vec![' '; width * height],
+        }
     }
 
-    pub fn fill(value: char, width: usize, height: usize) -> Screen {
-        Screen { is_mirror: false, cursor: 0, width, height, buffer: vec![value; width * height] }
+    pub fn fill(&mut self, value: char) {
+        self.buffer.as_mut_slice().fill(value);
     }
 
     pub fn sparse(&self) -> Screen {
         let mut res = Self::new(self.width() * 3, self.height());
         for offset in 0..self.buffer.len() {
-            res.put(1+3 * offset, self.buffer[offset]);
+            res.put(1 + 3 * offset, self.buffer[offset]);
         }
         res
     }
@@ -107,6 +69,50 @@ impl Screen {
 
     pub fn show(&self) {
         println!("{}", self);
+    }
+}
+
+impl Dimension for Screen {
+    fn width(&self) -> usize {
+        self.width
+    }
+
+    fn height(&self) -> usize {
+        self.height
+    }
+
+    fn transpose(&mut self) {
+        mem::swap(&mut self.width, &mut self.height);
+        self.is_mirror = !self.is_mirror;
+    }
+
+    fn is_mirror(&self) -> bool {
+        self.is_mirror
+    }
+}
+
+impl Cursor for Screen {
+    fn offset(&self) -> usize {
+        self.cursor
+    }
+
+    fn move_to(&mut self, offset: usize) {
+        self.cursor = offset;
+    }
+}
+
+impl Drawer for Screen {
+    fn put(&mut self, offset: usize, value: char) {
+        self.buffer[offset] = value;
+    }
+
+    fn read(&self, offset: usize, size: usize) -> &[char] {
+        let end = offset + size;
+        &self.buffer[offset..end]
+    }
+    fn read_mut(&mut self, offset: usize, size: usize) -> &mut [char] {
+        let end = offset + size;
+        &mut self.buffer[offset..end]
     }
 }
 

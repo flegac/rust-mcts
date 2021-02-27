@@ -3,7 +3,6 @@ use std::iter::FromIterator;
 
 use bit_set::BitSet;
 use graph_lib::topology::Topology;
-use itertools::Itertools;
 
 use action::GoAction;
 use board::goboard::GoBoard;
@@ -14,6 +13,7 @@ use rust_tools::screen::drawer::Drawer;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::stone::Stone;
+use rust_tools::screen::layout_old::Layout;
 
 pub struct GoDisplay {}
 
@@ -31,65 +31,87 @@ const SMALL_A: usize = 'a' as usize;
 // }
 
 impl BoardStats {
-    fn score_screen(&self) -> Screen {
-        let mut scr = Screen::new(35, 2);
-        scr.put_str(scr.index(0, 0),
-                    &format!("black: territories={}, captured={}",
-                             self.black.territory,
-                             self.black.captured));
-        scr.put_str(scr.index(0, 1),
-                    &format!("white: territories={}, captured={}",
-                             self.white.territory,
-                             self.white.captured));
+    pub(crate) fn stats_screen(&self) -> Screen {
+        let blacks = self.black.to_string();
+        let whites = self.white.to_string();
+        let nones = self.none.to_string();
+
+        let width = blacks.len().max(whites.len()).max(nones.len());
+        let mut scr = Screen::new(width, 3);
+        scr.put_str(scr.index(0, 0), &blacks);
+        scr.put_str(scr.index(0, 1), &whites);
+        scr.put_str(scr.index(0, 2), &nones);
         scr
     }
-}
 
-impl fmt::Display for BoardStats {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}\n{}\n{}",
-               self.black,
-               self.white,
-               self.none
-        )
+    pub(crate) fn score_screen(&self, stone: Stone) -> Screen {
+        let mut blacks = format!("black: territories={}, captured={}",
+                                 self.black.territory,
+                                 self.black.captured);
+        let mut whites = format!("white: territories={}, captured={}",
+                                 self.white.territory,
+                                 self.white.captured);
+
+        match stone {
+            Stone::None => {}
+            Stone::Black => blacks = format!("[{}]", blacks),
+            Stone::White => whites = format!("[{}]", whites)
+        }
+
+
+        let width = blacks.len().max(whites.len());
+        let mut scr = Screen::new(width, 2);
+        scr.put_str(scr.index(0, 0), &blacks);
+        scr.put_str(scr.index(0, 1), &whites);
+        scr
     }
 }
 
 
 trait GoScreen {
     fn with_notation(&self, sparse: bool) -> Self;
-    fn with_score(&self, board: &GoBoard) -> Self;
+    fn with_stats(&self, board: &GoBoard, score: bool, stats: bool) -> Self;
 }
 
 
 impl GoScreen for Screen {
     fn with_notation(&self, sparse: bool) -> Self {
-        let res = match sparse {
-            true => self.sparse().border(),
-            false => self.border()
-        };
-        let mut full = res.grow(1);
-
-        let columns = Screen::from_string(&String::from_iter((0..self.width())
-            .map(GoDisplay::column))).sparse();
-        full.draw_at(full.index(2, 0), &columns);
-        full.draw_at(full.index(2, -1), &columns);
-
+        // compute notation
+        let mut columns = Screen::from_string(&String::from_iter((0..self.width())
+            .map(GoDisplay::column)));
         let mut lines = Screen::from_string(&String::from_iter((0..self.width())
             .map(GoDisplay::line)));
-        lines.mirror();
+        lines.transpose();
+
+        let mut full = match sparse {
+            true => {
+                columns = columns.sparse();
+                self.sparse().border().grow(1)
+            }
+            false => {
+                self.border().grow(1)
+            }
+        };
+
+        full.draw_at(full.index(2, 0), &columns);
+        full.draw_at(full.index(2, -1), &columns);
         full.draw_at(full.index(0, 2), &lines);
         full.draw_at(full.index(-1, 2), &lines);
 
         full
     }
 
-    fn with_score(&self, board: &GoBoard) -> Self {
-        let mut full = Screen::new(self.width(), self.height() + 2);
-        let score = board.stats.score_screen();
-        full.draw(self);
-        full.draw_at(full.index(0_i32, -2), &score);
-        full
+    fn with_stats(&self, board: &GoBoard, score: bool, stats: bool) -> Self {
+        let x = board.stats.score_screen(board.stone);
+        let y = board.stats.stats_screen();
+        let mut screens = vec![self];
+        if score {
+            screens.push(&x);
+        }
+        if stats {
+            screens.push(&y);
+        }
+        Screen::valign(screens.as_slice(), 0)
     }
 }
 
@@ -102,7 +124,7 @@ impl GoShow for GoDisplay {
             let value = Self::stone(board.stone_at(c));
             screen.put(c, value.chars().next().unwrap());
         }
-        screen.with_notation(true).with_score(board)
+        screen.with_notation(true).with_stats(board, true, true)
     }
 
     fn group(board: &GoBoard, group: &GoGroup) -> String {
