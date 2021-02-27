@@ -3,6 +3,7 @@ use stones::group::GoGroup;
 use stones::stone::Stone;
 
 use crate::board::stats_color::ColorStats;
+use rust_tools::screen::layout::layout::Layout2;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub(crate) struct BoardStats {
@@ -67,7 +68,7 @@ impl BoardStats {
                 self.none.stones += n;
             }
         }
-        log::trace!("add: {}\n{}", group, self.stats_screen());
+        log::trace!("add: {}\n{}", group, self.stats_layout().as_screen());
     }
 
     pub(crate) fn rem_group(&mut self, group: &GoGroup) {
@@ -88,6 +89,6 @@ impl BoardStats {
                 self.none.stones -= n;
             }
         }
-        log::trace!("rem {}: {}\n{}", n, group, self.stats_screen());
+        log::trace!("rem {}: {}\n{}", n, group, self.stats_layout().as_screen());
     }
 }

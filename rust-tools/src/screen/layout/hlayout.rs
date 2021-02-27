@@ -1,24 +1,24 @@
 use std::iter::FromIterator;
 
 use screen::dimension::Dimension;
-use screen::layout::layout::Layout2;
+use screen::layout::layout::{Layout2, LayoutRc};
 use screen::screen::Screen;
 
-pub struct HLayout<T> {
-    data: Vec<T>,
+pub struct HLayout {
+    data: Vec<LayoutRc>,
     width: usize,
     height: usize,
 }
 
-impl<T: Dimension> HLayout<T> {
-    pub fn new(data: Vec<T>) -> HLayout<T> {
+impl HLayout {
+    pub fn new(data: Vec<LayoutRc>) -> HLayout {
         let width = data.iter().fold(0, |a, l| a + l.width());
         let height = data.iter().fold(0, |a, l| a.max(l.height()));
         Self { data, width, height }
     }
 }
 
-impl<T: Layout2> Dimension for HLayout<T> {
+impl Dimension for HLayout {
     fn width(&self) -> usize {
         self.width
     }
@@ -36,7 +36,7 @@ impl<T: Layout2> Dimension for HLayout<T> {
     }
 }
 
-impl<T: Layout2> Layout2 for HLayout<T> {
+impl Layout2 for HLayout {
     fn to_screen(&self, x: usize, y: usize, target: &mut Screen) {
         let mut pad = 0;
         let max_height = self.height();
