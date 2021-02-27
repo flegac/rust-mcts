@@ -13,7 +13,7 @@ pub mod action;
 pub mod gostate;
 pub mod board;
 pub mod game;
-pub mod go_display;
+pub mod display;
 pub mod screen;
 
 #[cfg(test)]
@@ -21,11 +21,11 @@ mod tests {
     use std::sync::Arc;
 
     use bit_set::BitSet;
+    use graph_lib::topology::Topology;
     use rpool::{Pool, Poolable, PoolScaleMode};
 
     use board::goboard::GoBoard;
     use board::grid::Grid;
-    use graph_lib::topology::Topology;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;

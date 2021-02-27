@@ -1,6 +1,6 @@
 use go_lib::gostate::GoState;
 
-struct GoEditor {
+pub struct GoEditor {
     state: GoState
 }
 

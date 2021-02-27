@@ -2,7 +2,6 @@ use std::hash::Hash;
 use std::iter::FromIterator;
 
 use bit_set::BitSet;
-
 use graph_lib::topology::Topology;
 
 pub type GoCell = usize;
@@ -28,12 +27,12 @@ impl Grid {
     }
 
     pub fn cell(&self, x: usize, y: usize) -> GoCell {
-        x * self.size + y
+        x + y * self.size
     }
 
     pub fn xy(&self, cell: GoCell) -> (usize, usize) {
-        let x = cell as usize / self.size;
-        let y = cell as usize % self.size;
+        let x = cell as usize % self.size;
+        let y = cell as usize / self.size;
         (x, y)
     }
 

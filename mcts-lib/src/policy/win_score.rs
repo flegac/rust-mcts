@@ -37,9 +37,7 @@ impl<'a> Score for ExploreScore<'a> {
         let total_tries = (self.parent.tries as f32).ln();
         let x = match stats.tries {
             0 => total_tries,
-            n => {
-                (2. * total_tries / n as f32)
-            }
+            n => 2. * total_tries / n as f32,
         };
         x.sqrt()
     }

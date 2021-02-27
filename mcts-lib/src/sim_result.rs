@@ -73,9 +73,7 @@ impl SimResult {
 
         let x = match child.tries {
             0 => xxx,
-            n => {
-                (2. * xxx / n as f32)
-            }
+            n => 2. * xxx / n as f32,
         };
         x.sqrt()
     }

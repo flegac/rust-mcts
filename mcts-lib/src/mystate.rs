@@ -38,7 +38,6 @@ impl<A, S> MyState<A, S>
         self.depth = 0;
 
         let parents = self.node.parents();
-        let n = parents.len();
         for (action, _value) in parents.iter().rev() {
             self.apply_action(action.clone())
         }
@@ -57,9 +56,8 @@ impl<A, S> MyState<A, S>
 
     fn extend_node(&mut self) {
         let actions = self.the_state.actions();
-        let n = actions.len();
         if self.node.children.borrow().is_empty() {
-            for (i, &a) in actions.iter().enumerate() {
+            for (_i, &a) in actions.iter().enumerate() {
                 let next_current = SimResult::node();
                 self.node.set_child(a, &next_current);
             }

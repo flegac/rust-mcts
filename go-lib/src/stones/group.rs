@@ -1,19 +1,19 @@
-use std::fmt;
-use std::fmt::Formatter;
 use std::hash::{Hash, Hasher};
-use std::iter::{FromIterator, once};
+use std::iter::FromIterator;
+use std::ops::Deref;
 
 use bit_set::BitSet;
+use graph_lib::algo::flood::Flood;
+use graph_lib::topology::Topology;
 
 use board::go::Go;
 use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
-use go_display::GoDisplay;
-use graph_lib::algo::flood::Flood;
-use graph_lib::topology::{SubGraph, Topology};
+use display::display::GoDisplay;
 use stones::stone::Stone;
+use display::goshow::GoShow;
 
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
     pub(crate) stone: Stone,
     pub(crate) liberties: usize,
@@ -29,11 +29,15 @@ impl GoGroup {
         }
     }
 
-    pub fn from_cell(stone: Stone, cell: GoCell) -> GoGroup {
+    pub fn from_cells(stone: Stone, cells: &[GoCell]) -> GoGroup {
+        let liberties = match cells.len() {
+            1 => 4,
+            _ => 0
+        };
         GoGroup {
             stone,
-            cells: BitSet::from_iter(once(cell)),
-            liberties: 4,
+            cells: BitSet::from_iter(cells.deref().iter().map(|x| x.clone())),
+            liberties,
         }
     }
 
@@ -43,7 +47,7 @@ impl GoGroup {
 
 
     pub(crate) fn add_group(&mut self, other: &GoGroup) {
-        assert!(self.stone == other.stone);
+        assert_eq!(self.stone, other.stone);
         self.cells.union_with(&other.cells);
     }
 
@@ -102,5 +106,40 @@ impl Hash for GoGroup {
         // let x = format!("{}:{}-{}", stone, min, max);
         // x.hash(state)
         min.hash(state)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::hash_map::DefaultHasher;
+    use std::convert::TryFrom;
+    use std::hash::{Hash, Hasher};
+
+    use board::goboard::GoBoard;
+    use board::grid::Grid;
+    use stones::group::GoGroup;
+    use stones::grouprc::GoGroupRc;
+    use stones::stone::Stone;
+
+    #[test]
+    fn group_hash() {
+        let g1 = GoGroup::from_cells(Stone::None, &[33, 36, 44]);
+        let g1_bis = GoGroup::from_cells(Stone::None, &[33, 36, 44]);
+        let g2 = GoGroup::from_cells(Stone::None, &[33, 128, 3000]);
+        let g3 = GoGroup::from_cells(Stone::None, &[33, 36, 10]);
+
+        assert_eq!(g1, g1_bis);
+        assert_ne!(g1, g2);
+        assert_ne!(g1, g3);
+
+        assert_eq!(hash(&g1), hash(&g2));
+        assert_ne!(hash(&g1), hash(&g3));
+    }
+
+    fn hash(x: &GoGroup) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        x.hash(&mut hasher);
+        let h = hasher.finish();
+        h
     }
 }

@@ -6,7 +6,6 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 use policy::policy::Policy;
-use state::State;
 
 pub struct RandomPolicy {
     rng: RefCell<Pcg64>,

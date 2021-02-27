@@ -1,7 +1,5 @@
-use std::fmt;
-
 use board::goboard::GoBoard;
-use go_display::GoDisplay;
+
 use stones::group::GoGroup;
 use stones::stone::Stone;
 
@@ -75,7 +73,7 @@ impl BoardStats {
                 self.none.stones += n;
             }
         }
-        log::trace!("add {}: {}\n{}", n, group, self);
+        log::trace!("add: {}\n{}", group, self);
     }
 
     pub(crate) fn rem_group(&mut self, group: &GoGroup) {
@@ -100,24 +98,4 @@ impl BoardStats {
     }
 
 
-    pub(crate) fn score_string(&self) -> String {
-        format!("\
-            black: territories={}, captured={}\n\
-            white: territories={}, captured={}",
-                self.black.territory,
-                self.black.captured,
-                self.white.territory,
-                self.white.captured
-        )
-    }
-}
-
-impl fmt::Display for BoardStats {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}\n{}\n{}",
-               self.black,
-               self.white,
-               self.none
-        )
-    }
 }

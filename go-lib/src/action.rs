@@ -1,9 +1,10 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
-use go_display::GoDisplay;
+use display::display::GoDisplay;
+use display::goshow::GoShow;
+
 
 #[derive(Debug, Copy, Hash, Clone, Eq, PartialEq)]
 pub enum GoAction {

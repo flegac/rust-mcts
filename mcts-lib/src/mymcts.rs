@@ -78,7 +78,7 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
             _ => {
                 let mut res = SimResult::new();
                 let node = state.get_node().clone();
-                for i in 0..self.simulation_factor {
+                for _i in 0..self.simulation_factor {
                     let the_node = node.clone();
                     state.setup_node(the_node);
                     res.merge(&self.simulation(state, policy));
@@ -132,7 +132,7 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
     fn backpropagation(&self, state: &mut MyState<A, S>, mut res: SimResult) {
         state.get_node().value.borrow_mut().merge(&res);
         let parents = state.get_node().parents();
-        for (key, value) in parents {
+        for (_key, value) in parents {
             value.value.borrow_mut().merge(&res);
             res.swap();
         }

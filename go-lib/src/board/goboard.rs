@@ -1,29 +1,27 @@
-use core::fmt;
-use proc_macro::Group;
-use std::borrow::Borrow;
 use std::cell::RefCell;
-use std::collections::{HashSet, LinkedList};
 use std::collections::hash_map::RandomState;
-use std::ops::{Deref, DerefMut};
+use std::collections::HashSet;
+use std::ops::Deref;
 
 use bit_set::BitSet;
-use fixed_typed_arena::Arena;
+use graph_lib::algo::flood::Flood;
+use graph_lib::graph::GFlood;
+use graph_lib::topology::Topology;
 use itertools::Itertools;
 
 use action::GoAction;
 use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
-use go_display::GoDisplay;
-use graph_lib::algo::flood::Flood;
-use graph_lib::graph::GFlood;
-use graph_lib::topology::Topology;
-use screen::Screen;
+use display::display::GoDisplay;
+use display::goshow::GoShow;
+use screen::dimension::{Cursor, ScreenIndex, Dimension};
+use screen::drawer::Drawer;
+use screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
 pub struct GoBoard {
-    arena: Arena<GoGroup>,
     pub stone: Stone,
 
     //groups
@@ -46,7 +44,6 @@ impl GoBoard {
     pub fn new(goban: Grid) -> Self {
         let empty_cells = GoGroup::from_goban(&goban);
         let mut board = GoBoard {
-            arena: Arena::new(),
             goban,
             groups: vec![],
 
@@ -122,11 +119,10 @@ impl GoBoard {
                 self.place_stone(cell, self.stone);
             }
         }
-
     }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
-        let before = self.screen(true);
+        let before = GoDisplay::board(self);
 
         assert!(self.stone_at(cell) == Stone::None);
 
@@ -142,10 +138,11 @@ impl GoBoard {
 
         self.stats.round += 1;
 
-        let after = self.screen(true);
-        let mut full = Screen::new(before.width * 2 + 1, before.height);
-        full.draw(0, 0, &before);
-        full.draw(before.width as i32 + 1 , 0, &after);
+        let after = GoDisplay::board(self);
+        let mut full = Screen::new(before.width() * 2 + 1, before.height());
+        full.draw(&before);
+        full.move_to(full.index(before.width() + 1, 0));
+        full.draw(&after);
         log::trace!("\n{}", full.to_string());
 
         self.check_correctness();
@@ -239,7 +236,7 @@ impl GoBoard {
 
 
     fn fusion_allied_groups(&mut self, cell: usize, stone: Stone) -> GoGroupRc {
-        let new_group = self.new_group(GoGroup::from_cell(stone, cell));
+        let new_group = self.new_group(GoGroup::from_cells(stone, &[cell]));
         self.goban.edges(cell).iter()
             .filter(|&c| self.stone_at(c) == stone)
             .map(|c| self.group_at(c))
@@ -342,7 +339,6 @@ impl GoBoard {
     }
 
     fn new_group(&self, group: GoGroup) -> GoGroupRc {
-        // self.arena.alloc(group)
         GoGroupRc::from(group)
     }
 }
@@ -364,13 +360,13 @@ mod tests {
     use std::sync::Arc;
 
     use bit_set::BitSet;
+    use graph_lib::algo::flood::Flood;
+    use graph_lib::graph::GFlood;
+    use graph_lib::topology::Topology;
     use rpool::{Pool, Poolable, PoolScaleMode};
 
     use board::goboard::GoBoard;
     use board::grid::Grid;
-    use graph_lib::algo::flood::Flood;
-    use graph_lib::graph::GFlood;
-    use graph_lib::topology::Topology;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;
@@ -380,19 +376,13 @@ mod tests {
         let goban = Grid::new(7);
         let board = GoBoard::new(goban);
 
-        let mut cells = BitSet::new();
-        for cell in &[
+        let mut cells = [
             board.goban.cell(0, 0),
             board.goban.cell(0, 3),
             board.goban.cell(3, 0)
-        ] {
-            cells.insert(*cell);
-        }
+        ];
 
-        let group = board.new_group(GoGroup::from_cell(
-            Stone::Black,
-            cells.iter().next().unwrap(),
-        ));
+        let group = board.new_group(GoGroup::from_cells(Stone::Black, &cells));
 
         assert_eq!(group.borrow().stones(), 3);
     }
