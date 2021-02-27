@@ -10,6 +10,10 @@ use board::stats_board::BoardStats;
 use display::goshow::GoShow;
 use rust_tools::screen::dimension::{Cursor, Dimension, ScreenIndex};
 use rust_tools::screen::drawer::Drawer;
+use rust_tools::screen::layout::hlayout::HLayout;
+use rust_tools::screen::layout::layout::{L, Layout2};
+use rust_tools::screen::layout::str_layout::StrLayout;
+use rust_tools::screen::layout::vlayout::VLayout;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::stone::Stone;
@@ -115,16 +119,41 @@ impl GoScreen for Screen {
     }
 }
 
+impl GoDisplay {
+    pub fn board_layout(board: &GoBoard) -> HLayout<VLayout<StrLayout>> {
+        let mut res = vec![];
+        for y in 0..board.goban.size {
+            res.push(Self::line_layout(board, y));
+        }
+        L::hori(res)
+    }
+
+    pub fn line_layout(board: &GoBoard, y: usize) -> VLayout<StrLayout> {
+        let mut res = vec![];
+        for x in 0..board.goban.size {
+            let cell = board.goban.cell(x, y);
+            let stone = Self::stone(board.stone_at(cell));
+            let l = L::str(stone.as_str());
+            res.push(l);
+        }
+        L::vert(res)
+    }
+}
+
 
 impl GoShow for GoDisplay {
     fn board(board: &GoBoard) -> Screen {
-        let size = board.goban.size;
-        let mut screen = Screen::new(size, size);
-        for c in board.vertices() {
-            let value = Self::stone(board.stone_at(c));
-            screen.put(c, value.chars().next().unwrap());
-        }
-        screen.with_notation(true).with_stats(board, true, true)
+        // let size = board.goban.size;
+        // let mut screen = Screen::new(size, size);
+        // for c in board.vertices() {
+        //     let value = Self::stone(board.stone_at(c));
+        //     screen.put(c, value.chars().next().unwrap());
+        // }
+        // screen
+        //     .with_notation(true).with_stats(board, true, true)
+
+        Self::board_layout(board).as_screen()
+            .with_notation(true).with_stats(board, true, true)
     }
 
     fn group(board: &GoBoard, group: &GoGroup) -> String {

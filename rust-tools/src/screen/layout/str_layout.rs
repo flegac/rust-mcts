@@ -1,7 +1,7 @@
 use screen::dimension::Dimension;
-use screen::layout::layout::Layout;
-use screen::screen::Screen;
 use screen::drawer::Drawer;
+use screen::layout::layout::Layout2;
+use screen::screen::Screen;
 
 pub struct StrLayout {
     data: String
@@ -33,8 +33,8 @@ impl Dimension for StrLayout {
     }
 }
 
-impl Layout for StrLayout {
-    fn to_screen(&self, offset: usize, target: &mut Screen) {
-        target.put_str(offset, self.data.as_str());
+impl Layout2 for StrLayout {
+    fn to_screen(&self, x: usize, y: usize, target: &mut Screen) {
+        target.put_str(target.at(x, y), self.data.as_str());
     }
 }

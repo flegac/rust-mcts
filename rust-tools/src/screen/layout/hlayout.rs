@@ -1,26 +1,30 @@
 use std::iter::FromIterator;
 
 use screen::dimension::Dimension;
+use screen::layout::layout::Layout2;
 use screen::screen::Screen;
-use screen::layout::layout::Layout;
 
 pub struct HLayout<T> {
     data: Vec<T>,
+    width: usize,
+    height: usize,
 }
 
-impl<T> HLayout<T> {
+impl<T: Dimension> HLayout<T> {
     pub fn new(data: Vec<T>) -> HLayout<T> {
-        HLayout { data }
+        let width = data.iter().fold(0, |a, l| a + l.width());
+        let height = data.iter().fold(0, |a, l| a.max(l.height()));
+        Self { data, width, height }
     }
 }
 
-impl<T: Layout> Dimension for HLayout<T> {
+impl<T: Layout2> Dimension for HLayout<T> {
     fn width(&self) -> usize {
-        self.data.iter().fold(0, |a, l| a.max(l.width()))
+        self.width
     }
 
     fn height(&self) -> usize {
-        self.data.iter().fold(0, |a, l| a + l.height())
+        self.height
     }
 
     fn transpose(&mut self) {
@@ -32,12 +36,14 @@ impl<T: Layout> Dimension for HLayout<T> {
     }
 }
 
-impl<T: Layout> Layout for HLayout<T> {
-    fn to_screen(&self, offset: usize, target: &mut Screen) {
-        let (x, y) = target.xy(offset);
+impl<T: Layout2> Layout2 for HLayout<T> {
+    fn to_screen(&self, x: usize, y: usize, target: &mut Screen) {
         let mut pad = 0;
+        let max_height = self.height();
+
         for l in self.data.iter() {
-            l.to_screen(target.at(x + pad, y), target);
+            let tab = (max_height - l.height()) / 2;
+            l.to_screen(x + pad, y + tab, target);
             pad += l.width();
         }
     }
