@@ -23,17 +23,20 @@ Hum... Do not expect wonders !
 
 # TODO
 
-- Move Screen class in its own crate
-
-- Implements GoEditor : command line interface to edit & visualise GoState/GoBoard 
+- Implements GoEditor : command line interface to edit & visualise GoState/GoBoard
 - multi-threading : simulations
 - State copy
 
+- Layout for Screen
+    - Screen.halign(scr1, scr2)
+    - Screen.valign(scr1, scr2)
+
 # Issues
 
-- Correct end game (pass/pass) 
-- suicide move : adding a stone that kill itself is possible.
+- Screen.mirror() & call it .transpose()
 
+- Correct end game (pass/pass)
+- suicide move : adding a stone that kill itself is possible.
 
 # Exemples
 

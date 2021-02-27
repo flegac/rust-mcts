@@ -7,6 +7,7 @@ extern crate log;
 extern crate mcts_lib;
 extern crate proc_macro;
 extern crate rpool;
+extern crate rust_tools;
 
 pub mod stones;
 pub mod action;
@@ -14,7 +15,6 @@ pub mod gostate;
 pub mod board;
 pub mod game;
 pub mod display;
-pub mod screen;
 
 #[cfg(test)]
 mod tests {

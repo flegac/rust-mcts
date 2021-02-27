@@ -8,6 +8,8 @@ use mcts_lib::state::{GameResult, State};
 
 use crate::action::GoAction;
 use itertools::Itertools;
+use display::display::GoDisplay;
+use display::goshow::GoShow;
 
 pub struct GoState {
     pub board: GoBoard,
@@ -64,7 +66,7 @@ impl State<GoAction> for GoState {
 impl fmt::Display for GoState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}\nhistory({}):\n{}\n",
-               self.board,
+               GoDisplay::board(&self.board),
                self.board.stats.round,
                Sequence::build(self.history.as_slice()))
     }

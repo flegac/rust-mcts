@@ -14,9 +14,9 @@ use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
-use screen::dimension::{Cursor, ScreenIndex, Dimension};
-use screen::drawer::Drawer;
-use screen::screen::Screen;
+use rust_tools::screen::dimension::{Cursor, Dimension, ScreenIndex};
+use rust_tools::screen::drawer::Drawer;
+use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
@@ -139,9 +139,10 @@ impl GoBoard {
         self.stats.round += 1;
 
         let after = GoDisplay::board(self);
-        let mut full = Screen::new(before.width() * 2 + 1, before.height());
+        let padding = 5;
+        let mut full = Screen::new(before.width() * 2 + padding, before.height());
         full.draw(&before);
-        full.move_to(full.index(before.width() + 1, 0));
+        full.move_to(full.index(before.width() + padding, 0));
         full.draw(&after);
         log::trace!("\n{}", full.to_string());
 

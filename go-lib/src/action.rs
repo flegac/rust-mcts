@@ -39,9 +39,3 @@ impl GoAction {
         }
     }
 }
-
-impl fmt::Display for GoAction {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", GoDisplay::action(self))
-    }
-}

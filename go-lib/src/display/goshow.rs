@@ -2,7 +2,7 @@ use bit_set::BitSet;
 
 use action::GoAction;
 use board::goboard::GoBoard;
-use screen::screen::Screen;
+use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::stone::Stone;
 

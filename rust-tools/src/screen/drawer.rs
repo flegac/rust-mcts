@@ -1,14 +1,22 @@
 use itertools::Itertools;
 
-use screen::dimension::{Cursor};
+use screen::dimension::Dimension;
+
+use crate::screen::dimension::Cursor;
 
 pub trait Drawer where Self: Cursor {
     fn put(&mut self, offset: usize, value: char);
     fn read(&self, offset: usize, size: usize) -> &[char];
     fn read_mut(&mut self, offset: usize, size: usize) -> &mut [char];
 
+
+    fn get(&self, offset: usize) ->  &char {
+        self.read(offset, 1).iter().next().unwrap()
+    }
+
     fn put_slice(&mut self, offset: usize, src: &[char]) {
-        let dst = self.read_mut(offset, src.len());
+        let size = src.len();
+        let dst = self.read_mut(offset, size);
         dst.clone_from_slice(src);
     }
 
@@ -16,18 +24,18 @@ pub trait Drawer where Self: Cursor {
         let vec = src.chars().collect_vec();
         let slice = vec.as_slice();
         self.put_slice(offset, slice);
-        // for (i, c) in src.chars().enumerate() {
-        //     let pos = self.at(x + i as i32, y);
-        //     self.buffer[pos] = c;
-        // }
     }
 
 
     fn draw_at(&mut self, offset: usize, other: &Self) {
         let (x, y) = self.xy(offset);
         for i in 0..other.height() {
-            let src = other.read(other.at(0, i), other.width());
+            if y + i >= self.height() {
+                break;
+            }
             let k = self.at(x, y + i);
+
+            let src = other.read(other.at(0, i), other.width());
             self.put_slice(k, src);
         }
     }

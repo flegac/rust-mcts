@@ -2,6 +2,10 @@ pub trait Dimension {
     fn width(&self) -> usize;
     fn height(&self) -> usize;
 
+    fn mirror(&mut self);
+
+    fn is_mirror(&self)->bool;
+
     fn at(&self, x: usize, y: usize) -> usize {
         (x + y * self.width()) as usize
     }
@@ -45,9 +49,11 @@ pub trait Cursor where Self: Dimension {
 
 #[cfg(test)]
 mod tests {
-    use screen::dimension::{Cursor, Dimension, ScreenIndex};
+    use screen::dimension::{Cursor, Dimension};
     use screen::drawer::Drawer;
-    use screen::screen::Screen;
+
+    use crate::screen::dimension::ScreenIndex;
+    use crate::screen::screen::Screen;
 
     #[test]
     fn test_dimension() {
@@ -63,6 +69,30 @@ mod tests {
                 assert_eq!(offset, offset2);
             }
         }
+    }
+
+    #[test]
+    fn test_mirror() {
+        let mut scr = Screen::new(20, 15);
+        let mut x = Screen::fill('#', 10, 1);
+
+
+        scr.move_to(scr.index(5, 2));
+        scr.draw(&x);
+
+        x.mirror();
+        scr.move_to(scr.index(3, 3));
+        scr.draw(&x);
+
+        x.mirror();
+        scr.move_to(scr.index(5, 4));
+        scr.draw(&x);
+
+        let mut scr = scr.border();
+        scr.show();
+        scr.mirror();
+        scr.show()
+
     }
 
     #[test]

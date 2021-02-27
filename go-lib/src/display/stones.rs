@@ -3,6 +3,9 @@ use std::fmt::Formatter;
 
 use stones::group::GoGroup;
 use stones::stone::Stone;
+use action::GoAction;
+use display::display::GoDisplay;
+use display::goshow::GoShow;
 
 impl fmt::Display for Stone {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -25,5 +28,11 @@ impl fmt::Display for GoGroup {
         }
         res.push_str("}");
         write!(f, "{}", res)
+    }
+}
+
+impl fmt::Display for GoAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", GoDisplay::action(self))
     }
 }

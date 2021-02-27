@@ -1,12 +1,12 @@
+use std::{fmt, mem};
 use std::fmt::{Display, Formatter};
-use std::fmt;
 
-
-use screen::dimension::{Cursor, Dimension, ScreenIndex};
-use screen::drawer::Drawer;
+use crate::screen::dimension::{Cursor, Dimension, ScreenIndex};
+use crate::screen::drawer::Drawer;
 
 pub struct Screen {
     cursor: usize,
+    is_mirror: bool,
     width: usize,
     height: usize,
     pub(crate) buffer: Vec<char>,
@@ -19,6 +19,15 @@ impl Dimension for Screen {
 
     fn height(&self) -> usize {
         self.height
+    }
+
+    fn mirror(&mut self) {
+        mem::swap(&mut self.width, &mut self.height);
+        self.is_mirror = !self.is_mirror;
+    }
+
+    fn is_mirror(&self) -> bool {
+        self.is_mirror
     }
 }
 
@@ -48,12 +57,26 @@ impl Drawer for Screen {
 }
 
 impl Screen {
+    pub fn from_string(value: &String) -> Screen {
+        let mut res = Self::new(value.len(), 1);
+        res.put_str(0, value);
+        res
+    }
+
     pub fn new(width: usize, height: usize) -> Self {
         Self::fill(' ', width, height)
     }
 
     pub fn fill(value: char, width: usize, height: usize) -> Screen {
-        Screen { cursor: 0, width, height, buffer: vec![value; width * height] }
+        Screen { is_mirror: false, cursor: 0, width, height, buffer: vec![value; width * height] }
+    }
+
+    pub fn sparse(&self) -> Screen {
+        let mut res = Self::new(self.width() * 3, self.height());
+        for offset in 0..self.buffer.len() {
+            res.put(1+3 * offset, self.buffer[offset]);
+        }
+        res
     }
 
     pub fn grow(&self, border: usize) -> Screen {
@@ -81,18 +104,26 @@ impl Screen {
         }
         res
     }
+
+    pub fn show(&self) {
+        println!("{}", self);
+    }
 }
 
 impl Display for Screen {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut res = String::new();
 
-        for i in 0..self.height {
-            let line: String = self.read(self.index(0, i), self.width)
-                .iter()
-                .map(|c| format!("{} ", c))
-                .collect();
-            res.push_str(&format!("{}\n", line));
+        for i in 0..self.height() {
+            for j in 0..self.width() {
+                let &x = if self.is_mirror() {
+                    self.get(self.index(i, j))
+                } else {
+                    self.get(self.index(j, i))
+                };
+                res.push(char::from(x));
+            }
+            res.push('\n');
         }
         write!(f, "{}", res)
     }
