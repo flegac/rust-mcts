@@ -1,8 +1,8 @@
 use bit_set::BitSet;
+use graph_lib::topology::Topology;
 use itertools::Itertools;
 
-use board::goboard::GoBoard;
-use graph_lib::topology::Topology;
+use board::goboard::{GoBoard, GroupAccess};
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
@@ -21,17 +21,6 @@ impl Go {
 
 
     pub fn count_stones(stone: Stone, board: &GoBoard) -> usize {
-        // if stone == Stone::None {
-        //     println!("count {}:", stone);
-        //     board.groups_by_stone(stone)
-        //         .iter().enumerate()
-        //         .for_each(|(i,g)| {
-        //             println!("- {}:  {} stones", i,g.borrow().stones())
-        //         });
-        //
-        // }
-
-
         board.groups_by_stone(stone)
             .iter()
             .map(|g| g.borrow().stones())
@@ -43,11 +32,14 @@ impl Go {
     }
 
     pub fn count_territory(stone: Stone, board: &GoBoard) -> usize {
-        board.groups_by_stone(Stone::None)
-            .iter()
-            .filter(|&g| Go::get_owner(board, g.clone()) == stone)
-            .map(|g| g.borrow().stones())
-            .sum()
+        match stone {
+            Stone::None => 0,
+            _ => board.groups_by_stone(Stone::None)
+                .iter()
+                .filter(|&g| Go::get_owner(board, g.clone()) == stone)
+                .map(|g| g.borrow().stones())
+                .sum()
+        }
     }
 
     pub fn get_owner(board: &GoBoard, group: GoGroupRc) -> Stone {

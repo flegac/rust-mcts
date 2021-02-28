@@ -17,8 +17,13 @@ pub struct StrPtr2 {
 }
 
 impl StrPtr2 {
+    pub fn new(value: &str) -> StrPtr2 {
+        StrPtr2 { value: RefCell::new(String::from(value)) }
+    }
+
     pub fn get(&self) -> String {
-        self.value.borrow().clone()
+        let res = self.value.borrow().clone();
+        res
     }
 
     pub fn update(&self, value: &str) {
@@ -31,10 +36,6 @@ pub struct StrLayout {
 }
 
 impl StrLayout {
-    pub fn ptr(value: &str) -> StrPtr {
-        Rc::new(StrPtr2 { value: RefCell::new(String::from(value)) })
-    }
-
     pub fn new(data: &StrPtr) -> StrLayout {
         StrLayout { data: data.clone() }
     }
@@ -42,17 +43,21 @@ impl StrLayout {
 
 impl Dimension for StrLayout {
     fn width(&self) -> usize {
-        self.data.get().len()
+        self.data.get().lines()
+            .map(|l| l.len())
+            .fold(0, |a, b| a.max(b))
     }
 
     fn height(&self) -> usize {
-        1
+        self.data.get().lines().count()
     }
 }
 
 impl Layout for StrLayout {
     fn to_screen(&self, x: usize, y: usize, target: &mut Screen) {
-        target.put_str(target.at(x, y), self.data.get().as_str());
+        for (i, l) in self.data.get().lines().enumerate() {
+            target.put_str(target.at(x, y + i), l);
+        }
     }
 }
 

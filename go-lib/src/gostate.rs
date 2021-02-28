@@ -10,6 +10,7 @@ use crate::action::GoAction;
 use itertools::Itertools;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
+use board::stats::board_stats::FullStats;
 
 pub struct GoState {
     pub board: GoBoard,
@@ -34,8 +35,8 @@ impl State<GoAction> for GoState {
 
     fn result(&self) -> Option<GameResult> {
         if self.board.end_game() {
-            let player = self.board.score(self.board.stone);
-            let opponent = self.board.score(self.board.stone.switch());
+            let player = self.board.score(self.board.stone).score();
+            let opponent = self.board.score(self.board.stone.switch()).score();
             let res = match player.cmp(&opponent) {
                 Ordering::Less => GameResult::Lose,
                 Ordering::Equal => GameResult::Draw,

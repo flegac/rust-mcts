@@ -1,6 +1,7 @@
-use screen::layout::layout::{LayoutRc, L};
 use std::collections::HashMap;
 use std::rc::Rc;
+
+use screen::layout::layout::{L, LayoutRc};
 use screen::layout::str_layout::{StrLayout, StrPtr};
 
 pub struct Template {
@@ -9,6 +10,9 @@ pub struct Template {
 }
 
 impl Template {
+    pub fn empty() -> Template {
+        Template::new(L::str(""))
+    }
     pub fn new(template: LayoutRc) -> Template {
         Template {
             template,

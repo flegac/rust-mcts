@@ -1,4 +1,5 @@
 use std::borrow::{Borrow, BorrowMut};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fmt;
@@ -8,9 +9,9 @@ use std::rc::Rc;
 use screen::dimension::Dimension;
 use screen::drawer::Drawer;
 use screen::layout::hlayout::HLayout;
+use screen::layout::str_layout::{StrLayout, StrPtr, StrPtr2};
 use screen::layout::vlayout::VLayout;
 use screen::screen::Screen;
-use screen::layout::str_layout::{StrLayout, StrPtr};
 
 pub type LayoutRc = Rc<Layout>;
 
@@ -35,14 +36,17 @@ pub trait Layout where Self: Dimension {
 pub struct L {}
 
 impl L {
+    pub fn ptr(value: &str) -> StrPtr {
+        Rc::new(StrPtr2::new(value))
+    }
 
-    pub fn str2(ptr: &StrPtr) -> StrLayout {
-        StrLayout::new(ptr)
+    pub fn str2(ptr: &StrPtr) -> Rc<StrLayout> {
+        Rc::new(StrLayout::new(ptr))
     }
 
     pub fn str(data: &str) -> Rc<StrLayout> {
         // Rc::new(StrLayout::new(data))
-        Rc::new(StrLayout::new(&StrLayout::ptr(data)))
+        Rc::new(StrLayout::new(&L::ptr(data)))
     }
     pub fn vert(data: Vec<LayoutRc>) -> LayoutRc {
         Rc::new(VLayout::new(data))

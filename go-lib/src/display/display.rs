@@ -1,15 +1,18 @@
+use std::borrow::Borrow;
 use std::fmt;
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
+use std::ptr::write;
 
 use bit_set::BitSet;
 use graph_lib::topology::Topology;
 use itertools::Itertools;
 
 use action::GoAction;
-use board::goboard::GoBoard;
-use board::stats_board::BoardStats;
-use board::stats_color::ColorStats;
+use board::goboard::{GoBoard, GroupAccess};
+use board::stats::board_stats::{BoardStats, FullStats};
+use board::stats::stone_score::StoneScore;
+use board::stats::stone_stats::StoneStats;
 use display::goshow::GoShow;
 use display::range::Range2;
 use rust_tools::screen::drawer::Drawer;
@@ -27,7 +30,17 @@ const BIG_A: usize = 'A' as usize;
 const SMALL_A: usize = 'a' as usize;
 
 
-impl fmt::Display for ColorStats {
+impl fmt::Display for StoneScore {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: territories={}, captured={}",
+               self.stone,
+               self.territory,
+               self.captures)
+    }
+}
+
+
+impl fmt::Display for StoneStats {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}: {} stones, {} groups, {} captured",
                &self.stone,
@@ -38,72 +51,21 @@ impl fmt::Display for ColorStats {
     }
 }
 
-struct GoTemplate {}
-
-// impl GoTemplate {
-//     pub fn color_stats(&self) -> Template {
-//         let stone = L::str("");
-//         let stones = L::str("");
-//         let groups = L::str("");
-//         let captured = L::str("");
-//         let mut res = Template::new(L::hori(vec![
-//             stone.clone(),
-//             L::str(": "),
-//             stones.clone(),
-//             L::str(" stones, "),
-//             groups.clone(),
-//             L::str(" groups, "),
-//             captured.clone(),
-//             L::str(" captured"),
-//         ]));
-//         res.register(0, &stone);
-//         res.register(1, &stones);
-//         res.register(2, &groups);
-//         res.register(3, &captured);
-//         res
-//     }
-//
-//     pub fn stats_template(&self) -> Template {
-//         let black = self.color_stats();
-//         let white = self.color_stats();
-//         let none = self.color_stats();
-//
-//         let mut res = Template::new(L::vert(vec![
-//             black.template,
-//             white.template,
-//             none.template,
-//         ]));
-//         let mut i = 0;
-//         for (k, v) in black.vars {
-//             res.register(k, &v);
-//         }
-//         for (k, v) in white.vars {
-//             res.register(k, &v);
-//         }
-//         for (k, v) in none.vars {
-//             res.register(k, &v);
-//         }
-//
-//         res
-//     }
-// }
-
-impl GoBoard {
-    pub(crate) fn stats_str(&self) -> String {
-        format!("{}\n{}\n{}",
-                self.stats.black.to_string(),
-                self.stats.white.to_string(),
-                self.stats.none.to_string(),
+impl fmt::Display for BoardStats {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}\n{}\n{}",
+               self.stats(Stone::Black),
+               self.stats(Stone::White),
+               self.stats(Stone::None),
         )
     }
+}
 
+impl GoBoard {
     pub(crate) fn score_str(&self) -> String {
-        let mut blacks = format!("black: territories={}, captured={}",
-                                 self.stats.black.territory,
-                                 self.stats.black.captured);
-        let mut whites = format!("white: territories={}, captured={}",
-                                 self.stats.white.territory,
-                                 self.stats.white.captured);
+        let mut blacks = self.score(Stone::Black).to_string();
+        let mut whites = self.score(Stone::White).to_string();
+
         match self.stone {
             Stone::None => {}
             Stone::Black => blacks = format!("[{}]", blacks),
@@ -147,7 +109,7 @@ impl GoShow for GoDisplay {
         L::str(&format!("{}\n{}\n{}",
                         Self::board_str(board, range),
                         board.score_str(),
-                        board.stats_str()
+                        board.stats
         ))
     }
 

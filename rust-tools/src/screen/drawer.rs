@@ -13,9 +13,11 @@ pub trait Drawer: Dimension {
     }
 
     fn put_slice(&mut self, offset: usize, src: &[char]) {
-        let size = src.len();
-        let dst = self.read_mut(offset, size);
-        dst.clone_from_slice(src);
+        if !src.is_empty() {
+            let size = src.len();
+            let dst = self.read_mut(offset, size);
+            dst.clone_from_slice(src);
+        }
     }
 
     fn put_str(&mut self, offset: usize, src: &str) {
