@@ -46,15 +46,3 @@ impl ColorStats {
         assert_eq!(self.groups, other.groups, "[{}] groups", self.stone);
     }
 }
-
-
-impl fmt::Display for ColorStats {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {} stones, {} groups, {} captured",
-               &self.stone,
-               &self.stones,
-               &self.groups,
-               &self.captured
-        )
-    }
-}

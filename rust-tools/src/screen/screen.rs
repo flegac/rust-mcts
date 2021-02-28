@@ -27,32 +27,11 @@ impl Screen {
         }
     }
 
-    // pub fn grow(&self, border: usize) -> Screen {
-    //     let mut res = Self::new(self.width + 2 * border, self.height + 2 * border);
-    //     res.draw_at(res.index(border, border), self);
-    //     res
-    // }
-    //
-    // pub fn border(&self) -> Screen {
-    //     let mut res = self.grow(1);
-    //     for x in 0..res.width() {
-    //         [0, -1].iter().for_each(|&y| {
-    //             res.put(res.index(x as i32, y), '-');
-    //         });
-    //     }
-    //     for y in 0..res.height() {
-    //         [0, -1].iter().for_each(|&x| {
-    //             res.put(res.index(x, y as i32), '|');
-    //         });
-    //     }
-    //     for &x in [0, -1].iter() {
-    //         for &y in [0, -1].iter() {
-    //             res.put(res.index(x, y), '+');
-    //         }
-    //     }
-    //     res
-    // }
-
+    pub fn resize(&mut self, width: usize, height: usize) {
+        self.buffer.resize_with(width * height, || ' ');
+        self.width = width;
+        self.height = height;
+    }
     pub fn show(&self) {
         println!("{}", self);
     }

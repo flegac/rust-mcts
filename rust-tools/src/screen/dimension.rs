@@ -38,12 +38,11 @@ pub trait Dimension {
 
 #[cfg(test)]
 mod tests {
-    use screen::dimension::{Cursor, Dimension};
+    use screen::dimension::Dimension;
     use screen::drawer::Drawer;
     use screen::smart_index::SmartIndex;
+    use screen::screen::Screen;
 
-    use crate::screen::dimension::ScreenIndex;
-    use crate::screen::screen::Screen;
 
     #[test]
     fn test_dimension() {

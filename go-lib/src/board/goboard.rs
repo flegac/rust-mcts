@@ -18,12 +18,15 @@ use display::display::GoDisplay;
 use display::goshow::GoShow;
 use display::range::Range2;
 use rust_tools::screen::layout::layout::L;
+use rust_tools::screen::layout::template::Template;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
 pub struct GoBoard {
+    // template: Template,
+
     //game state
     pub stone: Stone,
     pass_sequence: usize,
@@ -49,6 +52,8 @@ impl GoBoard {
     pub fn new(goban: Grid) -> Self {
         let empty_cells = GoGroup::from_goban(&goban);
         let mut board = GoBoard {
+            // template: Template::new(L::str("")),
+
             stone: Stone::Black,
             pass_sequence: 0,
             ko: None,

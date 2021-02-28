@@ -1,29 +1,92 @@
 use std::fmt;
 use std::iter::FromIterator;
+use std::ops::{Deref, DerefMut};
 
 use bit_set::BitSet;
+use graph_lib::topology::Topology;
 use itertools::Itertools;
-use rust_tools::screen::drawer::Drawer;
-use rust_tools::screen::layout::hlayout::HLayout;
-use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
-use rust_tools::screen::layout::str_layout::StrLayout;
-use rust_tools::screen::layout::vlayout::VLayout;
-use rust_tools::screen::screen::Screen;
 
 use action::GoAction;
 use board::goboard::GoBoard;
 use board::stats_board::BoardStats;
+use board::stats_color::ColorStats;
 use display::goshow::GoShow;
 use display::range::Range2;
-use graph_lib::topology::Topology;
+use rust_tools::screen::drawer::Drawer;
+use rust_tools::screen::layout::hlayout::HLayout;
+use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
+use rust_tools::screen::layout::template::Template;
+use rust_tools::screen::layout::vlayout::VLayout;
+use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::stone::Stone;
-use std::ops::{Deref, DerefMut};
 
 pub struct GoDisplay {}
 
 const BIG_A: usize = 'A' as usize;
 const SMALL_A: usize = 'a' as usize;
+
+
+impl fmt::Display for ColorStats {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {} stones, {} groups, {} captured",
+               &self.stone,
+               &self.stones,
+               &self.groups,
+               &self.captured
+        )
+    }
+}
+
+struct GoTemplate {}
+
+// impl GoTemplate {
+//     pub fn color_stats(&self) -> Template {
+//         let stone = L::str("");
+//         let stones = L::str("");
+//         let groups = L::str("");
+//         let captured = L::str("");
+//         let mut res = Template::new(L::hori(vec![
+//             stone.clone(),
+//             L::str(": "),
+//             stones.clone(),
+//             L::str(" stones, "),
+//             groups.clone(),
+//             L::str(" groups, "),
+//             captured.clone(),
+//             L::str(" captured"),
+//         ]));
+//         res.register(0, &stone);
+//         res.register(1, &stones);
+//         res.register(2, &groups);
+//         res.register(3, &captured);
+//         res
+//     }
+//
+//     pub fn stats_template(&self) -> Template {
+//         let black = self.color_stats();
+//         let white = self.color_stats();
+//         let none = self.color_stats();
+//
+//         let mut res = Template::new(L::vert(vec![
+//             black.template,
+//             white.template,
+//             none.template,
+//         ]));
+//         let mut i = 0;
+//         for (k, v) in black.vars {
+//             res.register(k, &v);
+//         }
+//         for (k, v) in white.vars {
+//             res.register(k, &v);
+//         }
+//         for (k, v) in none.vars {
+//             res.register(k, &v);
+//         }
+//
+//         res
+//     }
+// }
 
 impl GoBoard {
     pub(crate) fn stats_str(&self) -> String {
