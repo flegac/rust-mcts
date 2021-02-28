@@ -13,10 +13,11 @@ extern crate rust_tools;
 
 pub mod stones;
 pub mod action;
-pub mod gostate;
 pub mod board;
-pub mod game;
+pub mod sgf;
 pub mod display;
+pub mod groups;
+pub mod stats;
 
 #[cfg(test)]
 mod tests {
@@ -24,9 +25,8 @@ mod tests {
 
     use bit_set::BitSet;
     use graph_lib::topology::Topology;
-    use rpool::{Pool, Poolable, PoolScaleMode};
 
-    use board::goboard::GoBoard;
+    use board::go_state::GoState;
     use board::grid::Grid;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;

@@ -7,7 +7,7 @@ use graph_lib::algo::flood::Flood;
 use graph_lib::topology::Topology;
 
 use board::go::Go;
-use board::goboard::GoBoard;
+use board::go_state::GoState;
 use board::grid::{GoCell, Grid};
 use display::display::GoDisplay;
 use display::goshow::GoShow;
@@ -84,7 +84,7 @@ impl GoGroup {
     }
 
 
-    pub fn split(&mut self, board: &GoBoard) -> Vec<GoGroup> {
+    pub fn split(&mut self, board: &GoState) -> Vec<GoGroup> {
         let mut res = vec![];
         while !self.is_empty() {
             res.push(self.next_split(board));
@@ -92,7 +92,7 @@ impl GoGroup {
         res
     }
 
-    fn next_split(&mut self, board: &GoBoard) -> GoGroup {
+    fn next_split(&mut self, board: &GoState) -> GoGroup {
         let to_visit = self.cells.clone();
         let cell = to_visit.iter().next().unwrap();
 
@@ -125,7 +125,7 @@ mod tests {
     use std::convert::TryFrom;
     use std::hash::{Hash, Hasher};
 
-    use board::goboard::GoBoard;
+    use board::go_state::GoState;
     use board::grid::Grid;
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;

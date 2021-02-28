@@ -1,20 +1,23 @@
 use bit_set::BitSet;
 
 use action::GoAction;
-use board::goboard::GoBoard;
+use board::go_state::GoState;
 use display::range::Range2;
 use rust_tools::screen::layout::layout::LayoutRc;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::stone::Stone;
+use sgf::sgf_export::Sequence;
 
 pub trait GoShow {
-    fn board(board: &GoBoard) -> LayoutRc;
-    fn board_range(board: &GoBoard, range: Range2) -> LayoutRc;
-    fn group_layout(board: &GoBoard, group: &GoGroup) -> LayoutRc;
-    fn group(board: &GoBoard, group: &GoGroup) -> String;
+    fn game(board: &GoState)-> Sequence;
+
+    fn board(board: &GoState) -> LayoutRc;
+    fn board_range(board: &GoState, range: Range2) -> LayoutRc;
+    fn group_layout(board: &GoState, group: &GoGroup) -> LayoutRc;
+    fn group(board: &GoState, group: &GoGroup) -> String;
     fn cell(xy: (usize, usize)) -> String;
-    fn cells(board: &GoBoard, stone: Stone, cells: &BitSet) -> String;
+    fn cells(board: &GoState, stone: Stone, cells: &BitSet) -> String;
     fn stone(stone: Stone) -> String;
     fn action(action: &GoAction) -> String;
     fn column(x: usize) -> String;

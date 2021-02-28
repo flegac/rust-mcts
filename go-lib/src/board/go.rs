@@ -2,10 +2,10 @@ use bit_set::BitSet;
 use graph_lib::topology::Topology;
 use itertools::Itertools;
 
-use board::goboard::GoBoard;
+use board::go_state::GoState;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
-use board::groups::group_access::GroupAccess;
+use groups::group_access::GroupAccess;
 
 pub struct Go {}
 
@@ -21,18 +21,18 @@ impl Go {
     }
 
 
-    pub fn count_stones(stone: Stone, board: &GoBoard) -> usize {
+    pub fn count_stones(stone: Stone, board: &GoState) -> usize {
         board.groups_by_stone(stone)
             .iter()
             .map(|g| g.borrow().stones())
             .sum()
     }
 
-    pub fn count_groups(stone: Stone, board: &GoBoard) -> usize {
+    pub fn count_groups(stone: Stone, board: &GoState) -> usize {
         board.groups_by_stone(stone).len()
     }
 
-    pub fn count_territory(stone: Stone, board: &GoBoard) -> usize {
+    pub fn count_territory(stone: Stone, board: &GoState) -> usize {
         match stone {
             Stone::None => 0,
             _ => board.groups_by_stone(Stone::None)
@@ -43,7 +43,7 @@ impl Go {
         }
     }
 
-    pub fn get_owner(board: &GoBoard, group: GoGroupRc) -> Stone {
+    pub fn get_owner(board: &GoState, group: GoGroupRc) -> Stone {
         assert!(group.borrow().stone == Stone::None);
 
         let adjacents = Go::adjacent_cells(board, &group.borrow().cells);

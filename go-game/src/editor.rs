@@ -1,4 +1,4 @@
-use go_lib::gostate::GoState;
+use go_lib::board::go_state::GoState;
 
 pub struct GoEditor {
     state: GoState

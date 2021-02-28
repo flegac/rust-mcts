@@ -9,19 +9,20 @@ use graph_lib::topology::Topology;
 use itertools::Itertools;
 
 use action::GoAction;
-use board::goboard::GoBoard;
-use board::groups::group_access::GroupAccess;
-use board::stats::board_stats::{BoardStats, FullStats};
-use board::stats::stone_score::StoneScore;
-use board::stats::stone_stats::StoneStats;
+use board::go_state::GoState;
 use display::goshow::GoShow;
 use display::range::Range2;
+use groups::group_access::GroupAccess;
 use rust_tools::screen::drawer::Drawer;
 use rust_tools::screen::layout::hlayout::HLayout;
-use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
+use rust_tools::screen::layout::layout::{L, LayoutRc};
 use rust_tools::screen::layout::template::Template;
 use rust_tools::screen::layout::vlayout::VLayout;
 use rust_tools::screen::screen::Screen;
+use sgf::sgf_export::{Sequence, SGF};
+use stats::board_stats::{BoardStats, FullStats};
+use stats::stone_score::StoneScore;
+use stats::stone_stats::StoneStats;
 use stones::group::GoGroup;
 use stones::stone::Stone;
 
@@ -30,6 +31,16 @@ pub struct GoDisplay {}
 const BIG_A: usize = 'A' as usize;
 const SMALL_A: usize = 'a' as usize;
 
+
+impl fmt::Display for GoState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}\nhistory({}):\n{}\n",
+               GoDisplay::board(&self).to_string(),
+               self.stats.round,
+               GoDisplay::game(&self)
+        )
+    }
+}
 
 impl fmt::Display for StoneScore {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -62,7 +73,7 @@ impl fmt::Display for BoardStats {
     }
 }
 
-impl GoBoard {
+impl GoState {
     pub(crate) fn score_str(&self) -> String {
         let mut blacks = self.score(Stone::Black).to_string();
         let mut whites = self.score(Stone::White).to_string();
@@ -79,7 +90,7 @@ impl GoBoard {
 
 
 impl GoDisplay {
-    pub fn board_str(board: &GoBoard, range: Range2) -> String {
+    pub fn board_str(board: &GoState, range: Range2) -> String {
         let mut res = String::new();
         let columns = String::from_iter(
             range.x.iter()
@@ -105,7 +116,11 @@ impl GoDisplay {
 
 
 impl GoShow for GoDisplay {
-    fn board(board: &GoBoard) -> LayoutRc {
+    fn game(board: &GoState) -> Sequence {
+        SGF::game(board.goban().size, Stone::Black, board.history.as_slice())
+    }
+
+    fn board(board: &GoState) -> LayoutRc {
         let range = Range2::board(board.goban().size);
         L::str(&format!("{}\n{}\n{}",
                         Self::board_str(board, range),
@@ -114,17 +129,17 @@ impl GoShow for GoDisplay {
         ))
     }
 
-    fn board_range(board: &GoBoard, range: Range2) -> LayoutRc {
+    fn board_range(board: &GoState, range: Range2) -> LayoutRc {
         L::str(&Self::board_str(board, range))
     }
-    fn group_layout(board: &GoBoard, group: &GoGroup) -> LayoutRc {
+    fn group_layout(board: &GoState, group: &GoGroup) -> LayoutRc {
         let range = group.cells.iter()
             .map(|c| board.goban().xy(c))
             .fold(Range2::empty(), |c, v| c.merge(v));
         Self::board_range(board, range)
     }
 
-    fn group(board: &GoBoard, group: &GoGroup) -> String {
+    fn group(board: &GoState, group: &GoGroup) -> String {
         let mut res = String::new();
         res.push_str("{");
         res.push_str(&format!("{} #{}:", group.stone, group.stones()));
@@ -140,7 +155,7 @@ impl GoShow for GoDisplay {
         format!("{}{}", Self::column(xy.0), Self::line(xy.1))
     }
 
-    fn cells(board: &GoBoard, stone: Stone, cells: &BitSet) -> String {
+    fn cells(board: &GoState, stone: Stone, cells: &BitSet) -> String {
         let mut res = String::new();
         res.push_str("{");
         res.push_str(&format!("{} #{}:", stone, cells.len()));

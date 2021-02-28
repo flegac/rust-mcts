@@ -23,23 +23,24 @@ Hum... Do not expect wonders !
 
 # TODO
 
-- Implements GoEditor : command line interface to edit & visualise GoState/GoBoard
 - multi-threading : simulations
 - State copy
 
-- Grid Layout
-- Optimise Screen buffers copies
-
+- CORRECT RULES ! (check position against other application - using SGF output)
 - Ko rules
+- suicide move : adding a stone that kill itself is possible.
+
+- improve SGF support
+- LOAD SGF !!
+
+- Optimise Layout speed (String creation & copies)
+- Implements GoEditor : command line interface to edit & visualise GoState/GoBoard
 
 # Issues
 
 - Screen.mirror() & call it .transpose()
 
 - Correct end game (pass/pass)
-
-
-- suicide move : adding a stone that kill itself is possible.
 
 # Exemples
 

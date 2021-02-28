@@ -13,7 +13,8 @@ use log::LevelFilter;
 use bench::Bench;
 use constants::{BENCH, GOBAN_SIZE, LOG_LEVEL, SEED, SIM_FACTOR};
 use go_lib::board::go::Go;
-use go_lib::gostate::GoState;
+use go_lib::board::go_state::GoState;
+use go_lib::board::grid::Grid;
 use mcts_lib::mcts::MState;
 use mcts_lib::mymcts::MyMcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
@@ -42,7 +43,7 @@ pub fn main() {
                          &selection_score);
         }
         bench.inc_bench(&round);
-        root.state_mut().board.update_score(Go::count_territory);
+        root.state_mut().update_score(Go::count_territory);
         log::info!("Board:\n{}", root.state());
         log::info!("{} x {} | results: {}", SIM_FACTOR, round, mcts.root);
     }

@@ -10,10 +10,11 @@ use log::LevelFilter;
 
 use board::go::Go;
 use board::grid::{GoCell, Grid};
-use board::groups::group_access::GroupAccess;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
+use display::range::Range2;
+use groups::group_access::GroupAccess;
 
 pub struct BoardGroups {
     id_gen: usize,
@@ -43,6 +44,12 @@ impl BoardGroups {
         res.groups.resize_with(group.borrow().stones(), || group.clone());
         res.nones.insert(group.clone());
         res
+    }
+
+    pub fn group_range(&self, group: &GoGroupRc) -> Range2 {
+        group.borrow().cells.iter()
+            .map(|c| self.goban().xy(c))
+            .fold(Range2::empty(), |c, v| c.merge(v))
     }
 
     pub fn reset(&mut self) {

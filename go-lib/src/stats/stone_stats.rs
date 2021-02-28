@@ -1,13 +1,13 @@
 use std::fmt;
 
 use board::go::Go;
-use board::goboard::GoBoard;
+use board::go_state::GoState;
 use display::display::GoDisplay;
 use display::templates::GoTemplate;
 use rust_tools::screen::layout::layout::L;
 use rust_tools::screen::layout::template::Template;
 use stones::stone::Stone;
-use board::stats::board_stats::FullStats;
+use stats::board_stats::FullStats;
 
 pub struct StoneStats {
     pub stone: Stone,
@@ -28,7 +28,7 @@ impl StoneStats {
         }
     }
 
-    pub fn new(stone: Stone, board: &GoBoard) -> StoneStats {
+    pub fn new(stone: Stone, board: &GoState) -> StoneStats {
         StoneStats {
             stone,
             stones: Go::count_stones(stone, board),
