@@ -1,16 +1,13 @@
 use board::goboard::GoBoard;
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
-use display::templates::GoTemplate;
-use rust_tools::screen::layout::layout::{L, Layout};
-use rust_tools::screen::layout::template::Template;
 use stones::group::GoGroup;
 use stones::stone::Stone;
 
 pub trait FullStats {
     fn score(&self, stone: Stone) -> StoneScore;
     fn stats(&self, stone: Stone) -> StoneStats;
-    fn capture(&mut self, stone: Stone, n: usize);
+    fn add_prisoners(&mut self, stone: Stone, n: usize);
     fn set_territory(&mut self, stone: Stone, n: usize);
 }
 
@@ -43,8 +40,10 @@ impl FullStats for BoardStats {
         }
     }
 
-    fn capture(&mut self, stone: Stone, n: usize) {
-        self.for_stone_mut(stone).captured += n;
+    fn add_prisoners(&mut self, stone: Stone, n: usize) {
+        if stone != Stone::None {
+            self.for_stone_mut(stone).captured += n;
+        }
     }
 
     fn set_territory(&mut self, stone: Stone, n: usize) {

@@ -1,16 +1,17 @@
 use core::fmt;
 use std::cmp::Ordering;
 
+use itertools::Itertools;
+
 use board::goboard::GoBoard;
 use board::grid::Grid;
+use board::stats::board_stats::FullStats;
+use display::display::GoDisplay;
+use display::goshow::GoShow;
 use game::gogame::Sequence;
 use mcts_lib::state::{GameResult, State};
 
 use crate::action::GoAction;
-use itertools::Itertools;
-use display::display::GoDisplay;
-use display::goshow::GoShow;
-use board::stats::board_stats::FullStats;
 
 pub struct GoState {
     pub board: GoBoard,
@@ -49,12 +50,7 @@ impl State<GoAction> for GoState {
     }
 
     fn actions(&self) -> Vec<GoAction> {
-        let mut actions = self.board.empty_cells.cells.iter()
-            .map(|c| self.board.goban.xy(c))
-            .map(|(x, y)| GoAction::Cell(x, y))
-            .collect_vec();
-        actions.push(GoAction::Pass);
-        actions
+        self.board.actions()
     }
 
     fn apply(&mut self, action: GoAction) {

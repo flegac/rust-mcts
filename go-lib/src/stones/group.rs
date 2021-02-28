@@ -58,6 +58,10 @@ impl GoGroup {
     }
 
 
+    pub(crate) fn add_cells(&mut self, cells: &BitSet) {
+        self.cells.union_with(cells);
+    }
+
     pub(crate) fn add_group(&mut self, other: &GoGroup) {
         assert_eq!(self.stone, other.stone);
         self.cells.union_with(&other.cells);
@@ -77,12 +81,6 @@ impl GoGroup {
 
     pub fn is_dead(&self) -> bool {
         self.liberties == 0
-    }
-
-    pub fn update_liberties(&mut self, board: &GoBoard) {
-        let mut adjacents = Go::adjacent_cells(board, &self.cells);
-        adjacents.intersect_with(&board.empty_cells.cells);
-        self.liberties = adjacents.len();
     }
 
 

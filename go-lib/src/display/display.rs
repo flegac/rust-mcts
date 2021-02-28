@@ -9,7 +9,8 @@ use graph_lib::topology::Topology;
 use itertools::Itertools;
 
 use action::GoAction;
-use board::goboard::{GoBoard, GroupAccess};
+use board::goboard::GoBoard;
+use board::groups::group_access::GroupAccess;
 use board::stats::board_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
@@ -90,7 +91,7 @@ impl GoDisplay {
         for y in range.y.iter().rev() {
             res.push_str(&format!("{} |", GoDisplay::line(y)));
             for x in range.x.iter() {
-                let stone = Self::stone(board.stone_at(board.goban.cell(x, y)));
+                let stone = Self::stone(board.stone_at(board.goban().cell(x, y)));
                 res.push_str(&format!(" {} ", stone));
             }
             res.push_str(&format!("|\n"));
@@ -105,7 +106,7 @@ impl GoDisplay {
 
 impl GoShow for GoDisplay {
     fn board(board: &GoBoard) -> LayoutRc {
-        let range = Range2::board(board.goban.size);
+        let range = Range2::board(board.goban().size);
         L::str(&format!("{}\n{}\n{}",
                         Self::board_str(board, range),
                         board.score_str(),
@@ -118,7 +119,7 @@ impl GoShow for GoDisplay {
     }
     fn group_layout(board: &GoBoard, group: &GoGroup) -> LayoutRc {
         let range = group.cells.iter()
-            .map(|c| board.goban.xy(c))
+            .map(|c| board.goban().xy(c))
             .fold(Range2::empty(), |c, v| c.merge(v));
         Self::board_range(board, range)
     }
@@ -129,7 +130,7 @@ impl GoShow for GoDisplay {
         res.push_str(&format!("{} #{}:", group.stone, group.stones()));
         for cell in group.cells.iter() {
             res.push_str(" ");
-            res.push_str(&GoDisplay::cell(board.goban.xy(cell)));
+            res.push_str(&GoDisplay::cell(board.goban().xy(cell)));
         }
         res.push_str("}");
         res
@@ -145,7 +146,7 @@ impl GoShow for GoDisplay {
         res.push_str(&format!("{} #{}:", stone, cells.len()));
         for cell in cells.iter() {
             res.push_str(" ");
-            res.push_str(&GoDisplay::cell(board.goban.xy(cell)));
+            res.push_str(&GoDisplay::cell(board.goban().xy(cell)));
         }
         res.push_str("}");
         res

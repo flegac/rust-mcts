@@ -13,27 +13,22 @@ use itertools::Itertools;
 use log::LevelFilter;
 
 use action::GoAction;
-use board::board_groups::BoardGroups;
+use board::go::Go;
 use board::grid::{GoCell, Grid};
+use board::groups::board_groups::BoardGroups;
+use board::groups::group_access::GroupAccess;
 use board::stats::board_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
 use display::range::Range2;
-use rust_tools::screen::layout::layout::L;
+use rust_tools::screen::layout::layout::{L, LayoutRc};
 use rust_tools::screen::layout::template::Template;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
-
-pub trait GroupAccess {
-    fn group_at(&self, cell: GoCell) -> &GoGroupRc;
-    fn stone_at(&self, cell: GoCell) -> Stone;
-    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc, RandomState>;
-    fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc, RandomState>;
-}
 
 pub struct GoBoard {
     // template: Template,
@@ -45,40 +40,43 @@ pub struct GoBoard {
     pub(crate) stats: BoardStats,
 
     //groups
-    gg: BoardGroups,
-    pub(crate) empty_cells: GoGroup,
+    pub(crate) gg: BoardGroups,
 
     //graph
-    pub(crate) goban: Grid,
     pub(crate) flood: RefCell<GFlood>,
 
 }
 
 impl GoBoard {
     pub fn new(goban: Grid) -> Self {
-        let gg = BoardGroups::new(&goban);
         let mut board = GoBoard {
             stone: Stone::Black,
             pass_sequence: 0,
             ko: None,
-            goban,
-            gg,
+            gg: BoardGroups::new(goban),
             stats: BoardStats::new(),
-            empty_cells: GoGroup::new(),
             flood: RefCell::new(GFlood::new()),
         };
-        board.reset();
+        board.stats.add_group(&board.gg.empty_cells);
         board
+    }
+
+    pub(crate) fn actions(&self) -> Vec<GoAction> {
+        let mut actions = self.gg.empty_cells.cells.iter()
+            .map(|c| self.goban().xy(c))
+            .map(|(x, y)| GoAction::Cell(x, y))
+            .collect_vec();
+        actions.push(GoAction::Pass);
+        actions
     }
 
     pub fn reset(&mut self) {
         self.stone = Stone::Black;
         self.pass_sequence = 0;
         self.ko = None;
-        self.gg = BoardGroups::new(&self.goban);
+        self.gg.reset();
         self.stats = BoardStats::new();
-        self.empty_cells = GoGroup::from_goban(&self.goban);
-        self.stats.add_group(&self.empty_cells);
+        self.stats.add_group(&self.gg.empty_cells);
     }
 
     pub fn end_game(&self) -> bool {
@@ -88,14 +86,7 @@ impl GoBoard {
     }
 
     pub fn play(&mut self, action: GoAction) {
-        log::trace!("NEW PLAY: {} @ {}", self.stone, action);
-
-        let before = if log::max_level() <= LevelFilter::Trace {
-            GoDisplay::board(self)
-        } else {
-            L::str("")
-        };
-
+        let backup = self.play_start(action);
 
         match action {
             GoAction::Pass => {
@@ -103,34 +94,26 @@ impl GoBoard {
             }
             GoAction::Cell(x, y) => {
                 self.pass_sequence = 0;
-                let cell = self.goban.cell(x, y);
+                let cell = self.goban().cell(x, y);
                 self.place_stone(cell, self.stone);
             }
         }
         self.stone = self.stone.switch();
         self.stats.round += 1;
 
-        if log::max_level() <= LevelFilter::Trace {
-            log::trace!("\n{}", L::hori(vec![
-                before,
-                L::str(" - padding - "),
-                GoDisplay::board(self)
-            ]).to_string());
-        }
-
-        self.check_correctness();
+        self.play_end(backup);
     }
 
     pub fn group_range(&self, group: &GoGroupRc) -> Range2 {
         group.borrow().cells.iter()
-            .map(|c| self.goban.xy(c))
+            .map(|c| self.goban().xy(c))
             .fold(Range2::empty(), |c, v| c.merge(v))
     }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
         let splited_groups = self.handle_old_empty_group(cell);
 
-        let new_group = self.fusion_allied_groups2(cell, stone);
+        let new_group = self.fusion_allied_groups(cell, stone);
 
         self.kill_ennemy_groups(cell, stone);
 
@@ -148,7 +131,7 @@ impl GoBoard {
     }
 
     fn check_correctness(&self) {
-        assert_eq!(self.empty_cells.stones(), self.stats(Stone::None).stones);
+        assert_eq!(self.gg.empty_cells.stones(), self.stats(Stone::None).stones);
         assert_eq!(
             self.stats(Stone::Black).stones
                 + self.stats(Stone::White).stones
@@ -168,10 +151,10 @@ impl GoBoard {
 
 
     fn handle_old_empty_group(&mut self, cell: usize) -> Vec<GoGroupRc> {
-        self.empty_cells.cells.remove(cell);
+        self.gg.empty_cells.cells.remove(cell);
 
         let old = self.group_at(cell).clone();
-        let mut old_connections = self.goban.edges(cell).clone();
+        let mut old_connections = self.goban().edges(cell).clone();
         old_connections.intersect_with(&old.borrow().cells);
         old_connections.remove(cell); // TODO: useless ?
 
@@ -240,57 +223,21 @@ impl GoBoard {
             old_connections.is_subset(visited)
         };
         let visited = self.flood.borrow_mut().flood_check(
-            &self.goban, old_cell, &topology, &check_connection,
+            self.goban(), old_cell, &topology, &check_connection,
         );
         let split_needed = !check_connection(&visited);
         split_needed
     }
 
 
-    fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
-        assert!(!groups.is_empty());
+    fn fusion_allied_groups(&mut self, cell: usize, stone: Stone) -> GoGroupRc {
+        let mut groups = self.adjacent_groups(cell).into_iter()
+            .filter(|g| g.borrow().stone == stone)
+            .collect_vec();
 
-
-        //forget all groups
-        for g in groups {
-            self.gg.clear_group_color(g);
-        }
-
-        //create one unique group
-        let group = groups
-            .iter()
-            .map(GoGroupRc::clone)
-            .fold1(|g1, g2| {
-                g1.borrow_mut().add_group(g2.borrow().deref());
-                g1
-            })
-            .unwrap();
-
-
-        // add the final group
-        self.gg.update_group(&group);
-        self.stats.for_stone_mut(group.borrow().stone).groups -= (groups.len() - 1);
-
-        if log::max_level() <= LevelFilter::Trace {
-            log::trace!("FUSION {}:\n{}", group.borrow(), self.stats);
-        }
-        group
-    }
-
-    fn fusion_allied_groups2(&mut self, cell: usize, stone: Stone) -> GoGroupRc {
         let new_group = self.gg.new_group(GoGroup::from_cells(stone, &[cell]));
         self.update_group(&new_group);
-        let mut groups = vec![new_group];
-        self.goban.edges(cell)
-            .iter()
-            .filter(|&c| self.stone_at(c) == stone)
-            .map(|c| self.group_at(c))
-            .map(|g| g.clone())
-            .sorted()
-            .dedup()
-            .for_each(|g: GoGroupRc| {
-                groups.push(g)
-            });
+        groups.push(new_group);
 
         self.fusion(&groups)
     }
@@ -307,25 +254,16 @@ impl GoBoard {
     }
 
     fn kill_ennemy_groups(&mut self, cell: usize, stone: Stone) {
-        log::trace!("kill_ennemy_groups");
-        self.goban.edges(cell).iter()
-            .filter(|&c| self.stone_at(c) == stone.switch())
-            .map(|c| self.group_at(c))
-            .map(|g| g.clone())
-            .sorted()
-            .dedup()
-            .for_each(|g: GoGroupRc| {
-                self.try_capture(g.clone());
+        self.adjacent_groups(cell).into_iter()
+            .filter(|g| g.borrow().stone == stone.switch())
+            .for_each(|g| {
+                self.try_capture(g);
             });
     }
 
-    fn try_capture(&mut self, group: GoGroupRc) -> bool {
-        //TODO: this is sufficient ?
-        // g.borrow_mut().liberties -= 1;
-        // let libs = g.borrow_mut().liberties - 1;
-        group.borrow_mut().update_liberties(self);
-        // assert_eq!(libs, g.borrow().liberties);
 
+    fn try_capture(&mut self, group: GoGroupRc) -> bool {
+        self.update_liberties(&group);
         if group.borrow().is_dead() {
             if log::max_level() <= LevelFilter::Trace {
                 log::trace!("captured : {}\n {}",
@@ -333,19 +271,6 @@ impl GoBoard {
                             GoDisplay::group_layout(&self, group.borrow().deref()).to_string(),
                 );
             }
-
-            self.capture(group.borrow().stone, group.borrow().stones());
-
-            //update ancient color group
-            self.gg.clear_group_color(&group);
-            self.stats.rem_group(group.borrow().deref());
-
-
-            // remove stone from group & update None groups
-            group.borrow_mut().set_stone(Stone::None);
-            self.empty_cells.add_group(group.borrow().deref());
-            self.gg.update_group_color(&group);
-            self.stats.for_stone_mut(Stone::None).groups += 1;
 
             true
         } else {
@@ -361,18 +286,105 @@ impl GoBoard {
             log::trace!("add: {}\n{}", group, self.stats);
         }
     }
+
+
+    fn play_end(&mut self, backup: LayoutRc) {
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("\n{}", L::hori(vec![
+                backup,
+                L::str(" - padding - "),
+                GoDisplay::board(self)
+            ]).to_string());
+        }
+        self.check_correctness();
+    }
+
+    fn play_start(&mut self, action: GoAction) -> LayoutRc {
+        log::trace!("NEW PLAY: {} @ {}", self.stone, action);
+        if log::max_level() <= LevelFilter::Trace {
+            GoDisplay::board(self)
+        } else {
+            L::str("")
+        }
+    }
 }
 
 
 impl Topology for GoBoard {
     fn vertices(&self) -> &BitSet<u32> {
-        self.goban.vertices()
+        self.goban().vertices()
     }
     fn edges(&self, v: usize) -> &BitSet<u32> {
-        self.goban.edges(v)
+        self.goban().edges(v)
     }
 }
 
+impl FullStats for GoBoard {
+    fn score(&self, stone: Stone) -> StoneScore {
+        self.stats.score(stone)
+    }
+
+    fn stats(&self, stone: Stone) -> StoneStats {
+        self.stats.stats(stone)
+    }
+
+    fn add_prisoners(&mut self, stone: Stone, n: usize) {
+        self.stats.add_prisoners(stone, n)
+    }
+
+    fn set_territory(&mut self, stone: Stone, n: usize) {
+        self.stats.set_territory(stone, n)
+    }
+}
+
+impl GroupAccess for GoBoard {
+    fn goban(&self) -> &Grid {
+        &self.gg.goban()
+    }
+
+    fn capture(&mut self, group: &GoGroupRc) {
+        self.stats.add_prisoners(group.borrow().stone, group.borrow().stones());
+        self.stats.rem_group(group.borrow().deref());
+        self.stats.for_stone_mut(Stone::None).groups += 1;
+
+        //update ancient color group
+        self.gg.capture(group)
+    }
+
+    fn group_at(&self, cell: usize) -> &GoGroupRc {
+        self.gg.group_at(cell)
+    }
+
+    fn stone_at(&self, cell: usize) -> Stone {
+        self.gg.stone_at(cell)
+    }
+
+
+    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc, RandomState> {
+        self.gg.groups_by_stone_mut(stone)
+    }
+
+    fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc, RandomState> {
+        self.gg.groups_by_stone(stone)
+    }
+
+    fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
+        let group = self.gg.fusion(groups);
+        self.stats.for_stone_mut(group.borrow().stone).groups -= (groups.len() - 1);
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("FUSION {}:\n{}", group.borrow(), self.stats);
+        }
+        group
+    }
+
+    fn update_liberties(&self, group: &GoGroupRc) {
+        self.gg.update_liberties(group)
+    }
+
+    fn adjacent_groups(&self, cell: usize) -> Vec<GoGroupRc> {
+        self.gg.adjacent_groups(cell)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -421,41 +433,5 @@ mod tests {
             assert_eq!(x, x2);
             assert_eq!(y, y2);
         });
-    }
-}
-
-impl FullStats for GoBoard {
-    fn score(&self, stone: Stone) -> StoneScore {
-        self.stats.score(stone)
-    }
-
-    fn stats(&self, stone: Stone) -> StoneStats {
-        self.stats.stats(stone)
-    }
-
-    fn capture(&mut self, stone: Stone, n: usize) {
-        self.stats.capture(stone, n)
-    }
-
-    fn set_territory(&mut self, stone: Stone, n: usize) {
-        self.stats.set_territory(stone, n)
-    }
-}
-
-impl GroupAccess for GoBoard {
-    fn group_at(&self, cell: usize) -> &GoGroupRc {
-        self.gg.group_at(cell)
-    }
-
-    fn stone_at(&self, cell: usize) -> Stone {
-        self.gg.stone_at(cell)
-    }
-
-    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc, RandomState> {
-        self.gg.groups_by_stone_mut(stone)
-    }
-
-    fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc, RandomState> {
-        self.gg.groups_by_stone(stone)
     }
 }

@@ -2,9 +2,10 @@ use bit_set::BitSet;
 use graph_lib::topology::Topology;
 use itertools::Itertools;
 
-use board::goboard::{GoBoard, GroupAccess};
+use board::goboard::GoBoard;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
+use board::groups::group_access::GroupAccess;
 
 pub struct Go {}
 

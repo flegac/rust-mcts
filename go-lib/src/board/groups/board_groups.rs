@@ -1,36 +1,62 @@
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
+use std::iter::Map;
+use std::ops::Deref;
 
+use bit_set::Iter;
+use graph_lib::topology::Topology;
+use itertools::{Itertools, Unique};
 use log::LevelFilter;
 
-use board::goboard::GroupAccess;
+use board::go::Go;
 use board::grid::{GoCell, Grid};
+use board::groups::group_access::GroupAccess;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
 pub struct BoardGroups {
     id_gen: usize,
+    goban: Grid,
     groups: Vec<GoGroupRc>,
     blacks: HashSet<GoGroupRc>,
     whites: HashSet<GoGroupRc>,
     nones: HashSet<GoGroupRc>,
+    pub(crate) empty_cells: GoGroup,
+
 }
 
 impl BoardGroups {
-    pub fn new(goban: &Grid) -> BoardGroups {
+    pub fn new(goban: Grid) -> BoardGroups {
+        let gg = GoGroup::from_goban(&goban);
+        let empty_cells = GoGroup::from_goban(&goban);
         let mut res = BoardGroups {
             id_gen: 0,
+            goban,
+            empty_cells,
             groups: vec![],
             blacks: HashSet::new(),
             whites: HashSet::new(),
             nones: HashSet::new(),
         };
-        let group = res.new_group(GoGroup::from_goban(goban));
+        let group = res.new_group(gg);
         res.groups.resize_with(group.borrow().stones(), || group.clone());
         res.nones.insert(group.clone());
         res
     }
+
+    pub fn reset(&mut self) {
+        self.id_gen = 0;
+        self.empty_cells = GoGroup::from_goban(&self.goban);
+        self.groups.clear();
+        self.blacks.clear();
+        self.whites.clear();
+        self.nones.clear();
+        let group = self.new_group(GoGroup::from_goban(&self.goban));
+        self.groups.resize_with(group.borrow().stones(), || group.clone());
+        self.nones.insert(group.clone());
+    }
+
 
     pub fn new_group(&mut self, mut group: GoGroup) -> GoGroupRc {
         group.id = self.id_gen;
@@ -45,7 +71,6 @@ impl BoardGroups {
         }
         self.update_group_color(&group);
     }
-
 
     pub fn clear_group_color(&mut self, group: &GoGroupRc) {
         self.blacks.remove(group);
@@ -64,6 +89,43 @@ impl BoardGroups {
 }
 
 impl GroupAccess for BoardGroups {
+    fn goban(&self) -> &Grid {
+        &self.goban
+    }
+
+    fn capture(&mut self, group: &GoGroupRc) {
+        assert!(!group.borrow().is_empty());
+        group.borrow_mut().set_stone(Stone::None);
+
+        self.blacks.remove(group);
+        self.whites.remove(group);
+        self.nones.insert(group.clone());
+
+        self.empty_cells.add_cells(&group.borrow().cells);
+    }
+
+    fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
+        assert!(!groups.is_empty());
+        //forget all groups
+        for g in groups {
+            self.clear_group_color(g);
+        }
+
+        //create one unique group
+        let group = groups
+            .iter()
+            .map(GoGroupRc::clone)
+            .fold1(|g1, g2| {
+                g1.borrow_mut().add_group(g2.borrow().deref());
+                g1
+            })
+            .unwrap();
+
+        // add the final group
+        self.update_group(&group);
+        group
+    }
+
     fn group_at(&self, cell: GoCell) -> &GoGroupRc {
         &self.groups[cell]
     }
@@ -72,6 +134,7 @@ impl GroupAccess for BoardGroups {
         self.group_at(cell).borrow().stone
     }
 
+
     fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc, RandomState> {
         match stone {
             Stone::None => &mut self.nones,
@@ -79,7 +142,6 @@ impl GroupAccess for BoardGroups {
             Stone::White => &mut self.whites
         }
     }
-
 
     fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc, RandomState> {
         match stone {
@@ -93,5 +155,20 @@ impl GroupAccess for BoardGroups {
         //     .unique()
         //     .map(|g| g.clone())
         //     .collect_vec()
+    }
+
+    fn update_liberties(&self, group: &GoGroupRc) {
+        let mut adjacents = Go::adjacent_cells(&self.goban, &group.borrow().cells);
+        adjacents.intersect_with(&self.empty_cells.cells);
+        group.borrow_mut().liberties = adjacents.len();
+    }
+
+    fn adjacent_groups(&self, cell: usize) -> Vec<GoGroupRc> {
+        self.goban.edges(cell)
+            .iter()
+            .map(|c| self.group_at(c))
+            .unique()
+            .map(|g| g.clone())
+            .collect_vec()
     }
 }
