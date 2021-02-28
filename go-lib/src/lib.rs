@@ -1,13 +1,15 @@
 extern crate bit_set;
 extern crate core;
-extern crate fixed_typed_arena;
 extern crate graph_lib;
 extern crate itertools;
 extern crate log;
 extern crate mcts_lib;
 extern crate proc_macro;
-extern crate rpool;
 extern crate rust_tools;
+
+// extern crate fixed_typed_arena;
+// extern crate generational_arena;
+// extern crate rpool;
 
 pub mod stones;
 pub mod action;

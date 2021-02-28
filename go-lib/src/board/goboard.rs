@@ -9,6 +9,7 @@ use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 use itertools::Itertools;
+use log::LevelFilter;
 
 use action::GoAction;
 use board::grid::{GoCell, Grid};
@@ -113,16 +114,18 @@ impl GoBoard {
     pub fn end_game(&self) -> bool {
         let limit = self.vertex_number();
         let double_pass = self.pass_sequence >= 2;
-        if double_pass {
-            log::info!("DOUBLE PASS ! YEAAA");
-        }
-        self.stats.round > limit || self.stats.none.groups == 0 || double_pass
+        self.stats.round > limit || self.stats.none.groups == 0  // || double_pass
     }
-
 
     pub fn play(&mut self, action: GoAction) {
         log::trace!("NEW PLAY: {} @ {}", self.stone, action);
-        let before = GoDisplay::board(self);
+
+        let before = if log::max_level() <= LevelFilter::Trace {
+            GoDisplay::board(self)
+        } else {
+            L::str("")
+        };
+
 
         match action {
             GoAction::Pass => {
@@ -137,14 +140,21 @@ impl GoBoard {
         self.stone = self.stone.switch();
         self.stats.round += 1;
 
-        let full = L::hori(vec![
-            before,
-            L::str(" - padding - "),
-            GoDisplay::board(self)
-        ]);
-        log::trace!("\n{}", full.to_string());
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("\n{}", L::hori(vec![
+                before,
+                L::str(" - padding - "),
+                GoDisplay::board(self)
+            ]).to_string());
+        }
 
         self.check_correctness();
+    }
+
+    pub fn group_range(&self, group: &GoGroupRc) -> Range2 {
+        group.borrow().cells.iter()
+            .map(|c| self.goban.xy(c))
+            .fold(Range2::empty(), |c, v| c.merge(v))
     }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
@@ -152,16 +162,17 @@ impl GoBoard {
 
         let new_group = self.fusion_allied_groups(cell, stone);
         self.kill_ennemy_groups(cell, stone);
-        //FIXME: do not allow this case to happen !
+
         self.check_autokill(new_group);
 
-        if !splited_groups.is_empty() {
-            let mut x = vec![GoDisplay::board_range(self, Range2::board(self.goban.size))];
-            for g in splited_groups {
-                x.push(GoDisplay::group_layout(&self, &g.borrow()));
+
+        if log::max_level() <= LevelFilter::Trace {
+            if !splited_groups.is_empty() {
+                log::trace!("SPLITS:\n{}", L::hori(splited_groups.iter()
+                    .map(|g| self.group_range(g))
+                    .map(|range| GoDisplay::board_range(self, range))
+                    .collect_vec()).to_string());
             }
-            let view = L::hori(x);
-            log::trace!("SPLITS:\n{}", view.to_string());
         }
     }
 
@@ -199,10 +210,12 @@ impl GoBoard {
         old_connections.intersect_with(&old.borrow().cells);
         old_connections.remove(cell); // TODO: useless ?
 
-        log::trace!("handle_old_empty_group: {}",
-                    GoDisplay::cells(self,
-                                     Stone::None,
-                                     &old_connections));
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("handle_old_empty_group: {}",
+                        GoDisplay::cells(self,
+                                         Stone::None,
+                                         &old_connections));
+        }
 
         match old_connections.len() {
             0 => {
@@ -230,7 +243,9 @@ impl GoBoard {
                     old.borrow_mut().cells.remove(cell);
 
                     self.stats.rem_group(old.borrow().deref());
-                    log::trace!("- old (remove): {}\n{}", old, self.stats_str());
+                    if log::max_level() <= LevelFilter::Trace {
+                        log::trace!("- old (remove): {}\n{}", old, self.stats_str());
+                    }
                     let new_groups = old.borrow_mut()
                         .split(&self)
                         .into_iter()
@@ -238,7 +253,9 @@ impl GoBoard {
                         .collect_vec();
 
                     for g in new_groups.iter() {
-                        log::trace!("-{}", GoDisplay::group(self, &g.borrow()));
+                        if log::max_level() <= LevelFilter::Trace {
+                            log::trace!("-{}", GoDisplay::group(self, &g.borrow()));
+                        }
                         self.update_group(g.clone());
                     }
                     new_groups
@@ -278,16 +295,21 @@ impl GoBoard {
                 new_group.borrow_mut().add_group(g.borrow().deref());
                 self.clear_group_color(&g);
                 self.stats.rem_group(&g.borrow());
-                log::trace!("- fusion (remove): {}\n{}", g.borrow(), self.stats_str());
+                if log::max_level() <= LevelFilter::Trace {
+                    log::trace!("- fusion (remove): {}\n{}", g.borrow(), self.stats_str());
+                }
             });
         self.update_group(new_group.clone());
         new_group
     }
 
     fn check_autokill(&mut self, new_group: GoGroupRc) {
+        //FIXME: do not allow this case to happen !
         log::trace!("check_autokill...");
         if self.try_capture(new_group.clone()) {
-            log::trace!("AUTOKILL MOVE! {}", new_group);
+            if log::max_level() <= LevelFilter::Trace {
+                log::trace!("AUTOKILL MOVE! {}", new_group);
+            }
         }
     }
 
@@ -312,10 +334,12 @@ impl GoBoard {
         // assert_eq!(libs, g.borrow().liberties);
 
         if group.borrow().is_dead() {
-            log::trace!("captured : {}\n {}",
-                        GoDisplay::group(&self, group.borrow().deref()),
-                        GoDisplay::group_layout(&self, group.borrow().deref()).to_string(),
-            );
+            if log::max_level() <= LevelFilter::Trace {
+                log::trace!("captured : {}\n {}",
+                            GoDisplay::group(&self, group.borrow().deref()),
+                            GoDisplay::group_layout(&self, group.borrow().deref()).to_string(),
+                );
+            }
             match group.borrow().stone {
                 Stone::None => {}
                 Stone::Black => self.stats.black.captured += group.borrow().stones(),
@@ -360,7 +384,9 @@ impl GoBoard {
         }
         self.update_group_color(&group);
         self.stats.add_group(group.clone().borrow().deref());
-        log::trace!("add: {}\n{}", group, self.stats_str());
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("add: {}\n{}", group, self.stats_str());
+        }
     }
 
     fn update_group_color(&mut self, group: &GoGroupRc) {
@@ -397,10 +423,10 @@ mod tests {
     use graph_lib::algo::flood::Flood;
     use graph_lib::graph::GFlood;
     use graph_lib::topology::Topology;
-    use rpool::{Pool, Poolable, PoolScaleMode};
 
     use board::goboard::GoBoard;
     use board::grid::Grid;
+    use rpool::{Pool, Poolable, PoolScaleMode};
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;
