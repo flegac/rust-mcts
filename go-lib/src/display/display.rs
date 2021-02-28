@@ -2,22 +2,23 @@ use std::fmt;
 use std::iter::FromIterator;
 
 use bit_set::BitSet;
-use graph_lib::topology::Topology;
 use itertools::Itertools;
-
-use action::GoAction;
-use board::goboard::GoBoard;
-use board::stats_board::BoardStats;
-use display::goshow::GoShow;
-use display::range::Range2;
 use rust_tools::screen::drawer::Drawer;
 use rust_tools::screen::layout::hlayout::HLayout;
 use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
 use rust_tools::screen::layout::str_layout::StrLayout;
 use rust_tools::screen::layout::vlayout::VLayout;
 use rust_tools::screen::screen::Screen;
+
+use action::GoAction;
+use board::goboard::GoBoard;
+use board::stats_board::BoardStats;
+use display::goshow::GoShow;
+use display::range::Range2;
+use graph_lib::topology::Topology;
 use stones::group::GoGroup;
 use stones::stone::Stone;
+use std::ops::{Deref, DerefMut};
 
 pub struct GoDisplay {}
 
@@ -53,13 +54,13 @@ impl GoBoard {
 
 impl GoDisplay {
     pub fn board_str(board: &GoBoard, range: Range2) -> String {
+        let mut res = String::new();
         let columns = String::from_iter(
             range.x.iter()
                 .map(Self::column)
                 .map(|x| format!(" {} ", x))
         );
         let separator = String::from_iter(range.x.iter().map(|x| "---"));
-        let mut res = String::new();
         res.push_str(&format!("  +{}+\n", separator));
         for y in range.y.iter().rev() {
             res.push_str(&format!("{} |", GoDisplay::line(y)));

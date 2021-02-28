@@ -14,6 +14,10 @@ impl Range {
               self.1.max(value))
     }
 
+    pub fn size(&self) -> usize {
+        self.1 - self.0
+    }
+
     pub fn iter(&self) -> std::ops::Range<usize> {
         self.0..(self.1 + 1)
     }
@@ -38,6 +42,10 @@ impl Range2 {
             x: Range::empty(),
             y: Range::empty(),
         }
+    }
+
+    pub fn size(&self) -> usize {
+        self.x.size() * self.y.size()
     }
 
     pub fn merge(&self, xy: (usize, usize)) -> Self {
