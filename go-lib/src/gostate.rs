@@ -65,7 +65,7 @@ impl State<GoAction> for GoState {
 impl fmt::Display for GoState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}\nhistory({}):\n{}\n",
-               GoDisplay::board(&self.board),
+               GoDisplay::board(&self.board).to_string(),
                self.board.stats.round,
                Sequence::build(self.history.as_slice()))
     }

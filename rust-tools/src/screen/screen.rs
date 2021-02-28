@@ -1,12 +1,12 @@
 use std::{fmt, mem};
 use std::fmt::{Display, Formatter};
 
-use crate::screen::dimension::{Cursor, Dimension, ScreenIndex};
+use screen::dimension::{Dim, Dimension};
+use screen::smart_index::SmartIndex;
+
 use crate::screen::drawer::Drawer;
 
 pub struct Screen {
-    cursor: usize,
-    is_mirror: bool,
     width: usize,
     height: usize,
     pub(crate) buffer: Vec<char>,
@@ -21,24 +21,10 @@ impl Screen {
 
     pub fn new(width: usize, height: usize) -> Self {
         Screen {
-            is_mirror: false,
-            cursor: 0,
             width,
             height,
             buffer: vec![' '; width * height],
         }
-    }
-
-    pub fn fill(&mut self, value: char) {
-        self.buffer.as_mut_slice().fill(value);
-    }
-
-    pub fn sparse(&self) -> Screen {
-        let mut res = Self::new(self.width() * 3, self.height());
-        for offset in 0..self.buffer.len() {
-            res.put(1 + 3 * offset, self.buffer[offset]);
-        }
-        res
     }
 
     pub fn grow(&self, border: usize) -> Screen {
@@ -80,25 +66,6 @@ impl Dimension for Screen {
     fn height(&self) -> usize {
         self.height
     }
-
-    fn transpose(&mut self) {
-        mem::swap(&mut self.width, &mut self.height);
-        self.is_mirror = !self.is_mirror;
-    }
-
-    fn is_mirror(&self) -> bool {
-        self.is_mirror
-    }
-}
-
-impl Cursor for Screen {
-    fn offset(&self) -> usize {
-        self.cursor
-    }
-
-    fn move_to(&mut self, offset: usize) {
-        self.cursor = offset;
-    }
 }
 
 impl Drawer for Screen {
@@ -122,12 +89,7 @@ impl Display for Screen {
 
         for i in 0..self.height() {
             for j in 0..self.width() {
-                let &x = if self.is_mirror() {
-                    self.get(self.index(i, j))
-                } else {
-                    self.get(self.index(j, i))
-                };
-                res.push(char::from(x));
+                res.push(*self.get(self.index(j, i)));
             }
             res.push('\n');
         }

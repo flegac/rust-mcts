@@ -1,10 +1,28 @@
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
+pub struct Dim {
+    width: usize,
+    height: usize,
+}
+
+impl Dim {
+    pub fn new(width: usize, height: usize) -> Dim {
+        Dim { width, height }
+    }
+}
+
+impl Dimension for Dim {
+    fn width(&self) -> usize {
+        self.width
+    }
+
+    fn height(&self) -> usize {
+        self.height
+    }
+}
+
 pub trait Dimension {
     fn width(&self) -> usize;
     fn height(&self) -> usize;
-
-    fn transpose(&mut self);
-
-    fn is_mirror(&self)->bool;
 
     fn at(&self, x: usize, y: usize) -> usize {
         (x + y * self.width()) as usize
@@ -18,39 +36,11 @@ pub trait Dimension {
 }
 
 
-pub trait ScreenIndex<Index> where Self: Dimension {
-    fn index(&self, x: Index, y: Index) -> usize;
-}
-
-impl<T> ScreenIndex<i32> for T where T: Dimension {
-    fn index(&self, x: i32, y: i32) -> usize {
-        let w = self.width() as i32;
-        let h = self.height() as i32;
-        let x = (x + w) % w;
-        let y = (y + h) % h;
-        self.at(x as usize, y as usize)
-    }
-}
-
-impl<T> ScreenIndex<usize> for T where T: Dimension {
-    fn index(&self, x: usize, y: usize) -> usize {
-        self.at(x, y)
-    }
-}
-
-pub trait Cursor where Self: Dimension {
-    fn offset(&self) -> usize;
-    fn move_to(&mut self, offset: usize);
-
-    fn cursor(&self) -> (usize, usize) {
-        self.xy(self.offset())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use screen::dimension::{Cursor, Dimension};
     use screen::drawer::Drawer;
+    use screen::smart_index::SmartIndex;
 
     use crate::screen::dimension::ScreenIndex;
     use crate::screen::screen::Screen;
@@ -69,30 +59,6 @@ mod tests {
                 assert_eq!(offset, offset2);
             }
         }
-    }
-
-    #[test]
-    fn test_mirror() {
-        let mut scr = Screen::new(40, 25);
-        let mut x = Screen::from_string("La vie est belle !");
-
-
-        scr.move_to(scr.index(7, 2));
-        scr.draw(&x);
-
-        x.transpose();
-        scr.move_to(scr.index(3, 3));
-        scr.draw(&x);
-
-        x.transpose();
-        scr.move_to(scr.index(9, 4));
-        scr.draw(&x);
-
-        let mut scr = scr.border();
-        scr.show();
-        scr.transpose();
-        scr.show()
-
     }
 
     #[test]

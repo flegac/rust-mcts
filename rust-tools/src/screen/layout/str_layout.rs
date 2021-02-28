@@ -1,40 +1,39 @@
+use itertools::Itertools;
+
 use screen::dimension::Dimension;
 use screen::drawer::Drawer;
-use screen::layout::layout::Layout2;
+use screen::layout::layout::Layout;
 use screen::screen::Screen;
 
 pub struct StrLayout {
-    data: String
+    data: Vec<String>,
+    width: usize,
+    height: usize,
 }
 
 impl StrLayout {
     pub fn new(data: &str) -> StrLayout {
-        StrLayout {
-            data: String::from(data)
-        }
+        let lines = data.lines().map(String::from).collect_vec();
+        let width = lines.iter().fold(0, |a, l| a.max(l.len()));
+        let height = lines.len();
+        StrLayout { data: lines, width, height }
     }
 }
 
 impl Dimension for StrLayout {
     fn width(&self) -> usize {
-        self.data.len()
+        self.width
     }
 
     fn height(&self) -> usize {
-        1
-    }
-
-    fn transpose(&mut self) {
-        unimplemented!()
-    }
-
-    fn is_mirror(&self) -> bool {
-        false
+        self.height
     }
 }
 
-impl Layout2 for StrLayout {
+impl Layout for StrLayout {
     fn to_screen(&self, x: usize, y: usize, target: &mut Screen) {
-        target.put_str(target.at(x, y), self.data.as_str());
+        for (i, l) in self.data.iter().enumerate() {
+            target.put_str(target.at(x, y + i), l);
+        }
     }
 }

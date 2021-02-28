@@ -10,8 +10,8 @@ use board::go::Go;
 use board::goboard::GoBoard;
 use board::grid::{GoCell, Grid};
 use display::display::GoDisplay;
-use stones::stone::Stone;
 use display::goshow::GoShow;
+use stones::stone::Stone;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
@@ -92,7 +92,6 @@ impl GoGroup {
             cells: board.flood.borrow_mut().flood(board, cell, &test),
             liberties: 0,
         };
-        log::trace!("found split: {}", GoDisplay::group(board, &res));
         self.remove_group(&res);
         res
     }

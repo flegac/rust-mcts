@@ -9,13 +9,12 @@ use action::GoAction;
 use board::goboard::GoBoard;
 use board::stats_board::BoardStats;
 use display::goshow::GoShow;
-use rust_tools::screen::dimension::{Cursor, Dimension, ScreenIndex};
+use display::range::Range2;
 use rust_tools::screen::drawer::Drawer;
 use rust_tools::screen::layout::hlayout::HLayout;
-use rust_tools::screen::layout::layout::{L, Layout2, LayoutRc};
+use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
 use rust_tools::screen::layout::str_layout::StrLayout;
 use rust_tools::screen::layout::vlayout::VLayout;
-use rust_tools::screen::layout_old::Layout;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::stone::Stone;
@@ -25,114 +24,77 @@ pub struct GoDisplay {}
 const BIG_A: usize = 'A' as usize;
 const SMALL_A: usize = 'a' as usize;
 
-impl BoardStats {
-    pub(crate) fn stats_layout(&self) -> LayoutRc {
-        L::vert(
-            vec![
-                L::str(&self.black.to_string()),
-                L::str(&self.white.to_string()),
-                L::str(&self.none.to_string()),
-            ]
+impl GoBoard {
+    pub(crate) fn stats_str(&self) -> String {
+        format!("{}\n{}\n{}",
+                self.stats.black.to_string(),
+                self.stats.white.to_string(),
+                self.stats.none.to_string(),
         )
     }
 
-    pub(crate) fn score_layout(&self, stone: Stone) -> LayoutRc {
+    pub(crate) fn score_str(&self) -> String {
         let mut blacks = format!("black: territories={}, captured={}",
-                                 self.black.territory,
-                                 self.black.captured);
+                                 self.stats.black.territory,
+                                 self.stats.black.captured);
         let mut whites = format!("white: territories={}, captured={}",
-                                 self.white.territory,
-                                 self.white.captured);
-        match stone {
+                                 self.stats.white.territory,
+                                 self.stats.white.captured);
+        match self.stone {
             Stone::None => {}
             Stone::Black => blacks = format!("[{}]", blacks),
             Stone::White => whites = format!("[{}]", whites)
         }
 
-        L::vert(
-            vec![
-                L::str(&blacks),
-                L::str(&whites),
-            ]
-        )
+        format!("{}\n{}", blacks, whites)
     }
 }
 
 
-// fn with_notation(&self, sparse: bool) -> Self {
-//     // compute notation
-//     let mut columns = Screen::from_string(&String::from_iter((0..self.width())
-//         .map(GoDisplay::column)));
-//     let mut lines = Screen::from_string(&String::from_iter((0..self.width())
-//         .map(GoDisplay::line)));
-//     lines.transpose();
-//
-//     let mut full = match sparse {
-//         true => {
-//             columns = columns.sparse();
-//             self.sparse().border().grow(1)
-//         }
-//         false => {
-//             self.border().grow(1)
-//         }
-//     };
-//
-//     full.draw_at(full.index(2, 0), &columns);
-//     full.draw_at(full.index(2, -1), &columns);
-//     full.draw_at(full.index(0, 2), &lines);
-//     full.draw_at(full.index(-1, 2), &lines);
-//
-//     full
-// }
-
 impl GoDisplay {
-    pub fn board_layout(board: &GoBoard) -> LayoutRc {
-        let mut res = vec![];
-        for y in 0..board.goban.size {
-            res.push(Self::line_layout(board, y));
+    pub fn board_str(board: &GoBoard, range: Range2) -> String {
+        let columns = String::from_iter(
+            range.x.iter()
+                .map(Self::column)
+                .map(|x| format!(" {} ", x))
+        );
+        let separator = String::from_iter(range.x.iter().map(|x| "---"));
+        let mut res = String::new();
+        res.push_str(&format!("  +{}+\n", separator));
+        for y in range.y.iter().rev() {
+            res.push_str(&format!("{} |", GoDisplay::line(y)));
+            for x in range.x.iter() {
+                let stone = Self::stone(board.stone_at(board.goban.cell(x, y)));
+                res.push_str(&format!(" {} ", stone));
+            }
+            res.push_str(&format!("|\n"));
         }
-        // res.push(board.stats.score_layout(board.stone));
+        res.push_str(&format!("  +{}+\n", separator));
+        res.push_str(&format!("   {}\n", columns));
 
-
-        L::vert(vec![
-            L::vert(res),
-            board.stats.score_layout(board.stone),
-            board.stats.stats_layout()
-        ])
-
-        // L::vert((0..board.goban.size)
-        //     .map(|y| Self::line_layout(board, y))
-        //     .collect_vec()
-        // )
-    }
-
-    pub fn line_layout(board: &GoBoard, y: usize) -> LayoutRc {
-        let mut res = vec![];
-        for x in 0..board.goban.size {
-            let cell = board.goban.cell(x, y);
-            let stone = Self::stone(board.stone_at(cell));
-            let l = L::str(&format!(" {} ", stone.as_str()));
-            res.push(l);
-        }
-        L::hori(res)
+        res
     }
 }
 
 
 impl GoShow for GoDisplay {
-    fn board(board: &GoBoard) -> Screen {
-        // let size = board.goban.size;
-        // let mut screen = Screen::new(size, size);
-        // for c in board.vertices() {
-        //     let value = Self::stone(board.stone_at(c));
-        //     screen.put(c, value.chars().next().unwrap());
-        // }
-        // screen
-        //     .with_notation(true).with_stats(board, true, true)
+    fn board(board: &GoBoard) -> LayoutRc {
+        let range = Range2::board(board.goban.size);
+        L::str(&format!("{}\n{}\n{}",
+                        Self::board_str(board, range),
+                        board.score_str(),
+                        board.stats_str()
+        ))
+    }
 
-        Self::board_layout(board).as_screen()
-        // .with_notation(true)
-        // .with_stats(board, true, true)
+    fn board_range(board: &GoBoard, range: Range2) -> LayoutRc {
+        L::str(&Self::board_str(board, range))
+    }
+    fn group_layout(board: &GoBoard, group: &GoGroup) -> LayoutRc {
+        let range = group.cells.iter()
+            .map(|c| board.goban.xy(c))
+            .fold(Range2::empty(), |c, v| c.merge(v));
+        Self::board_range(board, range)
     }
 
     fn group(board: &GoBoard, group: &GoGroup) -> String {
@@ -151,10 +113,10 @@ impl GoShow for GoDisplay {
         format!("{}{}", Self::column(xy.0), Self::line(xy.1))
     }
 
-    fn cells(board: &GoBoard, cells: &BitSet) -> String {
+    fn cells(board: &GoBoard, stone: Stone, cells: &BitSet) -> String {
         let mut res = String::new();
         res.push_str("{");
-        res.push_str(&format!("#{}:", cells.len()));
+        res.push_str(&format!("{} #{}:", stone, cells.len()));
         for cell in cells.iter() {
             res.push_str(" ");
             res.push_str(&GoDisplay::cell(board.goban.xy(cell)));
@@ -180,18 +142,5 @@ impl GoShow for GoDisplay {
 
     fn line(y: usize) -> String {
         format!("{}", char::from((y + SMALL_A) as u8))
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use rust_tools::screen::screen::Screen;
-
-    #[test]
-    fn test_with_annotation() {
-        let scr = Screen::new(7, 3);
-
-        println!("{}", scr);
     }
 }

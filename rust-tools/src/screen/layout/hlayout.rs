@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 
 use screen::dimension::Dimension;
-use screen::layout::layout::{Layout2, LayoutRc};
+use screen::layout::layout::{Layout, LayoutRc};
 use screen::screen::Screen;
 
 pub struct HLayout {
@@ -18,6 +18,8 @@ impl HLayout {
     }
 }
 
+
+
 impl Dimension for HLayout {
     fn width(&self) -> usize {
         self.width
@@ -26,17 +28,9 @@ impl Dimension for HLayout {
     fn height(&self) -> usize {
         self.height
     }
-
-    fn transpose(&mut self) {
-        unimplemented!()
-    }
-
-    fn is_mirror(&self) -> bool {
-        false
-    }
 }
 
-impl Layout2 for HLayout {
+impl Layout for HLayout {
     fn to_screen(&self, x: usize, y: usize, target: &mut Screen) {
         let mut pad = 0;
         let max_height = self.height();

@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
@@ -14,12 +15,12 @@ use board::grid::{GoCell, Grid};
 use board::stats_board::BoardStats;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
-use rust_tools::screen::dimension::{Cursor, Dimension, ScreenIndex};
+use display::range::Range2;
+use rust_tools::screen::layout::layout::L;
 use rust_tools::screen::screen::Screen;
 use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
-use rust_tools::screen::layout_old::Layout;
 
 pub struct GoBoard {
     //game state
@@ -136,19 +137,32 @@ impl GoBoard {
         self.stone = self.stone.switch();
         self.stats.round += 1;
 
-        let after = GoDisplay::board(self);
-        let mut full = Screen::halign(&[&before, &after], 5);
-        log::trace!("\n{}", full);
+        let full = L::hori(vec![
+            before,
+            L::str(" - padding - "),
+            GoDisplay::board(self)
+        ]);
+        log::trace!("\n{}", full.to_string());
 
         self.check_correctness();
     }
 
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
-        self.handle_old_empty_group(cell);
+        let splited_groups = self.handle_old_empty_group(cell);
+
         let new_group = self.fusion_allied_groups(cell, stone);
         self.kill_ennemy_groups(cell, stone);
         //FIXME: do not allow this case to happen !
         self.check_autokill(new_group);
+
+        if !splited_groups.is_empty() {
+            let mut x = vec![GoDisplay::board_range(self, Range2::board(self.goban.size))];
+            for g in splited_groups {
+                x.push(GoDisplay::group_layout(&self, &g.borrow()));
+            }
+            let view = L::hori(x);
+            log::trace!("SPLITS:\n{}", view.to_string());
+        }
     }
 
     fn check_correctness(&self) {
@@ -177,7 +191,7 @@ impl GoBoard {
         territory + captures
     }
 
-    fn handle_old_empty_group(&mut self, cell: usize) {
+    fn handle_old_empty_group(&mut self, cell: usize) -> Vec<GoGroupRc> {
         self.empty_cells.cells.remove(cell);
 
         let old = self.group_at(cell).clone();
@@ -185,7 +199,10 @@ impl GoBoard {
         old_connections.intersect_with(&old.borrow().cells);
         old_connections.remove(cell); // TODO: useless ?
 
-        log::trace!("handle_old_empty_group: {}", GoDisplay::cells(self, &old_connections));
+        log::trace!("handle_old_empty_group: {}",
+                    GoDisplay::cells(self,
+                                     Stone::None,
+                                     &old_connections));
 
         match old_connections.len() {
             0 => {
@@ -194,10 +211,12 @@ impl GoBoard {
                 self.stats.none.groups -= 1;
                 self.clear_group_color(&old);
                 old.borrow_mut().cells.remove(cell);
+                vec![]
             }
             1 => {
                 // old group connexity is preserved !
                 old.borrow_mut().cells.remove(cell);
+                vec![]
             }
             _ => {
                 old.borrow_mut().cells.remove(cell);
@@ -211,12 +230,20 @@ impl GoBoard {
                     old.borrow_mut().cells.remove(cell);
 
                     self.stats.rem_group(old.borrow().deref());
+                    log::trace!("- old (remove): {}\n{}", old, self.stats_str());
+                    let new_groups = old.borrow_mut()
+                        .split(&self)
+                        .into_iter()
+                        .map(|g| self.new_group(g))
+                        .collect_vec();
 
-                    let parts = old.borrow_mut().split(&self);
-                    for part in parts {
-                        log::trace!("- new empty group: {}", GoDisplay::group(self, &part));
-                        self.update_group(self.new_group(part));
+                    for g in new_groups.iter() {
+                        log::trace!("-{}", GoDisplay::group(self, &g.borrow()));
+                        self.update_group(g.clone());
                     }
+                    new_groups
+                } else {
+                    vec![]
                 }
             }
         }
@@ -251,6 +278,7 @@ impl GoBoard {
                 new_group.borrow_mut().add_group(g.borrow().deref());
                 self.clear_group_color(&g);
                 self.stats.rem_group(&g.borrow());
+                log::trace!("- fusion (remove): {}\n{}", g.borrow(), self.stats_str());
             });
         self.update_group(new_group.clone());
         new_group
@@ -284,9 +312,10 @@ impl GoBoard {
         // assert_eq!(libs, g.borrow().liberties);
 
         if group.borrow().is_dead() {
-            log::trace!("captured {} stones: {:?}",
-                        group.borrow().stones(),
-                        group.borrow().cells);
+            log::trace!("captured : {}\n {}",
+                        GoDisplay::group(&self, group.borrow().deref()),
+                        GoDisplay::group_layout(&self, group.borrow().deref()).to_string(),
+            );
             match group.borrow().stone {
                 Stone::None => {}
                 Stone::Black => self.stats.black.captured += group.borrow().stones(),
@@ -296,6 +325,7 @@ impl GoBoard {
             //update ancient color group
             self.clear_group_color(&group);
             self.stats.rem_group(group.borrow().deref());
+
 
             // remove stone from group & update None groups
             group.borrow_mut().set_stone(Stone::None);
@@ -330,6 +360,7 @@ impl GoBoard {
         }
         self.update_group_color(&group);
         self.stats.add_group(group.clone().borrow().deref());
+        log::trace!("add: {}\n{}", group, self.stats_str());
     }
 
     fn update_group_color(&mut self, group: &GoGroupRc) {

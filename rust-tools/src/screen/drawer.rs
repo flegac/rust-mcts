@@ -2,15 +2,13 @@ use itertools::Itertools;
 
 use screen::dimension::Dimension;
 
-use crate::screen::dimension::Cursor;
-
-pub trait Drawer where Self: Cursor {
+pub trait Drawer: Dimension {
     fn put(&mut self, offset: usize, value: char);
     fn read(&self, offset: usize, size: usize) -> &[char];
     fn read_mut(&mut self, offset: usize, size: usize) -> &mut [char];
 
 
-    fn get(&self, offset: usize) ->  &char {
+    fn get(&self, offset: usize) -> &char {
         self.read(offset, 1).iter().next().unwrap()
     }
 
@@ -38,9 +36,5 @@ pub trait Drawer where Self: Cursor {
             let src = other.read(other.at(0, i), other.width());
             self.put_slice(k, src);
         }
-    }
-
-    fn draw(&mut self, other: &Self) {
-        self.draw_at(self.offset(), other)
     }
 }
