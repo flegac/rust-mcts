@@ -1,7 +1,8 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::ops::Deref;
 
 use bit_set::BitSet;
@@ -136,7 +137,8 @@ impl GoBoard {
     pub fn place_stone(&mut self, cell: GoCell, stone: Stone) {
         let splited_groups = self.handle_old_empty_group(cell);
 
-        let new_group = self.fusion_allied_groups(cell, stone);
+        let new_group = self.fusion_allied_groups2(cell, stone);
+
         self.kill_ennemy_groups(cell, stone);
 
         self.check_autokill(new_group);
@@ -252,38 +254,54 @@ impl GoBoard {
     }
 
 
-    fn fusion(&mut self, g1:GoGroupRc, g2:GoGroupRc) {
-        g1.borrow_mut().add_group(g2.borrow().deref());
-        self.gg.clear_group_color(&g2);
-        self.stats.rem_group(&g2.borrow());
-        if log::max_level() <= LevelFilter::Trace {
-            log::trace!("- fusion (remove): {}\n{}", g2.borrow(), self.stats);
-        }
-        self.update_group(&g1);
+    fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
+        assert!(!groups.is_empty());
 
+
+        //forget all groups
+        for g in groups {
+            self.gg.clear_group_color(g);
+        }
+
+        //create one unique group
+        let group = groups
+            .iter()
+            .map(GoGroupRc::clone)
+            .fold1(|g1, g2| {
+                g1.borrow_mut().add_group(g2.borrow().deref());
+                g1
+            })
+            .unwrap();
+
+
+        // add the final group
+        self.gg.update_group(&group);
+        self.stats.for_stone_mut(group.borrow().stone).groups -= (groups.len() - 1);
+
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("FUSION {}:\n{}", group.borrow(), self.stats);
+        }
+        group
     }
 
-
-    fn fusion_allied_groups(&mut self, cell: usize, stone: Stone) -> GoGroupRc {
+    fn fusion_allied_groups2(&mut self, cell: usize, stone: Stone) -> GoGroupRc {
         let new_group = self.new_group(GoGroup::from_cells(stone, &[cell]));
-        self.goban.edges(cell).iter()
+        self.update_group(&new_group);
+        let mut groups = vec![new_group];
+        self.goban.edges(cell)
+            .iter()
             .filter(|&c| self.stone_at(c) == stone)
             .map(|c| self.group_at(c))
-            // .unique()
             .map(|g| g.clone())
             .sorted()
             .dedup()
             .for_each(|g: GoGroupRc| {
-                new_group.borrow_mut().add_group(g.borrow().deref());
-                self.gg.clear_group_color(&g);
-                self.stats.rem_group(&g.borrow());
-                if log::max_level() <= LevelFilter::Trace {
-                    log::trace!("- fusion (remove): {}\n{}", g.borrow(), self.stats);
-                }
+                groups.push(g)
             });
-        self.update_group(&new_group);
-        new_group
+
+        self.fusion(&groups)
     }
+
 
     fn check_autokill(&mut self, new_group: GoGroupRc) {
         //FIXME: do not allow this case to happen !
@@ -341,7 +359,6 @@ impl GoBoard {
             false
         }
     }
-
 
     fn update_group(&mut self, group: &GoGroupRc) {
         assert!(!group.borrow().cells.is_empty());
