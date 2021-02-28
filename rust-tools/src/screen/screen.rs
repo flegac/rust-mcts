@@ -27,31 +27,31 @@ impl Screen {
         }
     }
 
-    pub fn grow(&self, border: usize) -> Screen {
-        let mut res = Self::new(self.width + 2 * border, self.height + 2 * border);
-        res.draw_at(res.index(border, border), self);
-        res
-    }
-
-    pub fn border(&self) -> Screen {
-        let mut res = self.grow(1);
-        for x in 0..res.width() {
-            [0, -1].iter().for_each(|&y| {
-                res.put(res.index(x as i32, y), '-');
-            });
-        }
-        for y in 0..res.height() {
-            [0, -1].iter().for_each(|&x| {
-                res.put(res.index(x, y as i32), '|');
-            });
-        }
-        for &x in [0, -1].iter() {
-            for &y in [0, -1].iter() {
-                res.put(res.index(x, y), '+');
-            }
-        }
-        res
-    }
+    // pub fn grow(&self, border: usize) -> Screen {
+    //     let mut res = Self::new(self.width + 2 * border, self.height + 2 * border);
+    //     res.draw_at(res.index(border, border), self);
+    //     res
+    // }
+    //
+    // pub fn border(&self) -> Screen {
+    //     let mut res = self.grow(1);
+    //     for x in 0..res.width() {
+    //         [0, -1].iter().for_each(|&y| {
+    //             res.put(res.index(x as i32, y), '-');
+    //         });
+    //     }
+    //     for y in 0..res.height() {
+    //         [0, -1].iter().for_each(|&x| {
+    //             res.put(res.index(x, y as i32), '|');
+    //         });
+    //     }
+    //     for &x in [0, -1].iter() {
+    //         for &y in [0, -1].iter() {
+    //             res.put(res.index(x, y), '+');
+    //         }
+    //     }
+    //     res
+    // }
 
     pub fn show(&self) {
         println!("{}", self);
@@ -73,6 +73,10 @@ impl Drawer for Screen {
         self.buffer[offset] = value;
     }
 
+    fn get(&self, offset: usize) -> &char {
+        &self.buffer[offset]
+    }
+
     fn read(&self, offset: usize, size: usize) -> &[char] {
         let end = offset + size;
         &self.buffer[offset..end]
@@ -85,14 +89,12 @@ impl Drawer for Screen {
 
 impl Display for Screen {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let mut res = String::new();
-
         for i in 0..self.height() {
             for j in 0..self.width() {
-                res.push(*self.get(self.index(j, i)));
+                write!(f, "{}", self.get(self.index(j, i)));
             }
-            res.push('\n');
+            write!(f, "\n");
         }
-        write!(f, "{}", res)
+        write!(f, "", )
     }
 }
