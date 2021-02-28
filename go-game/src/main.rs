@@ -4,7 +4,9 @@ extern crate go_lib;
 extern crate log;
 extern crate mcts_lib;
 
-use std::io::Write;
+use std::{env, fs};
+use std::io::{Error, Write};
+use std::path::Path;
 
 use chrono::Local;
 use env_logger::Builder;
@@ -15,6 +17,9 @@ use constants::{BENCH, GOBAN_SIZE, LOG_LEVEL, SEED, SIM_FACTOR};
 use go_lib::board::go::Go;
 use go_lib::board::go_state::GoState;
 use go_lib::board::grid::Grid;
+use go_lib::groups::group_access::GroupAccess;
+use go_lib::sgf::sgf_export::SGF;
+use go_lib::stones::stone::Stone;
 use mcts_lib::mcts::MState;
 use mcts_lib::mymcts::MyMcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
@@ -25,8 +30,27 @@ mod bench;
 mod constants;
 
 
+fn load_sgf(filename: &Path) -> Result<String, String> {
+    match fs::read_to_string(filename) {
+        Ok(content) => {
+            Ok(content)
+        }
+        Err(_) => Err(String::from("File not found !"))
+    }
+}
+
 pub fn main() {
     init_logs(LOG_LEVEL);
+
+
+    if let Ok(mut path) = env::current_dir() {
+        path.push("output.sgf");
+        println!("path: {:?}", path.as_path());
+        if let Ok(game) = load_sgf(&path) {
+            println!("game: {}", game);
+        }
+    }
+
 
     let selection_score = WinScore::new();
     let sim_policy = RandomPolicy::new(SEED);
@@ -48,6 +72,9 @@ pub fn main() {
         log::info!("{} x {} | results: {}", SIM_FACTOR, round, mcts.root);
     }
     log::info!("{}\n{}", bench, bench.log_speed(SIM_FACTOR as f32));
+
+    let board = root.state();
+    SGF::save(board.goban().size, Stone::Black, board.history.as_slice())
 }
 
 

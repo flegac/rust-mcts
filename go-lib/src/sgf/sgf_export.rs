@@ -1,5 +1,7 @@
 use std::fmt;
 use std::fmt::{Display, Formatter};
+use std::fs::File;
+use std::io::Write;
 use std::ptr::write_bytes;
 
 use action::GoAction;
@@ -48,6 +50,12 @@ impl Display for Sequence {
 pub struct SGF {}
 
 impl SGF {
+    pub fn save(board_size: usize, stone: Stone, actions: &[GoAction]) {
+        if let Ok(mut file) = File::create("output.sgf") {
+            file.write_all(SGF::game(board_size, stone, actions).to_string().as_bytes());
+        }
+    }
+
     fn prop(key: &str, value: &str) -> Prop {
         Prop {
             key: String::from(key),
