@@ -42,34 +42,29 @@ pub struct GoBoard {
     pub stone: Stone,
     pass_sequence: usize,
     ko: Option<GoCell>,
+    pub(crate) stats: BoardStats,
 
     //groups
     gg: BoardGroups,
-
     pub(crate) empty_cells: GoGroup,
 
     //graph
     pub(crate) goban: Grid,
-
-    pub(crate) stats: BoardStats,
     pub(crate) flood: RefCell<GFlood>,
+
 }
 
 impl GoBoard {
     pub fn new(goban: Grid) -> Self {
-        let empty_cells = GoGroup::from_goban(&goban);
+        let gg = BoardGroups::new(&goban);
         let mut board = GoBoard {
-            // template: Template::new(L::str("")),
-
             stone: Stone::Black,
             pass_sequence: 0,
             ko: None,
-
             goban,
-            gg: BoardGroups::new(),
-
+            gg,
             stats: BoardStats::new(),
-            empty_cells,
+            empty_cells: GoGroup::new(),
             flood: RefCell::new(GFlood::new()),
         };
         board.reset();
@@ -77,15 +72,13 @@ impl GoBoard {
     }
 
     pub fn reset(&mut self) {
-        self.stats = BoardStats::new();
         self.stone = Stone::Black;
+        self.pass_sequence = 0;
+        self.ko = None;
+        self.gg = BoardGroups::new(&self.goban);
+        self.stats = BoardStats::new();
         self.empty_cells = GoGroup::from_goban(&self.goban);
-        let group = self.new_group(GoGroup::from_goban(&self.goban));
-        self.gg.reset_board_group(&group);
-        self.stats.add_group(group.clone().borrow().deref());
-        if log::max_level() <= LevelFilter::Trace {
-            log::trace!("reset: {}\n{}", group, self.stats);
-        }
+        self.stats.add_group(&self.empty_cells);
     }
 
     pub fn end_game(&self) -> bool {
@@ -221,7 +214,7 @@ impl GoBoard {
                     let new_groups = old.borrow_mut()
                         .split(&self)
                         .into_iter()
-                        .map(|g| self.new_group(g))
+                        .map(|g| self.gg.new_group(g))
                         .collect_vec();
 
                     for g in new_groups.iter() {
@@ -285,7 +278,7 @@ impl GoBoard {
     }
 
     fn fusion_allied_groups2(&mut self, cell: usize, stone: Stone) -> GoGroupRc {
-        let new_group = self.new_group(GoGroup::from_cells(stone, &[cell]));
+        let new_group = self.gg.new_group(GoGroup::from_cells(stone, &[cell]));
         self.update_group(&new_group);
         let mut groups = vec![new_group];
         self.goban.edges(cell)
@@ -367,11 +360,6 @@ impl GoBoard {
         if log::max_level() <= LevelFilter::Trace {
             log::trace!("add: {}\n{}", group, self.stats);
         }
-    }
-
-
-    fn new_group(&self, group: GoGroup) -> GoGroupRc {
-        GoGroupRc::from(group)
     }
 }
 

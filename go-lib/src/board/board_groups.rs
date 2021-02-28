@@ -1,6 +1,8 @@
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
 
+use log::LevelFilter;
+
 use board::goboard::GroupAccess;
 use board::grid::{GoCell, Grid};
 use stones::group::GoGroup;
@@ -8,6 +10,7 @@ use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
 pub struct BoardGroups {
+    id_gen: usize,
     groups: Vec<GoGroupRc>,
     blacks: HashSet<GoGroupRc>,
     whites: HashSet<GoGroupRc>,
@@ -15,15 +18,25 @@ pub struct BoardGroups {
 }
 
 impl BoardGroups {
-    pub fn new() -> BoardGroups {
-        BoardGroups {
+    pub fn new(goban: &Grid) -> BoardGroups {
+        let mut res = BoardGroups {
+            id_gen: 0,
             groups: vec![],
             blacks: HashSet::new(),
             whites: HashSet::new(),
             nones: HashSet::new(),
-        }
+        };
+        let group = res.new_group(GoGroup::from_goban(goban));
+        res.groups.resize_with(group.borrow().stones(), || group.clone());
+        res.nones.insert(group.clone());
+        res
     }
 
+    pub fn new_group(&mut self, mut group: GoGroup) -> GoGroupRc {
+        group.id = self.id_gen;
+        self.id_gen += 1;
+        GoGroupRc::from(group)
+    }
 
     pub(crate) fn update_group(&mut self, group: &GoGroupRc) {
         assert!(!group.borrow().cells.is_empty());
@@ -33,15 +46,6 @@ impl BoardGroups {
         self.update_group_color(&group);
     }
 
-
-    pub(crate) fn reset_board_group(&mut self, group:&GoGroupRc) {
-        self.groups.clear();
-        self.whites.clear();
-        self.blacks.clear();
-        self.nones.clear();
-        self.groups.resize_with(group.borrow().stones(), || group.clone());
-        self.update_group_color(group);
-    }
 
     pub fn clear_group_color(&mut self, group: &GoGroupRc) {
         self.blacks.remove(group);

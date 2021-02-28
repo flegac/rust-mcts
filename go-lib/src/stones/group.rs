@@ -15,6 +15,7 @@ use stones::stone::Stone;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
+    pub(crate) id: usize,
     pub(crate) stone: Stone,
     pub(crate) liberties: usize,
     pub(crate) cells: BitSet,
@@ -23,8 +24,18 @@ pub struct GoGroup {
 impl GoGroup {
     pub fn from_goban(goban: &Grid) -> GoGroup {
         GoGroup {
+            id: 0,
             stone: Stone::None,
             cells: goban.vertices().clone(),
+            liberties: 0,
+        }
+    }
+
+    pub fn new() -> GoGroup {
+        GoGroup {
+            id: 0,
+            stone: Stone::None,
+            cells: BitSet::new(),
             liberties: 0,
         }
     }
@@ -35,6 +46,7 @@ impl GoGroup {
             _ => 0
         };
         GoGroup {
+            id: 0,
             stone,
             cells: BitSet::from_iter(cells.deref().iter().map(|x| x.clone())),
             liberties,
@@ -88,6 +100,7 @@ impl GoGroup {
 
         let test = |x| self.cells.contains(x);
         let res = GoGroup {
+            id: 0,
             stone: self.stone,
             cells: board.flood.borrow_mut().flood(board, cell, &test),
             liberties: 0,
