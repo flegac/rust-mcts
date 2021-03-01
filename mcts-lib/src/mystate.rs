@@ -1,27 +1,28 @@
-use std::fmt::{Display, Formatter};
 use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 
 use graph_lib::tree::TheTree;
-use mcts::{MState, Action};
+use mcts::{Action, MState};
 use sim_result::{MctsNode, SimResult};
 use state::State;
 
 pub struct MyState<A, S>
-    where
-        A: Eq,
-        A: Hash,
-        S: State<A> {
+where
+    A: Eq,
+    A: Hash,
+    S: State<A>,
+{
     the_state: S,
     pub(crate) node: MctsNode<A>,
     depth: usize,
 }
 
-
 impl<A, S> MyState<A, S>
-    where
-        A: Action,
-        S: State<A> {
+where
+    A: Action,
+    S: State<A>,
+{
     pub fn new(state: S, node: MctsNode<A>) -> MyState<A, S> {
         MyState {
             the_state: state,
@@ -66,9 +67,9 @@ impl<A, S> MyState<A, S>
 }
 
 impl<A, S> Display for MyState<A, S>
-    where
-        A: Action,
-        S: State<A>
+where
+    A: Action,
+    S: State<A>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "(depth={}) {}", self.depth, self.node)
@@ -76,9 +77,9 @@ impl<A, S> Display for MyState<A, S>
 }
 
 impl<A, S> MState<A, S> for MyState<A, S>
-    where
-        A: Action,
-        S: State<A>
+where
+    A: Action,
+    S: State<A>,
 {
     fn apply_action(&mut self, a: A) {
         self.the_state.apply(a);
@@ -91,7 +92,6 @@ impl<A, S> MState<A, S> for MyState<A, S>
     fn state_mut(&mut self) -> &mut S {
         &mut self.the_state
     }
-
 
     fn depth(&self) -> usize {
         self.depth

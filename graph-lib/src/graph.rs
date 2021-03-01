@@ -23,18 +23,26 @@ impl GFlood {
 
 impl Flood for GFlood {
     fn flood<F, G>(&mut self, graph: &G, v: usize, topology: &F) -> BitSet
-        where
-            F: Fn(Vert) -> bool,
-            G: Topology {
+    where
+        F: Fn(Vert) -> bool,
+        G: Topology,
+    {
         let cond = |_: &BitSet| false;
         self.flood_check(graph, v, topology, &cond)
     }
 
-    fn flood_check<F, T, G>(&mut self, graph: &G, v: usize, topology: &F, stop_condition: &T) -> BitSet
-        where
-            F: Fn(Vert) -> bool,
-            T: Fn(&BitSet) -> bool,
-            G: Topology {
+    fn flood_check<F, T, G>(
+        &mut self,
+        graph: &G,
+        v: usize,
+        topology: &F,
+        stop_condition: &T,
+    ) -> BitSet
+    where
+        F: Fn(Vert) -> bool,
+        T: Fn(&BitSet) -> bool,
+        G: Topology,
+    {
         self.visited.clear();
         self.to_visit.clear();
         self.to_visit.insert(v);

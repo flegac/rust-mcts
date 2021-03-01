@@ -10,11 +10,10 @@ impl GameResult {
         match self {
             GameResult::Win => GameResult::Lose,
             GameResult::Lose => GameResult::Win,
-            GameResult::Draw => GameResult::Draw
+            GameResult::Draw => GameResult::Draw,
         }
     }
 }
-
 
 pub trait State<A> {
     fn reset(&mut self);

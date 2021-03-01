@@ -5,11 +5,11 @@ extern crate rand;
 extern crate rand_pcg;
 
 pub mod mcts;
-pub mod state;
 pub mod mymcts;
-pub mod policy;
 mod mystate;
+pub mod policy;
 pub mod sim_result;
+pub mod state;
 
 #[cfg(test)]
 mod tests {

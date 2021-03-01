@@ -14,21 +14,20 @@ use crate::mcts::Mcts;
 use crate::state::State;
 
 pub struct MyMcts<A, S, SS>
-    where
-        A: Action,
-        SS: MState<A, S>
+where
+    A: Action,
+    SS: MState<A, S>,
 {
     pub root: MctsNode<A>,
     simulation_factor: usize,
     _foo: Option<(S, SS)>,
 }
 
-
 impl<A, S> MyMcts<A, S, MyState<A, S>>
-    where
-        A: Action,
-        A: Display,
-        S: State<A>,
+where
+    A: Action,
+    A: Display,
+    S: State<A>,
 {
     pub fn new(simulation_factor: usize) -> MyMcts<A, S, MyState<A, S>> {
         MyMcts {
@@ -41,14 +40,15 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
         MyState::new(state, self.root.clone())
     }
 
-
-    pub fn explore<Sim, Select>(&mut self,
-                                state: &mut MyState<A, S>,
-                                sim_policy: &Sim,
-                                select_policy: &Select)
-        where
-            Sim: Policy<A>,
-            Select: Score {
+    pub fn explore<Sim, Select>(
+        &mut self,
+        state: &mut MyState<A, S>,
+        sim_policy: &Sim,
+        select_policy: &Select,
+    ) where
+        Sim: Policy<A>,
+        Select: Score,
+    {
         log::debug!("* Exploration:");
         state.setup_node(self.root.clone());
 
@@ -72,9 +72,7 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
     }
     fn sim_many<Sim: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &Sim) -> SimResult {
         match self.simulation_factor {
-            1 => {
-                self.simulation(state, policy)
-            }
+            1 => self.simulation(state, policy),
             _ => {
                 let mut res = SimResult::new();
                 let node = state.get_node().clone();
@@ -89,21 +87,19 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
     }
 }
 
-
 impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
-    where
-        A: Action,
-        S: State<A>,
+where
+    A: Action,
+    S: State<A>,
 {
     fn selection<Sc: Score>(&self, state: &mut MyState<A, S>, exploitation: &Sc) {
         while state.is_selectable() {
             let node = state.get_node();
             let parent = node.value.borrow();
 
-            let score = |child: &SimResult|
-                OrderedFloat(
-                    exploitation.score(child)
-                        + ExploreScore::new(&parent).score(child));
+            let score = |child: &SimResult| {
+                OrderedFloat(exploitation.score(child) + ExploreScore::new(&parent).score(child))
+            };
             let found = node.search_max_child(&score);
             match found {
                 None => break,
@@ -127,7 +123,6 @@ impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
         }
         SimResult::from_game(state.state().result().unwrap())
     }
-
 
     fn backpropagation(&self, state: &mut MyState<A, S>, mut res: SimResult) {
         state.get_node().value.borrow_mut().merge(&res);

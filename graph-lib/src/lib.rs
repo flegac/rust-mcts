@@ -1,17 +1,17 @@
+pub mod algo;
+pub mod arena_tree;
+pub mod graph;
 pub mod node;
 pub mod safe_tree;
 pub mod topology;
-pub mod graph;
-pub mod arena_tree;
 pub mod tree;
-pub mod algo;
 
 #[cfg(test)]
 mod tests {
     use std::borrow::BorrowMut;
     use std::sync::Arc;
 
-    use rpool::{Pool, Poolable, PoolScaleMode};
+    use rpool::{Pool, PoolScaleMode, Poolable};
 
     #[derive(Debug)]
     struct TestContext {
@@ -41,7 +41,9 @@ mod tests {
     fn test_get() {
         let pool: Arc<Pool<TestContext, TestItem>> = Pool::new(
             PoolScaleMode::Static { count: 6 },
-            TestContext { test: "testing context" },
+            TestContext {
+                test: "testing context",
+            },
         );
         let mut x = vec![];
         for _ in 0..5 {

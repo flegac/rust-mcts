@@ -15,7 +15,12 @@ pub struct Node<K, V> {
     pub children: RefCell<HashMap<K, NodeRc<K, V>>>,
 }
 
-impl<K, V> Node<K, V> where K: Copy, K: Eq, K: Hash {
+impl<K, V> Node<K, V>
+where
+    K: Copy,
+    K: Eq,
+    K: Hash,
+{
     pub fn new(value: V) -> Node<K, V> {
         Node {
             value: RefCell::new(value),
@@ -28,9 +33,7 @@ impl<K, V> Node<K, V> where K: Copy, K: Eq, K: Hash {
         self.parent
             .borrow()
             .as_ref()
-            .map(|(key, value)| {
-                (key.clone(), value.upgrade().unwrap())
-            })
+            .map(|(key, value)| (key.clone(), value.upgrade().unwrap()))
     }
 
     pub fn is_leaf(&self) -> bool {
@@ -38,15 +41,20 @@ impl<K, V> Node<K, V> where K: Copy, K: Eq, K: Hash {
     }
 
     pub(crate) fn child_at(&self, index: K) -> Option<Rc<Self>> {
-        self.children.borrow().get(&index)
-            .map(|c| Rc::clone(c))
+        self.children.borrow().get(&index).map(|c| Rc::clone(c))
     }
 }
 
-impl<K, V> fmt::Display for Node<K, V> where V: Display {
+impl<K, V> fmt::Display for Node<K, V>
+where
+    V: Display,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}: {} childs]",
-               self.value.borrow(),
-               self.children.borrow().len())
+        write!(
+            f,
+            "[{}: {} childs]",
+            self.value.borrow(),
+            self.children.borrow().len()
+        )
     }
 }

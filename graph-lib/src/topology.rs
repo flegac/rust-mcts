@@ -28,17 +28,11 @@ pub struct SubGraph {
 impl SubGraph {
     pub fn from<T: Topology, F: Fn(Vert) -> bool>(graph: &T, test: &F) -> SubGraph {
         let mut res = SubGraph {
-            vertices: BitSet::from_iter(graph
-                .vertices()
-                .iter()
-                .filter(|&x| test(x))),
+            vertices: BitSet::from_iter(graph.vertices().iter().filter(|&x| test(x))),
             edges: vec![BitSet::new(); graph.vertex_number()],
         };
         for v in res.vertices.iter() {
-            res.edges[v] = BitSet::from_iter(graph
-                .edges(v)
-                .iter()
-                .filter(|&x| test(x)));
+            res.edges[v] = BitSet::from_iter(graph.edges(v).iter().filter(|&x| test(x)));
         }
 
         res

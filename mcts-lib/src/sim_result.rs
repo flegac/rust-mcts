@@ -1,7 +1,6 @@
-use std::{fmt, mem};
 use std::fmt::Formatter;
 use std::hash::Hash;
-
+use std::{fmt, mem};
 
 use graph_lib::safe_tree::Tree;
 use state::GameResult;
@@ -17,11 +16,13 @@ pub struct SimResult {
 
 impl SimResult {
     pub fn node<A>() -> MctsNode<A>
-        where
-            A: Copy, A: Eq, A: Hash {
+    where
+        A: Copy,
+        A: Eq,
+        A: Hash,
+    {
         Tree::new(SimResult::new())
     }
-
 
     pub fn new() -> SimResult {
         SimResult {
@@ -63,7 +64,6 @@ impl SimResult {
         mem::swap(&mut self.wins, &mut self.loses);
     }
 
-
     pub fn is_leaf(&self) -> bool {
         self.tries == 0
     }
@@ -79,9 +79,12 @@ impl SimResult {
     }
 }
 
-impl fmt::Display for SimResult where {
+impl fmt::Display for SimResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{} tries: {} win, {} draw, {} lose",
-               self.tries, self.wins, self.draws, self.loses, )
+        write!(
+            f,
+            "{} tries: {} win, {} draw, {} lose",
+            self.tries, self.wins, self.draws, self.loses,
+        )
     }
 }

@@ -38,9 +38,7 @@ struct TreeArena<V> {
 
 impl<V> TreeArena<V> {
     pub fn new() -> TreeArena<V> {
-        TreeArena {
-            arena: vec![],
-        }
+        TreeArena { arena: vec![] }
     }
 
     pub fn add_child(&mut self, node: NodeId, label: Label, value: V) -> NodeId {
@@ -56,7 +54,6 @@ impl<V> TreeArena<V> {
     pub fn get_mut(&mut self, node_id: NodeId) -> &mut Node<V> {
         &mut self.arena[node_id]
     }
-
 
     pub fn spawn_node(&mut self, value: V) -> NodeId {
         let node_id = self.arena.len();

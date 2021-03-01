@@ -22,7 +22,7 @@ impl Score for WinScore {
 }
 
 pub struct ExploreScore<'a> {
-    parent: &'a SimResult
+    parent: &'a SimResult,
 }
 
 impl<'a> ExploreScore<'a> {
@@ -30,7 +30,6 @@ impl<'a> ExploreScore<'a> {
         ExploreScore { parent }
     }
 }
-
 
 impl<'a> Score for ExploreScore<'a> {
     fn score(&self, stats: &SimResult) -> f32 {
