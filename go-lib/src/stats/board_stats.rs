@@ -11,6 +11,7 @@ pub trait FullStats {
     fn set_territory(&mut self, stone: Stone, n: usize);
 }
 
+#[derive(Copy, Clone)]
 pub struct BoardStats {
     black: StoneStats,
     white: StoneStats,

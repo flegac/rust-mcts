@@ -3,15 +3,13 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 
 use bit_set::BitSet;
-use graph_lib::algo::flood::Flood;
 use graph_lib::topology::Topology;
 
-use board::go::Go;
 use board::go_state::GoState;
 use board::grid::{GoCell, Grid};
-use display::display::GoDisplay;
-use display::goshow::GoShow;
 use stones::stone::Stone;
+use graph_lib::graph::GFlood;
+use graph_lib::algo::flood::Flood;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
@@ -100,7 +98,7 @@ impl GoGroup {
         let res = GoGroup {
             id: 0,
             stone: self.stone,
-            cells: board.flood.borrow_mut().flood(board, cell, &test),
+            cells: GFlood::new().flood(board, cell, &test),
             liberties: 0,
         };
         self.remove_group(&res);

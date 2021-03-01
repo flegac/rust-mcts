@@ -3,7 +3,6 @@ use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
-use std::iter::FromIterator;
 use std::ops::Deref;
 
 use bit_set::BitSet;
@@ -18,13 +17,10 @@ use board::go::Go;
 use board::grid::{GoCell, Grid};
 use display::display::GoDisplay;
 use display::goshow::GoShow;
-use display::range::Range2;
 use groups::board_groups::BoardGroups;
 use groups::group_access::GroupAccess;
 use mcts_lib::state::{GameResult, State};
 use rust_tools::screen::layout::layout::{L, LayoutRc};
-use rust_tools::screen::layout::template::Template;
-use rust_tools::screen::screen::Screen;
 use stats::board_stats::{BoardStats, FullStats};
 use stats::stone_score::StoneScore;
 use stats::stone_stats::StoneStats;
@@ -32,6 +28,7 @@ use stones::group::GoGroup;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
 
+// #[derive(Clone, Copy)]
 pub struct GoState {
     // template: Template,
 
@@ -44,10 +41,6 @@ pub struct GoState {
 
     //groups
     pub(crate) gg: BoardGroups,
-
-    //graph
-    pub(crate) flood: RefCell<GFlood>,
-
 }
 
 impl GoState {
@@ -61,7 +54,6 @@ impl GoState {
             history: vec![],
 
             gg: BoardGroups::new(goban),
-            flood: RefCell::new(GFlood::new()),
         };
         board.stats.add_group(&board.gg.empty_cells);
         board
@@ -190,7 +182,7 @@ impl GoState {
         let topology = |c: GoCell| to_visit.contains(c);
         let old_cell = to_visit.iter().next().unwrap();
         let check_connection = |visited: &BitSet| old_connections.is_subset(visited);
-        let visited = self.flood.borrow_mut().flood_check(
+        let visited = GFlood::new().borrow_mut().flood_check(
             self.goban(), old_cell, &topology, &check_connection,
         );
         !check_connection(&visited)
@@ -354,7 +346,7 @@ impl GroupAccess for GoState {
 
     fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
         let group = self.gg.fusion(groups);
-        self.stats.for_stone_mut(group.borrow().stone).groups -= (groups.len() - 1);
+        self.stats.for_stone_mut(group.borrow().stone).groups -= groups.len() - 1;
         if log::max_level() <= LevelFilter::Trace {
             log::trace!("FUSION {}:\n{}", group.borrow(), self.stats);
         }

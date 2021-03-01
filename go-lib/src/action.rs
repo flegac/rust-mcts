@@ -1,8 +1,4 @@
-use std::fmt;
-use std::fmt::Formatter;
-
 use board::grid::{GoCell, Grid};
-use display::display::GoDisplay;
 use display::goshow::GoShow;
 
 

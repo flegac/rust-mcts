@@ -2,7 +2,6 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::Write;
-use std::ptr::write_bytes;
 
 use action::GoAction;
 use stones::stone::Stone;

@@ -1,12 +1,9 @@
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
-use std::iter::Map;
 use std::ops::Deref;
 
-use bit_set::Iter;
 use graph_lib::topology::Topology;
-use itertools::{Itertools, Unique};
-use log::LevelFilter;
+use itertools::{Itertools, };
 
 use board::go::Go;
 use board::grid::{GoCell, Grid};

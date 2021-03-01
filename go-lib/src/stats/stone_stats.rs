@@ -1,14 +1,9 @@
-use std::fmt;
-
 use board::go::Go;
 use board::go_state::GoState;
-use display::display::GoDisplay;
-use display::templates::GoTemplate;
-use rust_tools::screen::layout::layout::L;
-use rust_tools::screen::layout::template::Template;
-use stones::stone::Stone;
 use stats::board_stats::FullStats;
+use stones::stone::Stone;
 
+#[derive(Copy, Clone)]
 pub struct StoneStats {
     pub stone: Stone,
     pub groups: usize,

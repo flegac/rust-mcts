@@ -1,4 +1,3 @@
-use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
 
 use board::grid::{GoCell, Grid};

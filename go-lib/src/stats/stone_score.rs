@@ -1,5 +1,6 @@
 use stones::stone::Stone;
 
+#[derive(Copy, Clone)]
 pub struct StoneScore {
     pub stone: Stone,
     pub territory: usize,

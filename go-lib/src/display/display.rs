@@ -1,11 +1,7 @@
-use std::borrow::Borrow;
 use std::fmt;
 use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut};
-use std::ptr::write;
 
 use bit_set::BitSet;
-use graph_lib::topology::Topology;
 use itertools::Itertools;
 
 use action::GoAction;
@@ -13,12 +9,7 @@ use board::go_state::GoState;
 use display::goshow::GoShow;
 use display::range::Range2;
 use groups::group_access::GroupAccess;
-use rust_tools::screen::drawer::Drawer;
-use rust_tools::screen::layout::hlayout::HLayout;
 use rust_tools::screen::layout::layout::{L, LayoutRc};
-use rust_tools::screen::layout::template::Template;
-use rust_tools::screen::layout::vlayout::VLayout;
-use rust_tools::screen::screen::Screen;
 use sgf::sgf_export::{Sequence, SGF};
 use stats::board_stats::{BoardStats, FullStats};
 use stats::stone_score::StoneScore;
