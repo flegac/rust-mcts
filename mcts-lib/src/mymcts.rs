@@ -14,9 +14,9 @@ use crate::mcts::Mcts;
 use crate::state::State;
 
 pub struct MyMcts<A, S, SS>
-where
-    A: Action,
-    SS: MState<A, S>,
+    where
+        A: Action,
+        SS: MState<A, S>,
 {
     pub root: MctsNode<A>,
     simulation_factor: usize,
@@ -24,10 +24,10 @@ where
 }
 
 impl<A, S> MyMcts<A, S, MyState<A, S>>
-where
-    A: Action,
-    A: Display,
-    S: State<A>,
+    where
+        A: Action,
+        A: Display,
+        S: State<A>,
 {
     pub fn new(simulation_factor: usize) -> MyMcts<A, S, MyState<A, S>> {
         MyMcts {
@@ -46,7 +46,7 @@ where
         sim_policy: &Sim,
         select_policy: &Select,
     ) where
-        Sim: Policy<A>,
+        Sim: Policy<A, S>,
         Select: Score,
     {
         log::debug!("* Exploration:");
@@ -70,7 +70,7 @@ where
         //            before_score,
         //            after_score)
     }
-    fn sim_many<Sim: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &Sim) -> SimResult {
+    fn sim_many<Sim: Policy<A, S>>(&self, state: &mut MyState<A, S>, policy: &Sim) -> SimResult {
         match self.simulation_factor {
             1 => self.simulation(state, policy),
             _ => {
@@ -88,9 +88,9 @@ where
 }
 
 impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
-where
-    A: Action,
-    S: State<A>,
+    where
+        A: Action,
+        S: State<A>,
 {
     fn selection<Sc: Score>(&self, state: &mut MyState<A, S>, exploitation: &Sc) {
         while state.is_selectable() {
@@ -110,15 +110,15 @@ where
         }
     }
 
-    fn expansion<P: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &P) -> A {
-        let action = policy.select(state.state().actions().as_slice());
+    fn expansion<P: Policy<A, S>>(&self, state: &mut MyState<A, S>, policy: &P) -> A {
+        let action = policy.select(state.state());
         state.move_to_node(action, SimResult::node());
         action
     }
 
-    fn simulation<P: Policy<A>>(&self, state: &mut MyState<A, S>, policy: &P) -> SimResult {
+    fn simulation<P: Policy<A, S>>(&self, state: &mut MyState<A, S>, policy: &P) -> SimResult {
         while !state.is_terminal() {
-            let action = policy.select(state.state().actions().as_slice());
+            let action = policy.select(state.state());
             state.apply_action(action);
         }
         SimResult::from_game(state.state().result().unwrap())

@@ -3,6 +3,7 @@ use std::hash::Hash;
 use policy::policy::Policy;
 use policy::score::Score;
 use sim_result::SimResult;
+use state::State;
 
 pub trait Action: Copy + Eq + Hash {}
 
@@ -19,11 +20,12 @@ pub trait MState<A, S> {
 }
 
 pub trait Mcts<A, S, SS>
-where
-    SS: MState<A, S>,
+    where
+        S: State<A>,
+        SS: MState<A, S>,
 {
     fn selection<Sc: Score>(&self, state: &mut SS, exploitation: &Sc);
-    fn expansion<P: Policy<A>>(&self, state: &mut SS, policy: &P) -> A;
-    fn simulation<P: Policy<A>>(&self, state: &mut SS, policy: &P) -> SimResult;
+    fn expansion<P: Policy<A, S>>(&self, state: &mut SS, policy: &P) -> A;
+    fn simulation<P: Policy<A, S>>(&self, state: &mut SS, policy: &P) -> SimResult;
     fn backpropagation(&self, state: &mut SS, res: SimResult);
 }
