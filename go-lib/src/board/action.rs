@@ -1,7 +1,6 @@
 use board::grid::{GoCell, Grid};
 use display::goshow::GoShow;
 
-
 #[derive(Debug, Copy, Hash, Clone, Eq, PartialEq)]
 pub enum GoAction {
     Pass,

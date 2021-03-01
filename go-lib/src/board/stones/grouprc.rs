@@ -3,9 +3,10 @@ use std::fmt;
 use std::fmt::Formatter;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
-use board::groups::groups1::GoGroup;
 
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
+use board::stones::groups::GoGroup;
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {

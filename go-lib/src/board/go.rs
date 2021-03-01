@@ -1,10 +1,10 @@
 use bit_set::BitSet;
-use graph_lib::topology::Topology;
 use itertools::Itertools;
 
-use board::groups::group_access::GroupAccess;
-use board::groups::stone::Stone;
-use board::groups::grouprc::GoGroupRc;
+use board::group_access::GroupAccess;
+use board::stones::grouprc::GoGroupRc;
+use board::stones::stone::Stone;
+use graph_lib::topology::Topology;
 
 pub struct Go<'a, T: GroupAccess> {
     state: &'a T

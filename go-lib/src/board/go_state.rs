@@ -6,39 +6,38 @@ use std::collections::HashSet;
 use std::ops::Deref;
 
 use bit_set::BitSet;
-use graph_lib::algo::flood::Flood;
-use graph_lib::graph::GFlood;
-use graph_lib::topology::Topology;
 use indexmap::set::IndexSet;
 use itertools::Itertools;
 use log::LevelFilter;
 
-use action::GoAction;
+use board::action::GoAction;
 use board::go::Go;
 use board::grid::{GoCell, Grid};
-use board::groups::board_groups::BoardGroups;
-use board::groups::group_access::GroupAccess;
-use board::groups::grouprc::GoGroupRc;
-use board::groups::groups1::GoGroup;
-use board::groups::stone::Stone;
+use board::group_access::GroupAccess;
 use board::stats::board_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
+use board::stones::board_groups::BoardGroups;
+use board::stones::grouprc::GoGroupRc;
+use board::stones::groups::GoGroup;
+use board::stones::stone::Stone;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
+use graph_lib::algo::flood::Flood;
+use graph_lib::graph::GFlood;
+use graph_lib::topology::Topology;
 use mcts_lib::state::{GameResult, State};
 use rust_tools::screen::layout::layout::{L, LayoutRc};
 
-// #[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct GoState {
-    //sgf state
     pub stone: Stone,
     pass_sequence: usize,
     ko: Option<GoCell>,
     pub(crate) stats: BoardStats,
     pub history: Vec<GoAction>,
 
-    //groups
+    //stones
     pub(crate) gg: BoardGroups,
 }
 
@@ -92,7 +91,7 @@ impl GoState {
         //new_group.liberties = allies.liberties.sum() + 4 - 2 * allies_connections
         //ennemy.liberties -= 1
         self.kill_ennemy_groups(cell, stone);
-        // /!\ allies touching dead groups must be updated !
+        // /!\ allies touching dead stones must be updated !
 
         log::trace!("AUTO KILL : checking...");
         self.try_capture(new_group.clone());
@@ -385,15 +384,12 @@ mod tests {
     use std::sync::Arc;
 
     use bit_set::BitSet;
-    use graph_lib::algo::flood::Flood;
-    use graph_lib::graph::GFlood;
-    use graph_lib::topology::Topology;
 
     use board::go_state::GoState;
     use board::grid::Grid;
-    use stones::grouprc::GoGroupRc;
-    use stones::groups1::GoGroup;
-    use stones::stone::Stone;
+    use graph_lib::algo::flood::Flood;
+    use graph_lib::graph::GFlood;
+    use graph_lib::topology::Topology;
 
     #[test]
     fn board_cell_id() {

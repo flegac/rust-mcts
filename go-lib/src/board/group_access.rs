@@ -3,8 +3,8 @@ use std::collections::HashSet;
 use indexmap::set::IndexSet;
 
 use board::grid::{GoCell, Grid};
-use board::groups::grouprc::GoGroupRc;
-use board::groups::stone::Stone;
+use board::stones::grouprc::GoGroupRc;
+use board::stones::stone::Stone;
 
 pub trait GroupAccess {
     fn goban(&self) -> &Grid;

@@ -3,13 +3,13 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 
 use bit_set::BitSet;
-use graph_lib::topology::Topology;
 
 use board::go_state::GoState;
 use board::grid::{GoCell, Grid};
-use graph_lib::graph::GFlood;
+use board::stones::stone::Stone;
 use graph_lib::algo::flood::Flood;
-use board::groups::stone::Stone;
+use graph_lib::graph::GFlood;
+use graph_lib::topology::Topology;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
@@ -17,6 +17,17 @@ pub struct GoGroup {
     pub(crate) stone: Stone,
     pub(crate) liberties: usize,
     pub(crate) cells: BitSet,
+}
+
+impl Clone for GoGroup {
+    fn clone(&self) -> Self {
+        GoGroup {
+            id: self.id,
+            stone: self.stone,
+            liberties: self.liberties,
+            cells: self.cells.clone(),
+        }
+    }
 }
 
 impl GoGroup {
@@ -125,11 +136,8 @@ mod tests {
 
     use board::go_state::GoState;
     use board::grid::Grid;
-    use stones::groups1::GoGroup;
-    use stones::grouprc::GoGroupRc;
-    use stones::stone::Stone;
-    use board::groups::groups1::GoGroup;
-    use board::groups::stone::Stone;
+    use board::stones::groups::GoGroup;
+    use board::stones::stone::Stone;
 
     #[test]
     fn group_hash() {

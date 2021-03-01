@@ -11,7 +11,7 @@ mod tests {
     use std::borrow::BorrowMut;
     use std::sync::Arc;
 
-    use rpool::{Pool, PoolScaleMode, Poolable};
+    use rpool::{Pool, Poolable, PoolScaleMode};
 
     #[derive(Debug)]
     struct TestContext {

@@ -4,18 +4,18 @@ use std::iter::FromIterator;
 use bit_set::BitSet;
 use itertools::Itertools;
 
-use action::GoAction;
+use board::action::GoAction;
 use board::go_state::GoState;
+use board::stats::board_stats::{BoardStats, FullStats};
+use board::stats::stone_score::StoneScore;
+use board::stats::stone_stats::StoneStats;
+use board::group_access::GroupAccess;
+use board::stones::groups::GoGroup;
+use board::stones::stone::Stone;
 use display::goshow::GoShow;
 use display::range::Range2;
 use rust_tools::screen::layout::layout::{L, LayoutRc};
 use sgf::sgf_export::{Sequence, SGF};
-use board::stats::stone_score::StoneScore;
-use board::stats::stone_stats::StoneStats;
-use board::stats::board_stats::{BoardStats, FullStats};
-use board::groups::group_access::GroupAccess;
-use board::groups::stone::Stone;
-use board::groups::groups1::GoGroup;
 
 pub struct GoDisplay {}
 
@@ -45,7 +45,7 @@ impl fmt::Display for StoneScore {
 
 impl fmt::Display for StoneStats {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {} stones, {} groups, {} captured",
+        write!(f, "{}: {} stones, {} stones, {} captured",
                &self.stone,
                &self.stones,
                &self.groups,

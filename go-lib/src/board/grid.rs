@@ -2,11 +2,12 @@ use std::hash::Hash;
 use std::iter::FromIterator;
 
 use bit_set::BitSet;
+
 use graph_lib::topology::Topology;
 
 pub type GoCell = usize;
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Clone)]
 pub struct Grid {
     pub size: usize,
     cells: BitSet,

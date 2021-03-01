@@ -1,12 +1,12 @@
 use bit_set::BitSet;
 
-use action::GoAction;
+use board::action::GoAction;
 use board::go_state::GoState;
+use board::stones::groups::GoGroup;
+use board::stones::stone::Stone;
 use display::range::Range2;
 use rust_tools::screen::layout::layout::LayoutRc;
 use sgf::sgf_export::Sequence;
-use board::groups::groups1::GoGroup;
-use board::groups::stone::Stone;
 
 pub trait GoShow {
     fn game(board: &GoState)-> Sequence;

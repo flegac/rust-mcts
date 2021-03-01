@@ -4,19 +4,19 @@ use std::collections::HashSet;
 use std::ops::Deref;
 
 use bit_set::BitSet;
-use graph_lib::topology::Topology;
 use indexmap::set::IndexSet;
 use itertools::Itertools;
 
 use board::go::Go;
 use board::grid::{GoCell, Grid};
-use board::groups::group_access::GroupAccess;
-use board::groups::grouprc::GoGroupRc;
-use board::groups::groups1::GoGroup;
-use board::groups::stone::Stone;
+use board::group_access::GroupAccess;
+use board::stones::grouprc::GoGroupRc;
+use board::stones::groups::GoGroup;
+use board::stones::stone::Stone;
 use display::range::Range2;
+use graph_lib::topology::Topology;
 
-// #[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct BoardGroups {
     id_gen: usize,
     goban: Grid,
@@ -114,7 +114,7 @@ impl GroupAccess for BoardGroups {
 
     fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
         assert!(!groups.is_empty());
-        //forget all groups
+        //forget all stones
         for g in groups {
             self.clear_group_color(g);
         }

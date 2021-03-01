@@ -1,7 +1,7 @@
 use board::go::Go;
 use board::go_state::GoState;
 use board::stats::board_stats::FullStats;
-use board::groups::stone::Stone;
+use board::stones::stone::Stone;
 
 #[derive(Copy, Clone)]
 pub struct StoneStats {
@@ -37,6 +37,6 @@ impl StoneStats {
     pub fn assert_eq(&self, other: &StoneStats) {
         assert_eq!(self.captured, other.captured, "[{}] captures", self.stone);
         assert_eq!(self.stones, other.stones, "[{}] stones", self.stone);
-        assert_eq!(self.groups, other.groups, "[{}] groups", self.stone);
+        assert_eq!(self.groups, other.groups, "[{}] stones", self.stone);
     }
 }

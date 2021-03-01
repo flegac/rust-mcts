@@ -1,6 +1,6 @@
-use rust_tools::screen::layout::template::Template;
+use board::stones::stone::Stone;
 use rust_tools::screen::layout::layout::L;
-use board::groups::stone::Stone;
+use rust_tools::screen::layout::template::Template;
 
 pub struct GoTemplate {}
 
@@ -14,7 +14,7 @@ impl GoTemplate {
             L::str2(&stones),
             L::str(" stones, "),
             L::str2(&groups),
-            L::str(" groups, "),
+            L::str(" stones, "),
             L::str2(&captured),
             L::str(" captured"),
         ]));

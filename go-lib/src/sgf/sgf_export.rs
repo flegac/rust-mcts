@@ -3,8 +3,8 @@ use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::Write;
 
-use action::GoAction;
-use board::groups::stone::Stone;
+use board::action::GoAction;
+use board::stones::stone::Stone;
 
 pub struct Prop {
     key: String,
@@ -109,17 +109,17 @@ impl SGF {
 
 #[test]
 fn stone_groups() {
-    let main = SGF::actions(Stone::Black, &[
+    let main = SGF::game(13, Stone::Black, &[
         GoAction::Cell(3, 2),
         GoAction::Cell(2, 2),
         GoAction::Cell(1, 1),
     ]);
-    let var1 = SGF::actions(Stone::Black, &[
+    let var1 = SGF::game(13, Stone::Black, &[
         GoAction::Cell(3, 2),
         GoAction::Cell(2, 2),
         GoAction::Cell(1, 1),
     ]);
-    let var2 = SGF::actions(Stone::Black, &[
+    let var2 = SGF::game(13, Stone::Black, &[
         GoAction::Cell(3, 2),
         GoAction::Cell(2, 2),
         GoAction::Cell(1, 1),

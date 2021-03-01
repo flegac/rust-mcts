@@ -1,11 +1,10 @@
-use graph_lib::topology::Topology;
-
 use board::go_state::GoState;
 use board::grid::Grid;
-use board::groups::groups1::GoGroup;
-use board::groups::stone::Stone;
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
+use board::stones::groups::GoGroup;
+use board::stones::stone::Stone;
+use graph_lib::topology::Topology;
 
 pub trait FullStats {
     fn score(&self, stone: Stone) -> StoneScore;
