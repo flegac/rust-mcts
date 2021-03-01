@@ -1,6 +1,5 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::ops::{Deref, DerefMut};

@@ -4,6 +4,7 @@ pub mod graph;
 pub mod node;
 pub mod safe_tree;
 pub mod topology;
+pub mod tree2;
 pub mod tree;
 
 #[cfg(test)]

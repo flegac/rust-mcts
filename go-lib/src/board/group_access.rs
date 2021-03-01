@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use indexmap::set::IndexSet;
 
 use board::grid::{GoCell, Grid};

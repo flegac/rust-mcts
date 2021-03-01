@@ -2,7 +2,6 @@ use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::hash_map::RandomState;
-use std::collections::HashSet;
 use std::ops::Deref;
 
 use bit_set::BitSet;

@@ -23,6 +23,8 @@ Hum... Do not expect wonders !
 
 # TODO
 
+***** CONTINUE graph-lib/src/tree2/mod.rs !! (the new MCTS) *****
+
 - State copy
 - multi-threading : simulations
 

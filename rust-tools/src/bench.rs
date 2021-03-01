@@ -85,9 +85,26 @@ impl Bench {
 
 impl Display for Bench {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Speed: {} iter {:?} sec",
+        write!(f, "Speed: {} iter {:?}",
                self.iterations,
                self.duration.unwrap_or(self.start.elapsed())
         )
     }
+}
+
+
+#[test]
+fn test_bench() {
+    let mut cpt = 0;
+
+    let mut bench = Bench::new(Duration::from_millis(200));
+    while bench.looping() {
+        let mut round = bench.spawn(Duration::from_millis(60));
+        while round.looping_inc(None) {
+            cpt += 3;
+        }
+        println!("{}", round);
+        bench.inc_bench(&round);
+    }
+    println!("{}\n{}", bench, bench.log_speed(1 as f32));
 }

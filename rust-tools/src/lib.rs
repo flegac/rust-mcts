@@ -1,6 +1,7 @@
 extern crate itertools;
 
 pub mod screen;
+pub mod bench;
 
 #[cfg(test)]
 mod tests {

@@ -9,3 +9,9 @@ edition = "2018"
 [dependencies]
 rpool = "1.0.1"
 bit-set = "0.5.2"
+indexmap = "1.6.1"
+rand = "0.8.3"
+
+
+[dependencies.rust-tools]
+path = "../rust-tools"

@@ -3,6 +3,7 @@ extern crate env_logger;
 extern crate go_lib;
 extern crate log;
 extern crate mcts_lib;
+extern crate rust_tools;
 
 use std::{env, fs};
 use std::io::Write;
@@ -12,7 +13,6 @@ use chrono::Local;
 use env_logger::Builder;
 use log::LevelFilter;
 
-use bench::Bench;
 use constants::{BENCH, GOBAN_SIZE, LOG_LEVEL, SEED, SIM_FACTOR};
 use go_lib::board::go_state::GoState;
 use go_lib::board::group_access::GroupAccess;
@@ -22,9 +22,9 @@ use mcts_lib::mcts::MState;
 use mcts_lib::mymcts::MyMcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
 use mcts_lib::policy::win_score::WinScore;
+use rust_tools::bench::Bench;
 
 mod editor;
-mod bench;
 mod constants;
 
 
