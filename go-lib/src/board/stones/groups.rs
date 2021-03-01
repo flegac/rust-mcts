@@ -119,12 +119,7 @@ impl GoGroup {
 
 impl Hash for GoGroup {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        // let stone = self.borrow().stone;
-        let min = self.cells.iter().min().unwrap();
-        // let max = self.cells.iter().max().unwrap();
-        // let x = format!("{}:{}-{}", stone, min, max);
-        // x.hash(state)
-        min.hash(state)
+        self.id.hash(state)
     }
 }
 
