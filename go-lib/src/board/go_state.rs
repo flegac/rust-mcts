@@ -17,21 +17,20 @@ use board::go::Go;
 use board::grid::{GoCell, Grid};
 use display::display::GoDisplay;
 use display::goshow::GoShow;
-use groups::board_groups::BoardGroups;
-use groups::group_access::GroupAccess;
 use mcts_lib::state::{GameResult, State};
 use rust_tools::screen::layout::layout::{L, LayoutRc};
-use stats::board_stats::{BoardStats, FullStats};
-use stats::stone_score::StoneScore;
-use stats::stone_stats::StoneStats;
-use stones::group::GoGroup;
-use stones::grouprc::GoGroupRc;
-use stones::stone::Stone;
+use indexmap::set::IndexSet;
+use board::stats::board_stats::{BoardStats, FullStats};
+use board::stats::stone_stats::StoneStats;
+use board::stats::stone_score::StoneScore;
+use board::groups::board_groups::BoardGroups;
+use board::groups::group_access::GroupAccess;
+use board::groups::stone::Stone;
+use board::groups::grouprc::GoGroupRc;
+use board::groups::groups1::GoGroup;
 
 // #[derive(Clone, Copy)]
 pub struct GoState {
-    // template: Template,
-
     //sgf state
     pub stone: Stone,
     pass_sequence: usize,
@@ -182,7 +181,7 @@ impl GoState {
         let topology = |c: GoCell| to_visit.contains(c);
         let old_cell = to_visit.iter().next().unwrap();
         let check_connection = |visited: &BitSet| old_connections.is_subset(visited);
-        let visited = GFlood::new().borrow_mut().flood_check(
+        let visited = GFlood::new().flood_check(
             self.goban(), old_cell, &topology, &check_connection,
         );
         !check_connection(&visited)
@@ -362,11 +361,11 @@ impl GroupAccess for GoState {
         self.gg.stone_at(cell)
     }
 
-    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc, RandomState> {
+    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut IndexSet<GoGroupRc, RandomState> {
         self.gg.groups_by_stone_mut(stone)
     }
 
-    fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc, RandomState> {
+    fn groups_by_stone(&self, stone: Stone) -> &IndexSet<GoGroupRc, RandomState> {
         self.gg.groups_by_stone(stone)
     }
 
@@ -391,7 +390,7 @@ mod tests {
 
     use board::go_state::GoState;
     use board::grid::Grid;
-    use stones::group::GoGroup;
+    use stones::groups1::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;
 

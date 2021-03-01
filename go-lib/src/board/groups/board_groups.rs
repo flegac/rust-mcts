@@ -3,23 +3,26 @@ use std::collections::HashSet;
 use std::ops::Deref;
 
 use graph_lib::topology::Topology;
-use itertools::{Itertools, };
+use itertools::Itertools;
 
 use board::go::Go;
 use board::grid::{GoCell, Grid};
-use stones::group::GoGroup;
-use stones::grouprc::GoGroupRc;
-use stones::stone::Stone;
 use display::range::Range2;
-use groups::group_access::GroupAccess;
+use indexmap::set::IndexSet;
+use board::groups::group_access::GroupAccess;
+use board::groups::stone::Stone;
+use std::borrow::Borrow;
+use board::groups::grouprc::GoGroupRc;
+use board::groups::groups1::GoGroup;
 
+// #[derive(Clone, Copy)]
 pub struct BoardGroups {
     id_gen: usize,
     goban: Grid,
     groups: Vec<GoGroupRc>,
-    blacks: HashSet<GoGroupRc>,
-    whites: HashSet<GoGroupRc>,
-    nones: HashSet<GoGroupRc>,
+    blacks: IndexSet<GoGroupRc>,
+    whites: IndexSet<GoGroupRc>,
+    nones: IndexSet<GoGroupRc>,
     pub(crate) empty_cells: GoGroup,
 
 }
@@ -33,9 +36,9 @@ impl BoardGroups {
             goban,
             empty_cells,
             groups: vec![],
-            blacks: HashSet::new(),
-            whites: HashSet::new(),
-            nones: HashSet::new(),
+            blacks: IndexSet::new(),
+            whites: IndexSet::new(),
+            nones: IndexSet::new(),
         };
         let group = res.new_group(gg);
         res.groups.resize_with(group.borrow().stones(), || group.clone());
@@ -139,7 +142,7 @@ impl GroupAccess for BoardGroups {
     }
 
 
-    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc, RandomState> {
+    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut IndexSet<GoGroupRc, RandomState> {
         match stone {
             Stone::None => &mut self.nones,
             Stone::Black => &mut self.blacks,
@@ -147,7 +150,7 @@ impl GroupAccess for BoardGroups {
         }
     }
 
-    fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc, RandomState> {
+    fn groups_by_stone(&self, stone: Stone) -> &IndexSet<GoGroupRc, RandomState> {
         match stone {
             Stone::None => &self.nones,
             Stone::Black => &self.blacks,
@@ -163,7 +166,7 @@ impl GroupAccess for BoardGroups {
 
     fn update_liberties(&self, group: &GoGroupRc) {
         let go = Go::new(self);
-        let mut adjacents = go.adjacent_cells( &group.borrow().cells);
+        let mut adjacents = go.adjacent_cells(&group.borrow().cells);
         adjacents.intersect_with(&self.empty_cells.cells);
         group.borrow_mut().liberties = adjacents.len();
     }

@@ -1,8 +1,8 @@
 use board::go_state::GoState;
-use stats::stone_score::StoneScore;
-use stats::stone_stats::StoneStats;
-use stones::group::GoGroup;
-use stones::stone::Stone;
+use board::stats::stone_score::StoneScore;
+use board::stats::stone_stats::StoneStats;
+use board::groups::stone::Stone;
+use board::groups::groups1::GoGroup;
 
 pub trait FullStats {
     fn score(&self, stone: Stone) -> StoneScore;

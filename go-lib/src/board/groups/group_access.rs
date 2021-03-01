@@ -1,8 +1,10 @@
 use std::collections::HashSet;
 
+use indexmap::set::IndexSet;
+
 use board::grid::{GoCell, Grid};
-use stones::grouprc::GoGroupRc;
-use stones::stone::Stone;
+use board::groups::grouprc::GoGroupRc;
+use board::groups::stone::Stone;
 
 pub trait GroupAccess {
     fn goban(&self) -> &Grid;
@@ -12,8 +14,8 @@ pub trait GroupAccess {
 
     fn group_at(&self, cell: GoCell) -> &GoGroupRc;
     fn stone_at(&self, cell: GoCell) -> Stone;
-    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut HashSet<GoGroupRc>;
-    fn groups_by_stone(&self, stone: Stone) -> &HashSet<GoGroupRc>;
+    fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut IndexSet<GoGroupRc>;
+    fn groups_by_stone(&self, stone: Stone) -> &IndexSet<GoGroupRc>;
     fn update_liberties(&self, group: &GoGroupRc);
     fn adjacent_groups(&self, cell: GoCell) -> Vec<GoGroupRc>;
 }

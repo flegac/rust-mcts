@@ -8,14 +8,14 @@ use action::GoAction;
 use board::go_state::GoState;
 use display::goshow::GoShow;
 use display::range::Range2;
-use groups::group_access::GroupAccess;
 use rust_tools::screen::layout::layout::{L, LayoutRc};
 use sgf::sgf_export::{Sequence, SGF};
-use stats::board_stats::{BoardStats, FullStats};
-use stats::stone_score::StoneScore;
-use stats::stone_stats::StoneStats;
-use stones::group::GoGroup;
-use stones::stone::Stone;
+use board::stats::stone_score::StoneScore;
+use board::stats::stone_stats::StoneStats;
+use board::stats::board_stats::{BoardStats, FullStats};
+use board::groups::group_access::GroupAccess;
+use board::groups::stone::Stone;
+use board::groups::groups1::GoGroup;
 
 pub struct GoDisplay {}
 

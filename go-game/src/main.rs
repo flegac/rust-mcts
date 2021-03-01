@@ -5,7 +5,7 @@ extern crate log;
 extern crate mcts_lib;
 
 use std::{env, fs};
-use std::io::{Error, Write};
+use std::io::Write;
 use std::path::Path;
 
 use chrono::Local;
@@ -14,17 +14,14 @@ use log::LevelFilter;
 
 use bench::Bench;
 use constants::{BENCH, GOBAN_SIZE, LOG_LEVEL, SEED, SIM_FACTOR};
-use go_lib::board::go::Go;
 use go_lib::board::go_state::GoState;
-use go_lib::board::grid::Grid;
-use go_lib::groups::group_access::GroupAccess;
+use go_lib::board::groups::group_access::GroupAccess;
+use go_lib::board::groups::stone::Stone;
 use go_lib::sgf::sgf_export::SGF;
-use go_lib::stones::stone::Stone;
 use mcts_lib::mcts::MState;
 use mcts_lib::mymcts::MyMcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
 use mcts_lib::policy::win_score::WinScore;
-use go_lib::stats::board_stats::FullStats;
 
 mod editor;
 mod bench;

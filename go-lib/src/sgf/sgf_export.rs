@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::Write;
 
 use action::GoAction;
-use stones::stone::Stone;
+use board::groups::stone::Stone;
 
 pub struct Prop {
     key: String,

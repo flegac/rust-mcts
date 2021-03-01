@@ -7,9 +7,9 @@ use graph_lib::topology::Topology;
 
 use board::go_state::GoState;
 use board::grid::{GoCell, Grid};
-use stones::stone::Stone;
 use graph_lib::graph::GFlood;
 use graph_lib::algo::flood::Flood;
+use board::groups::stone::Stone;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
@@ -125,9 +125,11 @@ mod tests {
 
     use board::go_state::GoState;
     use board::grid::Grid;
-    use stones::group::GoGroup;
+    use stones::groups1::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;
+    use board::groups::groups1::GoGroup;
+    use board::groups::stone::Stone;
 
     #[test]
     fn group_hash() {

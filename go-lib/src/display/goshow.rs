@@ -4,9 +4,9 @@ use action::GoAction;
 use board::go_state::GoState;
 use display::range::Range2;
 use rust_tools::screen::layout::layout::LayoutRc;
-use stones::group::GoGroup;
-use stones::stone::Stone;
 use sgf::sgf_export::Sequence;
+use board::groups::groups1::GoGroup;
+use board::groups::stone::Stone;
 
 pub trait GoShow {
     fn game(board: &GoState)-> Sequence;

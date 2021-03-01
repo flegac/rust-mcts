@@ -1,4 +1,4 @@
-use stones::stone::Stone;
+use board::groups::stone::Stone;
 
 #[derive(Copy, Clone)]
 pub struct StoneScore {

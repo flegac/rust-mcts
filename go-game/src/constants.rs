@@ -15,6 +15,6 @@ pub const GOBAN_SIZE: usize = 13;
 pub const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 pub const BENCH: Constants = Constants {
-    full_time: Duration::from_secs(1),
+    full_time: Duration::from_secs(3),
     round_time: Duration::from_millis(500),
 };

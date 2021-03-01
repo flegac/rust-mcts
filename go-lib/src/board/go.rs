@@ -2,9 +2,9 @@ use bit_set::BitSet;
 use graph_lib::topology::Topology;
 use itertools::Itertools;
 
-use groups::group_access::GroupAccess;
-use stones::grouprc::GoGroupRc;
-use stones::stone::Stone;
+use board::groups::group_access::GroupAccess;
+use board::groups::stone::Stone;
+use board::groups::grouprc::GoGroupRc;
 
 pub struct Go<'a, T: GroupAccess> {
     state: &'a T

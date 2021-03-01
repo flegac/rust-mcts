@@ -1,6 +1,6 @@
-use stones::stone::Stone;
 use rust_tools::screen::layout::template::Template;
 use rust_tools::screen::layout::layout::L;
+use board::groups::stone::Stone;
 
 pub struct GoTemplate {}
 
