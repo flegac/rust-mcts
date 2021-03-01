@@ -3,52 +3,60 @@ use graph_lib::topology::Topology;
 use itertools::Itertools;
 
 use board::go_state::GoState;
+use groups::group_access::GroupAccess;
 use stones::grouprc::GoGroupRc;
 use stones::stone::Stone;
-use groups::group_access::GroupAccess;
 
-pub struct Go {}
+pub struct Go<'a, T: GroupAccess> {
+    state: &'a T
+}
+
+impl<'a, T: GroupAccess> Go<'a, T> {
+    pub fn new(state: &'a T) -> Go<'a, T> {
+        Go { state }
+    }
+}
 
 
-impl Go {
-    pub fn adjacent_cells<G: Topology>(board: &G, cells: &BitSet) -> BitSet {
+impl<'a, T: GroupAccess> Go<'a, T> {
+    pub fn adjacent_cells(&self, cells: &BitSet) -> BitSet {
         let mut adjacents = BitSet::new();
         for c in cells.iter() {
-            adjacents.union_with(&board.edges(c));
+            adjacents.union_with(&self.state.goban().edges(c));
         }
         adjacents.difference_with(cells);
         adjacents
     }
 
 
-    pub fn count_stones(stone: Stone, board: &GoState) -> usize {
-        board.groups_by_stone(stone)
+    pub fn count_stones(&self, stone: Stone) -> usize {
+        self.state.groups_by_stone(stone)
             .iter()
             .map(|g| g.borrow().stones())
             .sum()
     }
 
-    pub fn count_groups(stone: Stone, board: &GoState) -> usize {
-        board.groups_by_stone(stone).len()
+    pub fn count_groups(&self, stone: Stone) -> usize {
+        self.state.groups_by_stone(stone).len()
     }
 
-    pub fn count_territory(stone: Stone, board: &GoState) -> usize {
+    pub fn count_territory(&self, stone: Stone) -> usize {
         match stone {
             Stone::None => 0,
-            _ => board.groups_by_stone(Stone::None)
+            _ => self.state.groups_by_stone(Stone::None)
                 .iter()
-                .filter(|&g| Go::get_owner(board, g.clone()) == stone)
+                .filter(|&g| self.get_owner(g.clone()) == stone)
                 .map(|g| g.borrow().stones())
                 .sum()
         }
     }
 
-    pub fn get_owner(board: &GoState, group: GoGroupRc) -> Stone {
+    pub fn get_owner(&self, group: GoGroupRc) -> Stone {
         assert!(group.borrow().stone == Stone::None);
 
-        let adjacents = Go::adjacent_cells(board, &group.borrow().cells);
+        let adjacents = self.adjacent_cells(&group.borrow().cells);
         let border = adjacents.iter()
-            .map(|c| board.stone_at(c))
+            .map(|c| self.state.stone_at(c))
             .unique()
             .collect_vec();
 

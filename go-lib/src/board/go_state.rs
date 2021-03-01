@@ -19,18 +19,18 @@ use board::grid::{GoCell, Grid};
 use display::display::GoDisplay;
 use display::goshow::GoShow;
 use display::range::Range2;
+use groups::board_groups::BoardGroups;
+use groups::group_access::GroupAccess;
 use mcts_lib::state::{GameResult, State};
 use rust_tools::screen::layout::layout::{L, LayoutRc};
 use rust_tools::screen::layout::template::Template;
 use rust_tools::screen::screen::Screen;
-use stones::group::GoGroup;
-use stones::grouprc::GoGroupRc;
-use stones::stone::Stone;
-use groups::board_groups::BoardGroups;
-use groups::group_access::GroupAccess;
 use stats::board_stats::{BoardStats, FullStats};
 use stats::stone_score::StoneScore;
 use stats::stone_stats::StoneStats;
+use stones::group::GoGroup;
+use stones::grouprc::GoGroupRc;
+use stones::stone::Stone;
 
 pub struct GoState {
     // template: Template,
@@ -115,12 +115,11 @@ impl GoState {
         }
     }
 
-    pub fn update_score<F>(&mut self, scorer: F)
-        where F: Fn(Stone, &GoState) -> usize {
-        self.set_territory(Stone::Black, scorer(Stone::Black, self));
-        self.set_territory(Stone::White, scorer(Stone::White, self));
+    pub fn update_score(&mut self) {
+        let go = Go::new(&self.gg);
+        self.stats.set_territory(Stone::Black, go.count_territory(Stone::Black));
+        self.stats.set_territory(Stone::White, go.count_territory(Stone::White));
     }
-
 
     fn try_split_empty_cells(&mut self, cell: usize) -> Vec<GoGroupRc> {
         self.gg.empty_cells.cells.remove(cell);
@@ -403,7 +402,6 @@ mod tests {
     use stones::group::GoGroup;
     use stones::grouprc::GoGroupRc;
     use stones::stone::Stone;
-
 
     #[test]
     fn board_cell_id() {

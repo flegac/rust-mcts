@@ -24,6 +24,7 @@ use mcts_lib::mcts::MState;
 use mcts_lib::mymcts::MyMcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
 use mcts_lib::policy::win_score::WinScore;
+use go_lib::stats::board_stats::FullStats;
 
 mod editor;
 mod bench;
@@ -67,7 +68,8 @@ pub fn main() {
                          &selection_score);
         }
         bench.inc_bench(&round);
-        root.state_mut().update_score(Go::count_territory);
+
+        root.state_mut().update_score();
         log::info!("Board:\n{}", root.state());
         log::info!("{} x {} | results: {}", SIM_FACTOR, round, mcts.root);
     }

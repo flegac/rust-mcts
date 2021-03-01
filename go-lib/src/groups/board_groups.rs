@@ -165,7 +165,8 @@ impl GroupAccess for BoardGroups {
     }
 
     fn update_liberties(&self, group: &GoGroupRc) {
-        let mut adjacents = Go::adjacent_cells(&self.goban, &group.borrow().cells);
+        let go = Go::new(self);
+        let mut adjacents = go.adjacent_cells( &group.borrow().cells);
         adjacents.intersect_with(&self.empty_cells.cells);
         group.borrow_mut().liberties = adjacents.len();
     }

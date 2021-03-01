@@ -29,12 +29,13 @@ impl StoneStats {
     }
 
     pub fn new(stone: Stone, board: &GoState) -> StoneStats {
+        let go = Go::new(board);
         StoneStats {
             stone,
-            stones: Go::count_stones(stone, board),
-            groups: Go::count_groups(stone, board),
+            stones: go.count_stones(stone),
+            groups: go.count_groups(stone),
             captured: board.stats(stone).captured,
-            territory: Go::count_territory(stone, board),
+            territory: go.count_territory(stone),
         }
     }
 

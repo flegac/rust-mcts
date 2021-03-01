@@ -23,8 +23,8 @@ Hum... Do not expect wonders !
 
 # TODO
 
-- multi-threading : simulations
 - State copy
+- multi-threading : simulations
 
 - CORRECT RULES ! (check position against other application - using SGF output)
 - Ko rules
