@@ -1,8 +1,11 @@
+use graph_lib::topology::Topology;
+
 use board::go_state::GoState;
+use board::grid::Grid;
+use board::groups::groups1::GoGroup;
+use board::groups::stone::Stone;
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
-use board::groups::stone::Stone;
-use board::groups::groups1::GoGroup;
 
 pub trait FullStats {
     fn score(&self, stone: Stone) -> StoneScore;
@@ -60,13 +63,16 @@ impl BoardStats {
     }
 
 
-    pub fn new() -> BoardStats {
-        BoardStats {
+    pub fn new(goban: &Grid) -> BoardStats {
+        let mut res = BoardStats {
             black: StoneStats::init(Stone::Black),
             white: StoneStats::init(Stone::White),
             none: StoneStats::init(Stone::None),
             round: 0,
-        }
+        };
+        res.for_stone_mut(Stone::None).stones = goban.vertex_number();
+        res.for_stone_mut(Stone::None).groups = 1;
+        res
     }
 
     pub fn from_board(board: &GoState) -> BoardStats {

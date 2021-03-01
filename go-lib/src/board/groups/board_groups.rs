@@ -1,19 +1,20 @@
+use std::borrow::Borrow;
 use std::collections::hash_map::RandomState;
 use std::collections::HashSet;
 use std::ops::Deref;
 
+use bit_set::BitSet;
 use graph_lib::topology::Topology;
+use indexmap::set::IndexSet;
 use itertools::Itertools;
 
 use board::go::Go;
 use board::grid::{GoCell, Grid};
-use display::range::Range2;
-use indexmap::set::IndexSet;
 use board::groups::group_access::GroupAccess;
-use board::groups::stone::Stone;
-use std::borrow::Borrow;
 use board::groups::grouprc::GoGroupRc;
 use board::groups::groups1::GoGroup;
+use board::groups::stone::Stone;
+use display::range::Range2;
 
 // #[derive(Clone, Copy)]
 pub struct BoardGroups {
@@ -23,14 +24,14 @@ pub struct BoardGroups {
     blacks: IndexSet<GoGroupRc>,
     whites: IndexSet<GoGroupRc>,
     nones: IndexSet<GoGroupRc>,
-    pub(crate) empty_cells: GoGroup,
+    pub(crate) empty_cells: BitSet,
 
 }
 
 impl BoardGroups {
     pub fn new(goban: Grid) -> BoardGroups {
-        let gg = GoGroup::from_goban(&goban);
-        let empty_cells = GoGroup::from_goban(&goban);
+        let ggg = GoGroup::from_goban(&goban);
+        let empty_cells = goban.vertices().clone();
         let mut res = BoardGroups {
             id_gen: 0,
             goban,
@@ -40,7 +41,7 @@ impl BoardGroups {
             whites: IndexSet::new(),
             nones: IndexSet::new(),
         };
-        let group = res.new_group(gg);
+        let group = res.new_group(ggg);
         res.groups.resize_with(group.borrow().stones(), || group.clone());
         res.nones.insert(group.clone());
         res
@@ -54,7 +55,7 @@ impl BoardGroups {
 
     pub fn reset(&mut self) {
         self.id_gen = 0;
-        self.empty_cells = GoGroup::from_goban(&self.goban);
+        self.empty_cells = self.goban.vertices().clone();
         self.groups.clear();
         self.blacks.clear();
         self.whites.clear();
@@ -108,7 +109,7 @@ impl GroupAccess for BoardGroups {
         self.whites.remove(group);
         self.nones.insert(group.clone());
 
-        self.empty_cells.add_cells(&group.borrow().cells);
+        self.empty_cells.union_with(&group.borrow().cells);
     }
 
     fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
@@ -156,18 +157,12 @@ impl GroupAccess for BoardGroups {
             Stone::Black => &self.blacks,
             Stone::White => &self.whites
         }
-
-        // self.groups.iter()
-        //     .filter(|&g| g.borrow().stone == stone)
-        //     .unique()
-        //     .map(|g| g.clone())
-        //     .collect_vec()
     }
 
     fn update_liberties(&self, group: &GoGroupRc) {
         let go = Go::new(self);
         let mut adjacents = go.adjacent_cells(&group.borrow().cells);
-        adjacents.intersect_with(&self.empty_cells.cells);
+        adjacents.intersect_with(&self.empty_cells);
         group.borrow_mut().liberties = adjacents.len();
     }
 

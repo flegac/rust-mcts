@@ -9,25 +9,25 @@ use bit_set::BitSet;
 use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
+use indexmap::set::IndexSet;
 use itertools::Itertools;
 use log::LevelFilter;
 
 use action::GoAction;
 use board::go::Go;
 use board::grid::{GoCell, Grid};
+use board::groups::board_groups::BoardGroups;
+use board::groups::group_access::GroupAccess;
+use board::groups::grouprc::GoGroupRc;
+use board::groups::groups1::GoGroup;
+use board::groups::stone::Stone;
+use board::stats::board_stats::{BoardStats, FullStats};
+use board::stats::stone_score::StoneScore;
+use board::stats::stone_stats::StoneStats;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
 use mcts_lib::state::{GameResult, State};
 use rust_tools::screen::layout::layout::{L, LayoutRc};
-use indexmap::set::IndexSet;
-use board::stats::board_stats::{BoardStats, FullStats};
-use board::stats::stone_stats::StoneStats;
-use board::stats::stone_score::StoneScore;
-use board::groups::board_groups::BoardGroups;
-use board::groups::group_access::GroupAccess;
-use board::groups::stone::Stone;
-use board::groups::grouprc::GoGroupRc;
-use board::groups::groups1::GoGroup;
 
 // #[derive(Clone, Copy)]
 pub struct GoState {
@@ -45,16 +45,17 @@ pub struct GoState {
 impl GoState {
     pub fn new(size: usize) -> Self {
         let goban = Grid::new(size);
+        let stats = BoardStats::new(&goban);
         let mut board = GoState {
             stone: Stone::Black,
             pass_sequence: 0,
             ko: None,
-            stats: BoardStats::new(),
+            stats,
             history: vec![],
 
             gg: BoardGroups::new(goban),
         };
-        board.stats.add_group(&board.gg.empty_cells);
+
         board
     }
 
@@ -113,7 +114,7 @@ impl GoState {
     }
 
     fn try_split_empty_cells(&mut self, cell: usize) -> Vec<GoGroupRc> {
-        self.gg.empty_cells.cells.remove(cell);
+        self.gg.empty_cells.remove(cell);
 
         let old = self.group_at(cell).clone();
         let mut old_connections = self.goban().edges(cell).clone();
@@ -244,7 +245,7 @@ impl GoState {
     }
 
     fn check_correctness(&self) {
-        assert_eq!(self.gg.empty_cells.stones(), self.stats(Stone::None).stones);
+        assert_eq!(self.gg.empty_cells.len(), self.stats(Stone::None).stones);
         assert_eq!(
             self.stats(Stone::Black).stones
                 + self.stats(Stone::White).stones
@@ -264,8 +265,7 @@ impl State<GoAction> for GoState {
         self.ko = None;
         self.history.clear();
         self.gg.reset();
-        self.stats = BoardStats::new();
-        self.stats.add_group(&self.gg.empty_cells);
+        self.stats = BoardStats::new(self.goban());
     }
 
     fn result(&self) -> Option<GameResult> {
@@ -284,7 +284,8 @@ impl State<GoAction> for GoState {
     }
 
     fn actions(&self) -> Vec<GoAction> {
-        let mut actions = self.gg.empty_cells.cells.iter()
+        let mut actions = self.gg.empty_cells
+            .iter()
             .map(|c| self.goban().xy(c))
             .map(|(x, y)| GoAction::Cell(x, y))
             .collect_vec();
@@ -390,8 +391,8 @@ mod tests {
 
     use board::go_state::GoState;
     use board::grid::Grid;
-    use stones::groups1::GoGroup;
     use stones::grouprc::GoGroupRc;
+    use stones::groups1::GoGroup;
     use stones::stone::Stone;
 
     #[test]
