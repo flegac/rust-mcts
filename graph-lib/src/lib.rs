@@ -5,7 +5,7 @@ pub mod node;
 pub mod safe_tree;
 pub mod topology;
 pub mod tree;
-pub mod tree2;
+pub mod mcts_tree;
 
 #[cfg(test)]
 mod tests {

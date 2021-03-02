@@ -5,30 +5,32 @@ use std::time::{Duration, Instant};
 pub struct Bench {
     iterations: usize,
     start: Instant,
-    time_limit: Duration,
-    duration: Option<Duration>,
+    duration: Duration,
+    speed_factor: Option<f32>,
 }
 
 impl Bench {
-    pub fn new(time_limit: Duration) -> Bench {
+    pub fn new() -> Bench {
         Bench {
             iterations: 0,
             start: Instant::now(),
-            time_limit,
-            duration: None,
-        }
-    }
-    pub fn spawn(&mut self, time_limit: Duration) -> Bench {
-        Bench {
-            iterations: 0,
-            start: Instant::now(),
-            time_limit,
-            duration: None,
+            duration: Duration::from_secs(0),
+            speed_factor: None,
         }
     }
 
+    pub fn with_speed(speed_factor: f32) -> Bench {
+        Bench {
+            iterations: 0,
+            start: Instant::now(),
+            duration: Duration::from_secs(0),
+            speed_factor: Some(speed_factor),
+        }
+    }
+
+
     pub fn speed(&self) -> f32 {
-        self.iterations as f32 / self.duration.unwrap().as_secs_f32()
+        self.iterations as f32 / self.duration.as_secs_f32()
     }
 
     pub fn inc_bench(&mut self, other: &Bench) {
@@ -39,73 +41,51 @@ impl Bench {
         self.iterations += value;
     }
 
-    pub fn inc_easy(&mut self, other: Option<Bench>) {
-        match other {
-            None => self.inc(1),
-            Some(o) => self.inc_bench(&o),
-        }
+    pub fn for_iterations(&mut self, limit: usize) -> bool {
+        self.until_condition(self.iterations >= limit)
     }
 
-    pub fn looping_inc(&mut self, round: Option<Bench>) -> bool {
-        let duration = self.start.elapsed();
-        let finished = duration >= self.time_limit;
-        match self.duration {
-            None => match finished {
-                true => self.duration = Some(duration),
-                false => self.inc_easy(round),
-            },
-            Some(_) => {}
-        }
-
-        !finished
+    pub fn for_duration(&mut self, time_limit: Duration) -> bool {
+        self.until_condition(self.duration >= time_limit)
     }
 
-    pub fn looping(&mut self) -> bool {
-        let duration = self.start.elapsed();
-        let finished = duration >= self.time_limit;
-        match self.duration {
-            None => {
-                if finished {
-                    self.duration = Some(duration);
-                }
-            }
-            Some(_) => {}
+    pub fn until_condition(&mut self, finished: bool) -> bool {
+        self.duration = self.start.elapsed();
+        if !finished {
+            self.iterations += 1;
         }
         !finished
-    }
-
-    pub fn log_speed(&self, speed_factor: f32) -> String {
-        let speed = self.speed();
-        let per_sec = (speed_factor * speed) as u32;
-        let per_min = (60. * speed_factor * speed) as u32;
-        let per_hour = (3600. * speed_factor * speed) as u32;
-        format!(
-            "{} iter/sec\n{} iter/min\n{} iter/hour",
-            per_sec, per_min, per_hour
-        )
     }
 }
 
 impl Display for Bench {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let speed = self.speed() * self.speed_factor.unwrap_or(1.);
         write!(
             f,
-            "Speed: {} iter {:?}",
-            self.iterations,
-            self.duration.unwrap_or(self.start.elapsed())
+            "Speed: {} iter {:?}\n\
+            {} iter/sec\n\
+            {} iter/min\n\
+            {} iter/hour",
+            self.iterations, self.duration,
+            (speed) as u32,
+            (60. * speed) as u32,
+            (3600. * speed) as u32
         )
     }
 }
+
 
 #[test]
 fn test_bench() {
     let mut cpt = 0;
 
-    let mut bench = Bench::new(Duration::from_millis(200));
-    while bench.looping() {
-        let mut round = bench.spawn(Duration::from_millis(60));
-        while round.looping_inc(None) {
+    let mut bench = Bench::new();
+    while bench.for_duration(Duration::from_millis(60)) {
+        let mut round = Bench::new();
+        while round.for_duration(Duration::from_millis(60)) {
             cpt += 3;
+            round.inc(1);
         }
         println!("{}", round);
         bench.inc_bench(&round);

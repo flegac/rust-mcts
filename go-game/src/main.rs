@@ -56,22 +56,20 @@ pub fn main() {
     let mut mcts = MyMcts::new(SIM_FACTOR);
     let mut root = mcts.get_state(GoState::new(GOBAN_SIZE));
 
-    let mut bench = Bench::new(BENCH.full_time);
-    while bench.looping() {
-        let mut round = bench.spawn(BENCH.round_time);
-        while round.looping_inc(None) {
+    let mut bench = Bench::with_speed(SIM_FACTOR as f32);
+    while bench.for_duration((BENCH.full_time)) {
+        let mut round = Bench::with_speed(SIM_FACTOR as f32);
+        while round.for_duration(BENCH.round_time) {
             mcts.explore(&mut root,
                          &sim_policy,
                          &selection_score);
         }
-        bench.inc_bench(&round);
-
         root.state_mut().update_score();
         log::info!("Board:\n{}", root.state());
         log::info!("{} x {} | results: {}", SIM_FACTOR, round, mcts.root);
     }
-    log::info!("{}\n{}", bench, bench.log_speed(SIM_FACTOR as f32));
 
+    println!("{}", bench);
     let board = root.state();
     SGF::save(board.goban().size, Stone::Black, board.history.as_slice())
 }
