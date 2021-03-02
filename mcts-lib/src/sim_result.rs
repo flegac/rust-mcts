@@ -1,6 +1,6 @@
-use std::{fmt, mem};
 use std::fmt::Formatter;
 use std::hash::Hash;
+use std::{fmt, mem};
 
 use graph_lib::safe_tree::Tree;
 use state::GameResult;
@@ -16,10 +16,10 @@ pub struct SimResult {
 
 impl SimResult {
     pub fn node<A>() -> MctsNode<A>
-        where
-            A: Copy,
-            A: Eq,
-            A: Hash,
+    where
+        A: Copy,
+        A: Eq,
+        A: Hash,
     {
         Tree::new(SimResult::new())
     }

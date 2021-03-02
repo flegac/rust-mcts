@@ -14,9 +14,9 @@ use crate::mcts::Mcts;
 use crate::state::State;
 
 pub struct MyMcts<A, S, SS>
-    where
-        A: Action,
-        SS: MState<A, S>,
+where
+    A: Action,
+    SS: MState<A, S>,
 {
     pub root: MctsNode<A>,
     simulation_factor: usize,
@@ -24,10 +24,10 @@ pub struct MyMcts<A, S, SS>
 }
 
 impl<A, S> MyMcts<A, S, MyState<A, S>>
-    where
-        A: Action,
-        A: Display,
-        S: State<A>,
+where
+    A: Action,
+    A: Display,
+    S: State<A>,
 {
     pub fn new(simulation_factor: usize) -> MyMcts<A, S, MyState<A, S>> {
         MyMcts {
@@ -88,9 +88,9 @@ impl<A, S> MyMcts<A, S, MyState<A, S>>
 }
 
 impl<A, S> Mcts<A, S, MyState<A, S>> for MyMcts<A, S, MyState<A, S>>
-    where
-        A: Action,
-        S: State<A>,
+where
+    A: Action,
+    S: State<A>,
 {
     fn selection<Sc: Score>(&self, state: &mut MyState<A, S>, exploitation: &Sc) {
         while state.is_selectable() {

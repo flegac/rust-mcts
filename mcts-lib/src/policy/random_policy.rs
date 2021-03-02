@@ -20,9 +20,10 @@ impl RandomPolicy {
     }
 }
 
-impl<A: Copy,S:State<A>> Policy<A,S> for RandomPolicy {
+impl<A: Copy, S: State<A>> Policy<A, S> for RandomPolicy {
     fn select(&self, state: &S) -> A {
-        state.actions()
+        state
+            .actions()
             .choose(self.rng.borrow_mut().deref_mut())
             .unwrap()
             .clone()

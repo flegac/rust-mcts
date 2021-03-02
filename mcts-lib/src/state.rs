@@ -15,7 +15,10 @@ impl GameResult {
     }
 }
 
-pub trait State<A> where Self:Clone {
+pub trait State<A>
+where
+    Self: Clone,
+{
     fn reset(&mut self);
     fn result(&self) -> Option<GameResult>;
     fn actions(&self) -> Vec<A>;

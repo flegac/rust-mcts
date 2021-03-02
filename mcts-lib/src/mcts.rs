@@ -20,9 +20,9 @@ pub trait MState<A, S> {
 }
 
 pub trait Mcts<A, S, SS>
-    where
-        S: State<A>,
-        SS: MState<A, S>,
+where
+    S: State<A>,
+    SS: MState<A, S>,
 {
     fn selection<Sc: Score>(&self, state: &mut SS, exploitation: &Sc);
     fn expansion<P: Policy<A, S>>(&self, state: &mut SS, policy: &P) -> A;
