@@ -13,15 +13,19 @@ use rust_tools::bench::Bench;
 
 use crate::mcts_tree::{BRANCH_FACTOR, MCTS, MStats, TREE_SIZE};
 
-struct M {
-    id_gen: usize
+struct M<T> {
+    id_gen: usize,
+    arena: Vec<Rc<RefCell<T>>>,
 }
 
-impl MCTS for M {
+impl MCTS for M<Node> {
     type Item = Tree;
 
-    fn new() -> M {
-        M { id_gen: 0 }
+    fn new() -> M<Node> {
+        M {
+            id_gen: 0,
+            arena: Vec::new(),
+        }
     }
 
     fn size(&self) -> usize {
@@ -31,7 +35,9 @@ impl MCTS for M {
     fn new_node(&mut self, size: usize) -> Self::Item {
         let id = self.id_gen;
         self.id_gen += 1;
-        Some(Rc::new(RefCell::new(Node::new(id, size))))
+        let node = Rc::new(RefCell::new(Node::new(id, size)));
+        //TODO: use the arena strategy
+        Some(node)
     }
 
     fn select(&mut self, tree: &Self::Item) -> Self::Item {
@@ -166,7 +172,9 @@ fn test_it() {
         mcts.expand(&selected, BRANCH_FACTOR);
     }
 
-    mcts.display(&root);
+    if mcts.size() < 30 {
+        mcts.display(&root);
+    }
     println!("{} nodes", mcts.size());
     println!("{}", bench);
 }

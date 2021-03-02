@@ -1,8 +1,8 @@
 pub mod mcts_tree;
 mod test_indextree;
 
-// pub const TREE_SIZE: usize = 1_000_000;
-pub const TREE_SIZE: usize = 20;
+pub const TREE_SIZE: usize = 500_000;
+// pub const TREE_SIZE: usize = 20;
 pub const BRANCH_FACTOR: usize = 2;
 
 

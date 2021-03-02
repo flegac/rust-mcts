@@ -117,7 +117,9 @@ fn test_it() {
         mcts.expand(&selected, BRANCH_FACTOR);
     }
 
-    println!("{:?}", mcts.display(&root));
+    if mcts.size() < 30 {
+        mcts.display(&root);
+    }
     println!("{} nodes", mcts.size());
     println!("{}", bench);
 }
