@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use screen::layout::layout::{L, LayoutRc};
+use screen::layout::layout::{LayoutRc, L};
 use screen::layout::str_layout::{StrLayout, StrPtr};
 
 pub struct Template {
@@ -37,10 +37,8 @@ impl Template {
 #[test]
 fn test_template() {
     let x = L::str("coucou");
-    let mut template = Template::new(
-        L::vert(vec![x.clone(), x.clone()]));
+    let mut template = Template::new(L::vert(vec![x.clone(), x.clone()]));
     template.register(0, &x);
-
 
     template.template.show();
     template.update(0, "toto");

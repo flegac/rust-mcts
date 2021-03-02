@@ -1,7 +1,7 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
-use std::fmt::{Display, Formatter};
 use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 
@@ -14,8 +14,10 @@ use screen::screen::Screen;
 
 pub type LayoutRc = Rc<Layout>;
 
-
-pub trait Layout where Self: Dimension {
+pub trait Layout
+where
+    Self: Dimension,
+{
     fn to_screen(&self, x: usize, y: usize, target: &mut Screen);
     fn as_screen(&self) -> Screen {
         let mut scr = Screen::new(self.width(), self.height());

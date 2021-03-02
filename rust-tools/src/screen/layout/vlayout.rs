@@ -4,12 +4,9 @@ use screen::dimension::Dimension;
 use screen::layout::layout::{Layout, LayoutRc};
 use screen::screen::Screen;
 
-
 enum LayoutPolicy {
     Vertical,
-    Horizontal
-
-
+    Horizontal,
 }
 
 pub struct VLayout {
@@ -22,7 +19,11 @@ impl VLayout {
     pub fn new(data: Vec<LayoutRc>) -> VLayout {
         let width = data.iter().fold(0, |a, l| a.max(l.width()));
         let height = data.iter().fold(0, |a, l| a + l.height());
-        Self { data, width, height }
+        Self {
+            data,
+            width,
+            height,
+        }
     }
 }
 

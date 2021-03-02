@@ -1,5 +1,5 @@
-pub mod layout;
 pub mod hlayout;
-pub mod vlayout;
-pub mod template;
+pub mod layout;
 pub mod str_layout;
+pub mod template;
+pub mod vlayout;

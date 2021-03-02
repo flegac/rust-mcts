@@ -7,7 +7,6 @@ pub trait Drawer: Dimension {
     fn read(&self, offset: usize, size: usize) -> &[char];
     fn read_mut(&mut self, offset: usize, size: usize) -> &mut [char];
 
-
     fn get(&self, offset: usize) -> &char {
         self.read(offset, 1).iter().next().unwrap()
     }
@@ -25,7 +24,6 @@ pub trait Drawer: Dimension {
         let slice = vec.as_slice();
         self.put_slice(offset, slice);
     }
-
 
     fn draw_at(&mut self, offset: usize, other: &Self) {
         let (x, y) = self.xy(offset);

@@ -35,14 +35,12 @@ pub trait Dimension {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use screen::dimension::Dimension;
     use screen::drawer::Drawer;
-    use screen::smart_index::SmartIndex;
     use screen::screen::Screen;
-
+    use screen::smart_index::SmartIndex;
 
     #[test]
     fn test_dimension() {
@@ -73,7 +71,7 @@ mod tests {
                 scr.index(x as i32, y as i32),
                 scr.index(x as i32 - w as i32, y as i32),
                 scr.index(x as i32, y as i32 - h as i32),
-                scr.index(x as i32 - w as i32, y as i32 - h as i32)
+                scr.index(x as i32 - w as i32, y as i32 - h as i32),
             ];
 
             print!("{},{} :", x, y);

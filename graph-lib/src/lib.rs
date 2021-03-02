@@ -4,15 +4,15 @@ pub mod graph;
 pub mod node;
 pub mod safe_tree;
 pub mod topology;
-pub mod tree2;
 pub mod tree;
+pub mod tree2;
 
 #[cfg(test)]
 mod tests {
     use std::borrow::BorrowMut;
     use std::sync::Arc;
 
-    use rpool::{Pool, Poolable, PoolScaleMode};
+    use rpool::{Pool, PoolScaleMode, Poolable};
 
     #[derive(Debug)]
     struct TestContext {

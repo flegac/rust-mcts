@@ -13,12 +13,14 @@ use screen::screen::Screen;
 pub type StrPtr = Rc<StrPtr2>;
 
 pub struct StrPtr2 {
-    value: RefCell<String>
+    value: RefCell<String>,
 }
 
 impl StrPtr2 {
     pub fn new(value: &str) -> StrPtr2 {
-        StrPtr2 { value: RefCell::new(String::from(value)) }
+        StrPtr2 {
+            value: RefCell::new(String::from(value)),
+        }
     }
 
     pub fn get(&self) -> String {
@@ -43,7 +45,9 @@ impl StrLayout {
 
 impl Dimension for StrLayout {
     fn width(&self) -> usize {
-        self.data.get().lines()
+        self.data
+            .get()
+            .lines()
             .map(|l| l.len())
             .fold(0, |a, b| a.max(b))
     }
@@ -60,7 +64,6 @@ impl Layout for StrLayout {
         }
     }
 }
-
 
 #[test]
 fn test_str2() {

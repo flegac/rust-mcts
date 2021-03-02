@@ -1,5 +1,5 @@
-use std::{fmt, mem};
 use std::fmt::{Display, Formatter};
+use std::{fmt, mem};
 
 use screen::dimension::{Dim, Dimension};
 use screen::smart_index::SmartIndex;
@@ -74,6 +74,6 @@ impl Display for Screen {
             }
             write!(f, "\n");
         }
-        write!(f, "", )
+        write!(f, "",)
     }
 }

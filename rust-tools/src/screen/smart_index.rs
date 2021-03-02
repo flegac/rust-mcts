@@ -1,10 +1,16 @@
 use screen::dimension::Dimension;
 
-pub trait SmartIndex<Index> where Self: Dimension {
+pub trait SmartIndex<Index>
+where
+    Self: Dimension,
+{
     fn index(&self, x: Index, y: Index) -> usize;
 }
 
-impl<T> SmartIndex<i32> for T where T: Dimension {
+impl<T> SmartIndex<i32> for T
+where
+    T: Dimension,
+{
     fn index(&self, x: i32, y: i32) -> usize {
         let w = self.width() as i32;
         let h = self.height() as i32;
@@ -14,7 +20,10 @@ impl<T> SmartIndex<i32> for T where T: Dimension {
     }
 }
 
-impl<T> SmartIndex<usize> for T where T: Dimension {
+impl<T> SmartIndex<usize> for T
+where
+    T: Dimension,
+{
     fn index(&self, x: usize, y: usize) -> usize {
         self.at(x, y)
     }

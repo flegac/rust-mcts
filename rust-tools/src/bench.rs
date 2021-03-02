@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter};
 use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::time::{Duration, Instant};
 
 pub struct Bench {
@@ -42,10 +42,9 @@ impl Bench {
     pub fn inc_easy(&mut self, other: Option<Bench>) {
         match other {
             None => self.inc(1),
-            Some(o) => self.inc_bench(&o)
+            Some(o) => self.inc_bench(&o),
         }
     }
-
 
     pub fn looping_inc(&mut self, round: Option<Bench>) -> bool {
         let duration = self.start.elapsed();
@@ -53,8 +52,8 @@ impl Bench {
         match self.duration {
             None => match finished {
                 true => self.duration = Some(duration),
-                false => self.inc_easy(round)
-            }
+                false => self.inc_easy(round),
+            },
             Some(_) => {}
         }
 
@@ -65,8 +64,10 @@ impl Bench {
         let duration = self.start.elapsed();
         let finished = duration >= self.time_limit;
         match self.duration {
-            None => if finished {
-                self.duration = Some(duration);
+            None => {
+                if finished {
+                    self.duration = Some(duration);
+                }
             }
             Some(_) => {}
         }
@@ -78,20 +79,23 @@ impl Bench {
         let per_sec = (speed_factor * speed) as u32;
         let per_min = (60. * speed_factor * speed) as u32;
         let per_hour = (3600. * speed_factor * speed) as u32;
-        format!("{} iter/sec\n{} iter/min\n{} iter/hour",
-                per_sec, per_min, per_hour)
+        format!(
+            "{} iter/sec\n{} iter/min\n{} iter/hour",
+            per_sec, per_min, per_hour
+        )
     }
 }
 
 impl Display for Bench {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Speed: {} iter {:?}",
-               self.iterations,
-               self.duration.unwrap_or(self.start.elapsed())
+        write!(
+            f,
+            "Speed: {} iter {:?}",
+            self.iterations,
+            self.duration.unwrap_or(self.start.elapsed())
         )
     }
 }
-
 
 #[test]
 fn test_bench() {

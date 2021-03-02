@@ -14,11 +14,13 @@ impl HLayout {
     pub fn new(data: Vec<LayoutRc>) -> HLayout {
         let width = data.iter().fold(0, |a, l| a + l.width());
         let height = data.iter().fold(0, |a, l| a.max(l.height()));
-        Self { data, width, height }
+        Self {
+            data,
+            width,
+            height,
+        }
     }
 }
-
-
 
 impl Dimension for HLayout {
     fn width(&self) -> usize {
