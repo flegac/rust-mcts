@@ -11,8 +11,12 @@ use rand::Rng;
 
 use rust_tools::bench::Bench;
 
+trait Mcts {
+    fn is_leaf(&self) -> bool;
+}
+
 #[derive(Clone, Debug)]
-struct Mcts {
+struct MStats {
     explored: usize,
     wins: usize,
 }
@@ -22,17 +26,19 @@ type Tree = Option<Rc<RefCell<Node>>>;
 #[derive(Clone, Debug)]
 struct Node {
     id: usize,
-    value: Mcts,
+    value: MStats,
     depth: usize,
     leafs: usize,
     children: Vec<Tree>,
 }
 
-impl Node {
+impl Mcts for Node {
     fn is_leaf(&self) -> bool {
-        self.leafs == self.children.len()
+        self.value.explored == 0
     }
+}
 
+impl Node {
     fn size(&self) -> usize {
         let cpt: usize = self
             .children
@@ -70,8 +76,12 @@ fn select(tree: &Tree) -> Tree {
         None => panic!(),
         Some(node) => {
             if node.as_ref().borrow().is_leaf() {
+                node.as_ref().borrow_mut().value.explored+=1;
+
                 tree.clone()
             } else {
+                node.as_ref().borrow_mut().value.explored+=1;
+
                 //TODO : smarter selection
                 let childs = node.as_ref().borrow().children.len();
                 let mut rng = rand::thread_rng();
@@ -82,13 +92,20 @@ fn select(tree: &Tree) -> Tree {
     }
 }
 
-struct M {}
+struct M {
+    id_gen: usize
+}
 
 impl M {
-    fn node(id: usize, size: usize) -> Tree {
+    fn new() -> M {
+        M { id_gen: 0 }
+    }
+    fn node(&mut self, size: usize) -> Tree {
+        let id = self.id_gen;
+        self.id_gen += 1;
         Some(Rc::new(RefCell::new(Node {
-            id: id,
-            value: Mcts { explored: 0, wins: 0 },
+            id,
+            value: MStats { explored: 0, wins: 0 },
             depth: 0,
             leafs: size,
             children: vec![None; size],
@@ -116,29 +133,28 @@ impl Display for Node {
 
 #[test]
 fn test_it() {
-    let mut id_gen = 0;
-    let root = M::node(id_gen, 19 * 19);
-    id_gen += 1;
+    let branch_factor = 3;
+    let mut mcts = M::new();
+    let root = mcts.node(branch_factor);
 
-    let mut bench = Bench::new(Duration::from_secs(1));
+    let mut bench = Bench::new(Duration::from_millis(2));
     while bench.looping_inc(None) {
         let selected = select(&root);
-        match selected {
+        match &selected {
             None => panic!(),
             Some(node) => {
                 let nn = node.as_ref().borrow().children.len();
                 for i in 0..nn {
-                    let tree = M::node(id_gen, 19 * 19);
-                    id_gen += 1;
+                    let tree = mcts.node(branch_factor);
                     node.as_ref().borrow_mut().set_child(i, tree);
                 }
             }
         }
     }
-    // println!("{}", root);
     match root {
-        None => {}
+        None => panic!(),
         Some(node) => {
+            println!("{}", node.as_ref().borrow());
             println!("{} nodes", node.as_ref().borrow().size());
         }
     }
