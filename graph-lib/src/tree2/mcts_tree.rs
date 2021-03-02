@@ -12,8 +12,15 @@ use rand::Rng;
 use rust_tools::bench::Bench;
 
 #[derive(Clone, Debug)]
+struct Mcts {
+    explored: usize,
+    wins: usize,
+}
+
+#[derive(Clone, Debug)]
 struct Node {
     id: usize,
+    value: Mcts,
     depth: usize,
     leafs: usize,
     children: Vec<Tree>,
@@ -65,6 +72,7 @@ impl Tree {
     fn node(id: usize, size: usize) -> Tree {
         Tree::Node(Rc::new(RefCell::new(Node {
             id: id,
+            value: Mcts { explored: 0, wins: 0 },
             depth: 0,
             leafs: size,
             children: vec![Tree::Leaf; size],
