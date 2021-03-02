@@ -5,12 +5,32 @@ mod test_indextree;
 pub const TREE_SIZE: usize = 20;
 pub const BRANCH_FACTOR: usize = 2;
 
+
+pub trait MCTS {
+    type Item;
+
+    fn new() -> Self;
+
+    fn size(&self) -> usize;
+
+    fn new_node(&mut self, size: usize) -> Self::Item;
+
+    fn select(&mut self, tree: &Self::Item) -> Self::Item;
+
+    fn expand(&mut self, node: &Self::Item, max_children: usize);
+
+    fn display(&self, node: &Self::Item);
+
+    fn node_size(&self, node: &Self::Item) -> usize;
+}
+
 #[derive(Clone, Debug)]
 pub struct MStats {
     explored: usize,
     wins: usize,
     depth: usize,
     childs: usize,
+    tree_size: usize,
 }
 
 impl MStats {
@@ -20,6 +40,7 @@ impl MStats {
             wins: 0,
             depth: 0,
             childs: 0,
+            tree_size: 1,
         }
     }
 

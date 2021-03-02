@@ -11,13 +11,15 @@ use rand::Rng;
 
 use rust_tools::bench::Bench;
 
-use crate::mcts_tree::{BRANCH_FACTOR, MStats, TREE_SIZE};
+use crate::mcts_tree::{BRANCH_FACTOR, MCTS, MStats, TREE_SIZE};
 
 struct M {
     id_gen: usize
 }
 
-impl M {
+impl MCTS for M {
+    type Item = Tree;
+
     fn new() -> M {
         M { id_gen: 0 }
     }
@@ -26,28 +28,22 @@ impl M {
         self.id_gen
     }
 
-    fn new_node(&mut self, size: usize) -> Tree {
+    fn new_node(&mut self, size: usize) -> Self::Item {
         let id = self.id_gen;
         self.id_gen += 1;
-        let mut stats = MStats::new();
-        stats.childs = size;
-        Some(Rc::new(RefCell::new(Node {
-            id,
-            value: stats,
-            children: vec![None; size],
-        })))
+        Some(Rc::new(RefCell::new(Node::new(id, size))))
     }
 
-    fn select(&self, tree: &Tree) -> Tree {
+    fn select(&mut self, tree: &Self::Item) -> Self::Item {
         match tree {
             None => panic!(),
             Some(n) => {
-                if n.as_ref().borrow().value.is_leaf() {
-                    n.as_ref().borrow_mut().value.explored += 1;
+                if n.as_ref().borrow().data.is_leaf() {
+                    n.as_ref().borrow_mut().data.explored += 1;
                     tree.clone()
                 } else {
                     let mut rng = rand::thread_rng();
-                    n.as_ref().borrow_mut().value.explored += 1;
+                    n.as_ref().borrow_mut().data.explored += 1;
                     let childs = n.as_ref().borrow().children.len();
                     let index = rng.gen_range(0..childs);
                     self.select(&n.as_ref().borrow().children[index])
@@ -56,7 +52,7 @@ impl M {
         }
     }
 
-    fn expand(&mut self, node: &Tree, max_children: usize) {
+    fn expand(&mut self, node: &Self::Item, max_children: usize) {
         match &node {
             None => panic!(),
             Some(node) => {
@@ -69,7 +65,7 @@ impl M {
         }
     }
 
-    fn display(&self, node: &Tree) {
+    fn display(&self, node: &Self::Item) {
         let data = &node.clone().map(|x| x.as_ref().borrow().to_string());
         match data {
             None => {}
@@ -79,7 +75,7 @@ impl M {
         }
     }
 
-    fn node_size(node: &Tree) -> usize {
+    fn node_size(&self, node: &Self::Item) -> usize {
         match node {
             None => 0,
             Some(n) => n.as_ref().borrow().size(),
@@ -93,11 +89,22 @@ type Tree = Option<Rc<RefCell<Node>>>;
 #[derive(Clone, Debug)]
 struct Node {
     id: usize,
-    value: MStats,
+    data: MStats,
     children: Vec<Tree>,
 }
 
+
 impl Node {
+    fn new(id: usize, size: usize) -> Node {
+        let mut stats = MStats::new();
+        stats.childs = size;
+        Node {
+            id,
+            data: stats,
+            children: vec![None; size],
+        }
+    }
+
     fn size(&self) -> usize {
         let cpt: usize = self
             .children
@@ -110,29 +117,19 @@ impl Node {
         return cpt + 1;
     }
 
-    fn display(&self, node: &Tree) {
-        let data = &node.clone().map(|x| x.as_ref().borrow().to_string());
-        match data {
-            None => {}
-            Some(data) => {
-                println!("{}", data);
-            }
-        }
-    }
-
     fn set_child(&mut self, i: usize, child: Tree) {
         // update child depth
         match &child {
             None => {}
             Some(n) => {
-                n.as_ref().borrow_mut().value.depth = self.value.depth + 1;
+                n.as_ref().borrow_mut().data.depth = self.data.depth + 1;
                 // n.as_ref().borrow_mut().depth = self.depth + 1;
             }
         }
 
         match &self.children[i] {
             None => {
-                self.value.childs -= 1;
+                self.data.childs -= 1;
             }
             _ => {}
         }
@@ -142,9 +139,9 @@ impl Node {
 
 impl Display for Node {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let tab = String::from_iter(vec![' '; self.value.depth].iter());
-        write!(f, "{}{}:{}", tab, self.id, self.value.childs);
-        if !(self.value.is_leaf()) {
+        let tab = String::from_iter(vec![' '; self.data.depth].iter());
+        write!(f, "{}{}:{}", tab, self.id, self.data.childs);
+        if !(self.data.is_leaf()) {
             for child in self.children.iter() {
                 match child {
                     None => write!(f, "X"),
