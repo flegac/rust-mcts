@@ -17,6 +17,8 @@ struct Mcts {
     wins: usize,
 }
 
+type Tree = Option<Rc<RefCell<Node>>>;
+
 #[derive(Clone, Debug)]
 struct Node {
     id: usize,
@@ -36,8 +38,8 @@ impl Node {
             .children
             .iter()
             .map(|c| match c {
-                Tree::Leaf => 1,
-                Tree::Node(n) => n.as_ref().borrow().size(),
+                None => 1,
+                Some(n) => n.as_ref().borrow().size(),
             })
             .sum();
         return cpt + 1;
@@ -46,14 +48,14 @@ impl Node {
     fn set_child(&mut self, i: usize, child: Tree) {
         // update child depth
         match &child {
-            Tree::Leaf => {}
-            Tree::Node(n) => {
+            None => {}
+            Some(n) => {
                 n.as_ref().borrow_mut().depth = self.depth + 1;
             }
         }
 
         match &self.children[i] {
-            Tree::Leaf => {
+            None => {
                 self.leafs -= 1;
             }
             _ => {}
@@ -62,38 +64,35 @@ impl Node {
     }
 }
 
-#[derive(Clone, Debug)]
-enum Tree {
-    Leaf,
-    Node(Rc<RefCell<Node>>),
+
+fn select(tree: &Tree) -> Tree {
+    match tree {
+        None => panic!(),
+        Some(node) => {
+            if node.as_ref().borrow().is_leaf() {
+                tree.clone()
+            } else {
+                //TODO : smarter selection
+                let childs = node.as_ref().borrow().children.len();
+                let mut rng = rand::thread_rng();
+                let index = rng.gen_range(0..childs);
+                select(&node.as_ref().borrow().children[index])
+            }
+        }
+    }
 }
 
-impl Tree {
+struct M {}
+
+impl M {
     fn node(id: usize, size: usize) -> Tree {
-        Tree::Node(Rc::new(RefCell::new(Node {
+        Some(Rc::new(RefCell::new(Node {
             id: id,
             value: Mcts { explored: 0, wins: 0 },
             depth: 0,
             leafs: size,
-            children: vec![Tree::Leaf; size],
+            children: vec![None; size],
         })))
-    }
-
-    fn select(&self) -> Tree {
-        match self {
-            Tree::Leaf => panic!(),
-            Tree::Node(node) => {
-                if node.as_ref().borrow().is_leaf() {
-                    self.clone()
-                } else {
-                    //TODO : smarter selection
-                    let childs = node.as_ref().borrow().children.len();
-                    let mut rng = rand::thread_rng();
-                    let index = rng.gen_range(0..childs);
-                    node.as_ref().borrow().children[index].select()
-                }
-            }
-        }
     }
 }
 
@@ -104,8 +103,8 @@ impl Display for Node {
         if !(self.is_leaf()) {
             for child in self.children.iter() {
                 match child {
-                    Tree::Leaf => write!(f, "X"),
-                    Tree::Node(_) => write!(f, "\n{}{}", tab, child),
+                    None => write!(f, "X"),
+                    Some(c) => write!(f, "\n{}{}", tab, c.as_ref().borrow()),
                 };
             }
         }
@@ -114,30 +113,22 @@ impl Display for Node {
     }
 }
 
-impl Display for Tree {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Tree::Leaf => write!(f, "X"),
-            Tree::Node(node) => write!(f, "{}", node.as_ref().borrow()),
-        }
-    }
-}
 
 #[test]
 fn test_it() {
     let mut id_gen = 0;
-    let root = Tree::node(id_gen, 19 * 19);
+    let root = M::node(id_gen, 19 * 19);
     id_gen += 1;
 
     let mut bench = Bench::new(Duration::from_secs(1));
     while bench.looping_inc(None) {
-        let selected = root.select();
+        let selected = select(&root);
         match selected {
-            Tree::Leaf => panic!(),
-            Tree::Node(node) => {
+            None => panic!(),
+            Some(node) => {
                 let nn = node.as_ref().borrow().children.len();
                 for i in 0..nn {
-                    let tree = Tree::node(id_gen, 19 * 19);
+                    let tree = M::node(id_gen, 19 * 19);
                     id_gen += 1;
                     node.as_ref().borrow_mut().set_child(i, tree);
                 }
@@ -146,8 +137,8 @@ fn test_it() {
     }
     // println!("{}", root);
     match root {
-        Tree::Leaf => {}
-        Tree::Node(node) => {
+        None => {}
+        Some(node) => {
             println!("{} nodes", node.as_ref().borrow().size());
         }
     }
