@@ -21,14 +21,8 @@ struct M<T> {
 impl MCTS for M<Node> {
     type Item = Tree;
 
-    fn new() -> M<Node> {
-        M {
-            id_gen: 0,
-            arena: Vec::new(),
-        }
-    }
 
-    fn size(&self) -> usize {
+    fn node_count(&self) -> usize {
         self.id_gen
     }
 
@@ -40,7 +34,7 @@ impl MCTS for M<Node> {
         Some(node)
     }
 
-    fn select(&mut self, tree: &Self::Item) -> Self::Item {
+    fn select_from(&mut self, tree: &Self::Item) -> Self::Item {
         match tree {
             None => panic!(),
             Some(n) => {
@@ -52,7 +46,7 @@ impl MCTS for M<Node> {
                     n.as_ref().borrow_mut().data.explored += 1;
                     let childs = n.as_ref().borrow().children.len();
                     let index = rng.gen_range(0..childs);
-                    self.select(&n.as_ref().borrow().children[index])
+                    self.select_from(&n.as_ref().borrow().children[index])
                 }
             }
         }
@@ -89,7 +83,16 @@ impl MCTS for M<Node> {
     }
 }
 
+impl M<Node> {
+    fn new() -> M<Node> {
+        M {
+            id_gen: 0,
+            arena: Vec::new(),
+        }
+    }
+}
 
+//TODO: change to Rc<RefCell<Option<Node>>> ?? (this would make the data easily clonable)
 type Tree = Option<Rc<RefCell<Node>>>;
 
 #[derive(Clone, Debug)]
@@ -167,14 +170,14 @@ fn test_it() {
     let root = mcts.new_node(BRANCH_FACTOR);
 
     let mut bench = Bench::new();
-    while bench.until_condition(mcts.size() >= TREE_SIZE) {
-        let selected = mcts.select(&root);
+    while bench.until_condition(mcts.node_count() >= TREE_SIZE) {
+        let selected = mcts.select_from(&root);
         mcts.expand(&selected, BRANCH_FACTOR);
     }
 
-    if mcts.size() < 30 {
+    if mcts.node_count() < 30 {
         mcts.display(&root);
     }
-    println!("{} nodes", mcts.size());
+    println!("{} nodes", mcts.node_count());
     println!("{}", bench);
 }

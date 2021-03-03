@@ -1,21 +1,19 @@
 pub mod mcts_tree;
 mod test_indextree;
 
-pub const TREE_SIZE: usize = 500_000;
-// pub const TREE_SIZE: usize = 20;
+// pub const TREE_SIZE: usize = 500_000;
+pub const TREE_SIZE: usize = 20;
 pub const BRANCH_FACTOR: usize = 2;
 
 
 pub trait MCTS {
     type Item;
 
-    fn new() -> Self;
-
-    fn size(&self) -> usize;
+    fn node_count(&self) -> usize;
 
     fn new_node(&mut self, size: usize) -> Self::Item;
 
-    fn select(&mut self, tree: &Self::Item) -> Self::Item;
+    fn select_from(&mut self, node: &Self::Item) -> Self::Item;
 
     fn expand(&mut self, node: &Self::Item, max_children: usize);
 

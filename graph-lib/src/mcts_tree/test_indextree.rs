@@ -16,11 +16,7 @@ struct M {
 impl MCTS for M {
     type Item = NodeId;
 
-    fn new() -> M {
-        M { arena: Arena::new() }
-    }
-
-    fn size(&self) -> usize {
+    fn node_count(&self) -> usize {
         self.arena.count()
     }
 
@@ -28,7 +24,7 @@ impl MCTS for M {
         self.arena.new_node(MStats::new())
     }
 
-    fn select(&mut self, node: &Self::Item) -> Self::Item {
+    fn select_from(&mut self, node: &Self::Item) -> Self::Item {
         match self.arena.get_mut(node.clone()) {
             None => panic!(),
             Some(mut n) => {
@@ -41,7 +37,7 @@ impl MCTS for M {
                     match node.children(&self.arena).choose(&mut rng) {
                         None => panic!(),
                         Some(child) => {
-                            self.select(&child)
+                            self.select_from(&child)
                         }
                     }
                 }
@@ -84,6 +80,10 @@ impl MCTS for M {
 }
 
 impl M {
+    fn new() -> M {
+        M { arena: Arena::new() }
+    }
+
     fn expand_one(&mut self, node: NodeId, max_children: usize) -> NodeId {
         let child = self.arena.new_node(MStats::new());
         node.append(child, &mut self.arena);
@@ -112,15 +112,15 @@ fn test_it() {
     let root = mcts.new_node(BRANCH_FACTOR);
 
     let mut bench = Bench::new();
-    while bench.until_condition(mcts.size() >= TREE_SIZE) {
-        let selected = mcts.select(&root);
+    while bench.until_condition(mcts.node_count() >= TREE_SIZE) {
+        let selected = mcts.select_from(&root);
         mcts.expand(&selected, BRANCH_FACTOR);
     }
 
-    if mcts.size() < 30 {
+    if mcts.node_count() < 30 {
         mcts.display(&root);
     }
-    println!("{} nodes", mcts.size());
+    println!("{} nodes", mcts.node_count());
     println!("{}", bench);
 }
 
