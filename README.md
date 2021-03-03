@@ -10,10 +10,13 @@
 
 The project is composed of the followings crates :
 
+- go-game: playing go with Monte-Carlo Tree Search
+- go-lib: Go game library & data structures
+
 - graph-lib: tree & graph structures
 - mcts-lib: MCTS API & implementation
-- go-lib: Go game library & data structures
-- go-game: playing go with Monte-Carlo Tree Search
+
+- rust-tools: logging & benchmark helpers
 
 # Usage
 
