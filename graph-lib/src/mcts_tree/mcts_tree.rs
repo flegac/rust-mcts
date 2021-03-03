@@ -13,12 +13,12 @@ use rust_tools::bench::Bench;
 
 use crate::mcts_tree::{BRANCH_FACTOR, MCTS, MStats, TREE_SIZE};
 
-struct M<T> {
+pub struct M2<T> {
     id_gen: usize,
     arena: Vec<Rc<RefCell<T>>>,
 }
 
-impl MCTS for M<Node> {
+impl MCTS for M2<Node> {
     type Item = Tree;
 
 
@@ -83,9 +83,9 @@ impl MCTS for M<Node> {
     }
 }
 
-impl M<Node> {
-    fn new() -> M<Node> {
-        M {
+impl M2<Node> {
+    pub fn new() -> M2<Node> {
+        M2 {
             id_gen: 0,
             arena: Vec::new(),
         }
@@ -93,10 +93,10 @@ impl M<Node> {
 }
 
 //TODO: change to Rc<RefCell<Option<Node>>> ?? (this would make the data easily clonable)
-type Tree = Option<Rc<RefCell<Node>>>;
+pub type Tree = Option<Rc<RefCell<Node>>>;
 
 #[derive(Clone, Debug)]
-struct Node {
+pub struct Node {
     id: usize,
     data: MStats,
     children: Vec<Tree>,
@@ -104,7 +104,7 @@ struct Node {
 
 
 impl Node {
-    fn new(id: usize, size: usize) -> Node {
+    pub fn new(id: usize, size: usize) -> Node {
         let mut stats = MStats::new();
         stats.childs = size;
         Node {
@@ -163,21 +163,3 @@ impl Display for Node {
     }
 }
 
-
-#[test]
-fn test_it() {
-    let mut mcts = M::new();
-    let root = mcts.new_node(BRANCH_FACTOR);
-
-    let mut bench = Bench::new();
-    while bench.until_condition(mcts.node_count() >= TREE_SIZE) {
-        let selected = mcts.select_from(&root);
-        mcts.expand(&selected, BRANCH_FACTOR);
-    }
-
-    if mcts.node_count() < 30 {
-        mcts.display(&root);
-    }
-    println!("{} nodes", mcts.node_count());
-    println!("{}", bench);
-}

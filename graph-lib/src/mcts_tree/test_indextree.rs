@@ -9,11 +9,11 @@ use rust_tools::bench::Bench;
 
 use crate::mcts_tree::{BRANCH_FACTOR, MCTS, MStats, TREE_SIZE};
 
-struct M {
+pub struct M1 {
     arena: Arena<MStats>
 }
 
-impl MCTS for M {
+impl MCTS for M1 {
     type Item = NodeId;
 
     fn node_count(&self) -> usize {
@@ -79,9 +79,9 @@ impl MCTS for M {
     }
 }
 
-impl M {
-    fn new() -> M {
-        M { arena: Arena::new() }
+impl M1 {
+    pub fn new() -> M1 {
+        M1 { arena: Arena::new() }
     }
 
     fn expand_one(&mut self, node: NodeId, max_children: usize) -> NodeId {
@@ -103,24 +103,5 @@ impl M {
         }
         child
     }
-}
-
-
-#[test]
-fn test_it() {
-    let mut mcts = M::new();
-    let root = mcts.new_node(BRANCH_FACTOR);
-
-    let mut bench = Bench::new();
-    while bench.until_condition(mcts.node_count() >= TREE_SIZE) {
-        let selected = mcts.select_from(&root);
-        mcts.expand(&selected, BRANCH_FACTOR);
-    }
-
-    if mcts.node_count() < 30 {
-        mcts.display(&root);
-    }
-    println!("{} nodes", mcts.node_count());
-    println!("{}", bench);
 }
 
