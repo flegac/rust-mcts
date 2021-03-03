@@ -1,31 +1,19 @@
 use std::hash::Hash;
 
+use graph_lib::safe_tree::Tree;
 use policy::policy::Policy;
 use policy::score::Score;
 use sim_result::SimResult;
-use state::State;
+use state::{Action, State};
 
-pub trait Action: Copy + Eq + Hash {}
+pub(crate) type MctsNode<A> = Tree<A, SimResult>;
 
-impl<T: Copy + Eq + Hash> Action for T {}
+pub trait Mcts<A: Action, S: State<A>> {
+    fn root(&self) -> MctsNode<A>;
+    fn selection<Sc: Score>(&mut self, exploitation: &Sc) -> MctsNode<A>;
+    fn expansion<P: Policy<A, S>>(&mut self, cursor: &MctsNode<A>, policy: &P) -> (A, MctsNode<A>);
+    fn backpropagation(&mut self, cursor: &MctsNode<A>, res: SimResult);
 
-pub trait MState<A, S> {
-    fn apply_action(&mut self, a: A);
     fn state(&self) -> &S;
     fn state_mut(&mut self) -> &mut S;
-    fn depth(&self) -> usize;
-
-    fn is_selectable(&self) -> bool;
-    fn is_terminal(&self) -> bool;
-}
-
-pub trait Mcts<A, S, SS>
-where
-    S: State<A>,
-    SS: MState<A, S>,
-{
-    fn selection<Sc: Score>(&self, state: &mut SS, exploitation: &Sc);
-    fn expansion<P: Policy<A, S>>(&self, state: &mut SS, policy: &P) -> A;
-    fn simulation<P: Policy<A, S>>(&self, state: &mut SS, policy: &P) -> SimResult;
-    fn backpropagation(&self, state: &mut SS, res: SimResult);
 }

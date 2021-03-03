@@ -13,6 +13,7 @@ pub struct Node<K, V> {
     pub value: RefCell<V>,
     pub parent: RefCell<Option<(K, NodeWeak<K, V>)>>,
     pub children: RefCell<HashMap<K, NodeRc<K, V>>>,
+    pub depth: RefCell<usize>
 }
 
 impl<K, V> Node<K, V>
@@ -26,6 +27,7 @@ where
             value: RefCell::new(value),
             parent: RefCell::new(None),
             children: RefCell::new(HashMap::new()),
+            depth:RefCell::new(0)
         }
     }
 

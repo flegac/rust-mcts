@@ -11,22 +11,19 @@ use rand::Rng;
 
 use rust_tools::bench::Bench;
 
-use crate::mcts_tree::{BRANCH_FACTOR, MCTS, MStats, TREE_SIZE};
+use crate::mcts_tree::mcts::{BRANCH_FACTOR, MCTS, TREE_SIZE};
+use crate::mcts_tree::mcts::MStats;
+use crate::mcts_tree::tree::Tree;
 
 pub struct M2<T> {
     id_gen: usize,
     arena: Vec<Rc<RefCell<T>>>,
 }
 
-impl MCTS for M2<Node> {
-    type Item = Tree;
 
+impl Tree<NodeId> for M2<Node> {
 
-    fn node_count(&self) -> usize {
-        self.id_gen
-    }
-
-    fn new_node(&mut self, size: usize) -> Self::Item {
+    fn new_node(&mut self, size: usize) -> NodeId {
         let id = self.id_gen;
         self.id_gen += 1;
         let node = Rc::new(RefCell::new(Node::new(id, size)));
@@ -34,7 +31,37 @@ impl MCTS for M2<Node> {
         Some(node)
     }
 
-    fn select_from(&mut self, tree: &Self::Item) -> Self::Item {
+    fn node_count(&self) -> usize {
+        self.id_gen
+    }
+
+    fn node_size(&self, node: &NodeId) -> usize {
+        match node {
+            None => 0,
+            Some(n) => n.as_ref().borrow().size(),
+        }
+    }
+
+    fn display(&self, node: &NodeId) {
+        log::trace!("display...");
+
+        let data = &node.clone().map(|x| x.as_ref().borrow().to_string());
+        match data {
+            None => {}
+            Some(data) => {
+                println!("{}", data);
+            }
+        }
+    }
+
+    fn set_child(&mut self, i: usize, parent: &NodeId, child: &NodeId) {
+        todo!()
+    }
+}
+
+
+impl MCTS<NodeId> for M2<Node> {
+    fn select_from(&mut self, tree: &NodeId) -> NodeId {
         match tree {
             None => panic!(),
             Some(n) => {
@@ -52,7 +79,7 @@ impl MCTS for M2<Node> {
         }
     }
 
-    fn expand(&mut self, node: &Self::Item, max_children: usize) {
+    fn expand(&mut self, node: &NodeId, max_children: usize) {
         match &node {
             None => panic!(),
             Some(node) => {
@@ -62,23 +89,6 @@ impl MCTS for M2<Node> {
                     node.as_ref().borrow_mut().set_child(i, child);
                 }
             }
-        }
-    }
-
-    fn display(&self, node: &Self::Item) {
-        let data = &node.clone().map(|x| x.as_ref().borrow().to_string());
-        match data {
-            None => {}
-            Some(data) => {
-                println!("{}", data);
-            }
-        }
-    }
-
-    fn node_size(&self, node: &Self::Item) -> usize {
-        match node {
-            None => 0,
-            Some(n) => n.as_ref().borrow().size(),
         }
     }
 }
@@ -93,20 +103,20 @@ impl M2<Node> {
 }
 
 //TODO: change to Rc<RefCell<Option<Node>>> ?? (this would make the data easily clonable)
-pub type Tree = Option<Rc<RefCell<Node>>>;
+pub type NodeId = Option<Rc<RefCell<Node>>>;
 
 #[derive(Clone, Debug)]
 pub struct Node {
     id: usize,
     data: MStats,
-    children: Vec<Tree>,
+    children: Vec<NodeId>,
 }
 
 
 impl Node {
     pub fn new(id: usize, size: usize) -> Node {
         let mut stats = MStats::new();
-        stats.childs = size;
+        stats.leafs = size;
         Node {
             id,
             data: stats,
@@ -126,7 +136,7 @@ impl Node {
         return cpt + 1;
     }
 
-    fn set_child(&mut self, i: usize, child: Tree) {
+    fn set_child(&mut self, i: usize, child: NodeId) {
         // update child depth
         match &child {
             None => {}
@@ -138,7 +148,7 @@ impl Node {
 
         match &self.children[i] {
             None => {
-                self.data.childs -= 1;
+                self.data.leafs -= 1;
             }
             _ => {}
         }
@@ -149,7 +159,7 @@ impl Node {
 impl Display for Node {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let tab = String::from_iter(vec![' '; self.data.depth].iter());
-        write!(f, "{}{}:{}", tab, self.id, self.data.childs);
+        write!(f, "{}{}:{}", tab, self.id, self.data.leafs);
         if !(self.data.is_leaf()) {
             for child in self.children.iter() {
                 match child {
@@ -162,4 +172,3 @@ impl Display for Node {
         Ok(())
     }
 }
-

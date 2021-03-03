@@ -1,8 +1,5 @@
-use state::State;
+use state::{State, Action};
 
-pub trait Policy<A, S>
-where
-    S: State<A>,
-{
+pub trait Policy<A: Action, S: State<A>> {
     fn select(&self, state: &S) -> A;
 }

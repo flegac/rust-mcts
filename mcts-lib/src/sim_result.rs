@@ -1,11 +1,11 @@
+use std::{fmt, mem};
 use std::fmt::Formatter;
 use std::hash::Hash;
-use std::{fmt, mem};
 
 use graph_lib::safe_tree::Tree;
-use state::GameResult;
+use state::{Action, GameResult};
 
-pub(crate) type MctsNode<A> = Tree<A, SimResult>;
+use crate::mcts::MctsNode;
 
 pub struct SimResult {
     pub tries: usize,
@@ -15,11 +15,7 @@ pub struct SimResult {
 }
 
 impl SimResult {
-    pub fn node<A>() -> MctsNode<A>
-    where
-        A: Copy,
-        A: Eq,
-        A: Hash,
+    pub fn node<A>() -> MctsNode<A> where A: Action,
     {
         Tree::new(SimResult::new())
     }
@@ -49,6 +45,7 @@ impl SimResult {
             GameResult::Win => self.wins += 1,
             GameResult::Lose => self.loses += 1,
             GameResult::Draw => self.draws += 1,
+            _ => panic!()
         }
         self.tries += 1;
     }

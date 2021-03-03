@@ -1,6 +1,7 @@
 use core::fmt;
 use core::fmt::{Display, Formatter};
 use core::option::Option;
+use std::borrow::Borrow;
 use std::hash::Hash;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -10,17 +11,17 @@ use crate::node::Node;
 use crate::tree::TheTree;
 
 pub struct Tree<K, V>(NodeRc<K, V>)
-where
-    K: Eq,
-    K: Hash;
+    where
+        K: Eq,
+        K: Hash;
 
 pub type NodeRc<K, V> = Rc<Node<K, V>>;
 
 impl<K, V> Tree<K, V>
-where
-    K: Copy,
-    K: Eq,
-    K: Hash,
+    where
+        K: Copy,
+        K: Eq,
+        K: Hash,
 {
     pub fn clone(&self) -> Tree<K, V> {
         let x = &self.0;
@@ -51,14 +52,14 @@ where
 }
 
 impl<K, V> Trees<K, V> for Tree<K, V>
-where
-    K: Copy,
-    K: Eq,
-    K: Hash,
+    where
+        K: Copy,
+        K: Eq,
+        K: Hash,
 {
     fn search_max_child<B: Ord, F>(&self, f: F) -> Option<(K, Self)>
-    where
-        F: Fn(&V) -> B,
+        where
+            F: Fn(&V) -> B,
     {
         self.0
             .children
@@ -70,10 +71,10 @@ where
 }
 
 impl<K, V> TheTree<K, V> for Tree<K, V>
-where
-    K: Copy,
-    K: Eq,
-    K: Hash,
+    where
+        K: Copy,
+        K: Eq,
+        K: Hash,
 {
     fn parent(&self) -> Option<(K, Self)> {
         self.0
@@ -90,6 +91,7 @@ where
             .insert(index, Rc::clone(&value.0));
         let data = Rc::downgrade(&self.0);
         value.0.parent.replace(Some((index, data)));
+        value.depth.replace(self.depth.take() + 1);
     }
 
     fn get_child(&self, index: K) -> Option<Self> {
@@ -102,9 +104,9 @@ where
 }
 
 impl<K, V> Deref for Tree<K, V>
-where
-    K: Eq,
-    K: Hash,
+    where
+        K: Eq,
+        K: Hash,
 {
     type Target = NodeRc<K, V>;
     fn deref(&self) -> &Self::Target {
@@ -113,10 +115,10 @@ where
 }
 
 impl<K, V> fmt::Display for Tree<K, V>
-where
-    V: Display,
-    K: Eq,
-    K: Hash,
+    where
+        V: Display,
+        K: Eq,
+        K: Hash,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)

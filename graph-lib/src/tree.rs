@@ -1,6 +1,6 @@
 pub trait TheTree<K, V>
-where
-    Self: Sized,
+    where
+        Self: Sized,
 {
     fn parent(&self) -> Option<(K, Self)>;
     fn set_child(&self, index: K, value: &Self);

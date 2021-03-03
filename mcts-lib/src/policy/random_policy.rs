@@ -6,7 +6,7 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 use policy::policy::Policy;
-use state::State;
+use state::{State, Action};
 
 pub struct RandomPolicy {
     rng: RefCell<Pcg64>,
@@ -20,7 +20,7 @@ impl RandomPolicy {
     }
 }
 
-impl<A: Copy, S: State<A>> Policy<A, S> for RandomPolicy {
+impl<A: Action, S: State<A>> Policy<A, S> for RandomPolicy {
     fn select(&self, state: &S) -> A {
         state
             .actions()

@@ -18,8 +18,8 @@ use go_lib::board::go_state::GoState;
 use go_lib::board::group_access::GroupAccess;
 use go_lib::board::stones::stone::Stone;
 use go_lib::sgf::sgf_export::SGF;
-use mcts_lib::mcts::MState;
-use mcts_lib::mymcts::MyMcts;
+use mcts_lib::explorator::Explorator;
+use mcts_lib::mcts::Mcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
 use mcts_lib::policy::win_score::WinScore;
 use rust_tools::bench::Bench;
@@ -39,8 +39,6 @@ fn load_sgf(filename: &Path) -> Result<String, String> {
 
 pub fn main() {
     init_logs(LOG_LEVEL);
-
-
     if let Ok(mut path) = env::current_dir() {
         path.push("output.sgf");
         println!("path: {:?}", path.as_path());
@@ -49,28 +47,28 @@ pub fn main() {
         }
     }
 
-
     let selection_score = WinScore::new();
     let sim_policy = RandomPolicy::new(SEED);
-
-    let mut mcts = MyMcts::new(SIM_FACTOR);
-    let mut root = mcts.get_state(GoState::new(GOBAN_SIZE));
+    let mut explorator = Explorator::new(
+        SIM_FACTOR,
+        GoState::new(GOBAN_SIZE),
+    );
 
     let mut bench = Bench::with_speed(SIM_FACTOR as f32);
-    while bench.for_duration((BENCH.full_time)) {
-        let mut round = Bench::with_speed(SIM_FACTOR as f32);
-        while round.for_duration(BENCH.round_time) {
-            mcts.explore(&mut root,
-                         &sim_policy,
-                         &selection_score);
+    let cursor = loop {
+        let res = explorator.explore(&sim_policy, &selection_score);
+        if bench.for_duration(BENCH.full_time) {
+            break res;
         }
-        root.state_mut().update_score();
-        log::info!("Board:\n{}", root.state());
-        log::info!("{} x {} | results: {}", SIM_FACTOR, round, mcts.root);
-    }
+    };
 
-    println!("{}", bench);
-    let board = root.state();
+    explorator.mcts_mut().state_mut().update_score();
+    let mut mcts = explorator.mcts();
+    log::info!("Board:\n{}", mcts.state());
+    log::info!("results: {}", cursor);
+    log::info!("{}", bench);
+
+    let board = mcts.state();
     SGF::save(board.goban().size, Stone::Black, board.history.as_slice())
 }
 

@@ -3,10 +3,11 @@ extern crate indextree;
 extern crate ordered_float;
 extern crate rand;
 extern crate rand_pcg;
+extern crate core;
 
 pub mod mcts;
-pub mod mymcts;
-mod mystate;
+pub mod explorator;
+mod mymcts;
 pub mod policy;
 pub mod sim_result;
 pub mod state;
