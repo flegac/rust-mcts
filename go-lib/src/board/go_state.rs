@@ -291,7 +291,7 @@ impl State<GoAction> for GoState {
         actions
     }
 
-    fn apply(&mut self, action: GoAction) {
+    fn apply_action(&mut self, action: GoAction) {
         self.play(action);
     }
 }
@@ -384,25 +384,47 @@ mod tests {
 
     use bit_set::BitSet;
 
+    use board::action::GoAction;
     use board::go_state::GoState;
     use board::grid::Grid;
+    use display::display::GoDisplay;
+    use display::goshow::GoShow;
     use graph_lib::algo::flood::Flood;
     use graph_lib::graph::GFlood;
     use graph_lib::topology::Topology;
+    use mcts_lib::state::State;
+    use rust_tools::screen::layout::layout::L;
+    use log::LevelFilter;
+    use rust_tools::loggers::init_logs;
 
     #[test]
-    fn board_cell_id() {
-        let goban = Grid::new(7);
+    fn go_state_clone() {
+        init_logs(LevelFilter::Trace);
+
+        let mut state = GoState::new(5);
 
 
-        goban.apply(|c| {
-            let (x, y) = goban.xy(c);
-            let c2 = goban.cell(x, y);
-            let (x2, y2) = goban.xy(c2);
+        for i in 0..4 {
+            for j in 3..5 {
+                state.apply_action(GoAction::Cell(i, j));
+            }
+        }
 
-            assert_eq!(c, c2);
-            assert_eq!(x, x2);
-            assert_eq!(y, y2);
-        });
+        let copy = state.clone();
+        let mut stats = vec![state, copy];
+        for a in vec![
+            GoAction::Cell(3, 3),
+            GoAction::Cell(1, 3),
+            GoAction::Cell(3, 3),
+        ] {
+            L::hori(vec![
+                GoDisplay::board(&stats[0]),
+                L::str(" - padding - "),
+                GoDisplay::board(&stats[1]),
+            ]).show();
+            for go in stats.iter_mut() {
+                go.apply_action(a)
+            }
+        }
     }
 }

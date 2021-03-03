@@ -21,11 +21,6 @@ use crate::mcts::MctsNode;
 pub struct MyMcts<A: Action, S: State<A>> {
     the_state: S,
     root: MctsNode<A>,
-    depth: usize,
-}
-
-fn is_leaf<A: Action>(node: MctsNode<A>) -> bool {
-    node.value.borrow().is_leaf()
 }
 
 impl<A: Action, S: State<A>> MyMcts<A, S> {
@@ -33,54 +28,29 @@ impl<A: Action, S: State<A>> MyMcts<A, S> {
         MyMcts {
             the_state: state,
             root: SimResult::node(),
-            depth: 0,
         }
     }
 
+    pub fn fork(&self, node: &MctsNode<A>) -> MyMcts<A, S> {
+        MyMcts {
+            the_state: self.state().clone(),
+            root: node.clone(),
+        }
+    }
+
+    fn is_leaf(node: MctsNode<A>) -> bool {
+        node.value.borrow().is_leaf()
+    }
 
     pub(crate) fn setup_node(&mut self, current: MctsNode<A>) {
         self.the_state.reset();
-        self.depth = 0;
-
-        let parents = current.parents();
-        for (action, _value) in parents.iter().rev() {
-            self.state_mut().apply(action.clone())
-        }
-
-        if !parents.is_empty() {
-            log::debug!("{} parents", parents.len());
-        } else {
-            self.extend_node(&current)
+        for (action, _) in current.parents().iter().rev() {
+            self.state_mut().apply_action(action.clone())
         }
     }
 
     pub(crate) fn reset(&mut self) {
         self.setup_node(self.root.clone());
-    }
-
-    pub(crate) fn move_to_node(&mut self, action: A, cursor: &MctsNode<A>, node: &MctsNode<A>) {
-        cursor.set_child(action, &node);
-        self.state_mut().apply(action);
-    }
-
-    fn extend_node(&mut self, node: &MctsNode<A>) {
-        let actions = self.the_state.actions();
-        if node.children.borrow().is_empty() {
-            for (_i, &a) in actions.iter().enumerate() {
-                let next_current = SimResult::node();
-                node.set_child(a, &next_current);
-            }
-        }
-    }
-}
-
-impl<A, S> Display for MyMcts<A, S>
-    where
-        A: Action,
-        S: State<A>,
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "(depth={})", self.depth)
     }
 }
 
@@ -93,32 +63,29 @@ impl<A: Action, S: State<A>> Mcts<A, S> for MyMcts<A, S> {
         self.reset();
         let mut cursor = self.root();
 
-        while is_leaf(cursor.clone()) {
-            let copy = cursor.clone();
-            let parent = copy.value.borrow();
+        while Self::is_leaf(cursor.clone()) {
             let score = |child: &SimResult| {
+                let copy = cursor.clone();
+                let parent = copy.value.borrow();
                 OrderedFloat(exploitation.score(child) + ExploreScore::new(&parent).score(child))
             };
-            let found = cursor.search_max_child(&score);
-            match found {
+            match cursor.search_max_child(&score) {
                 None => break,
                 Some((action, node)) => {
                     cursor.set_child(action, &node);
-                    self.state_mut().apply(action);
-                    // mem::swap(&mut cursor, &mut node);
+                    self.state_mut().apply_action(action);
                     cursor = node.clone();
                 }
             }
         }
         cursor
     }
-    fn expansion<P: Policy<A, S>>(&mut self, cursor: &MctsNode<A>, policy: &P) -> (A, MctsNode<A>) {
+
+    fn expansion<P: Policy<A, S>>(&mut self, selected: &MctsNode<A>, policy: &P) -> (A, MctsNode<A>) {
         let action = policy.select(self.state());
-
         let new_node = SimResult::node();
-
-        cursor.set_child(action, &new_node);
-        self.state_mut().apply(action);
+        selected.set_child(action, &new_node);
+        self.state_mut().apply_action(action);
         (action, new_node)
     }
 

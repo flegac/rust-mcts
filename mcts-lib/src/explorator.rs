@@ -61,15 +61,12 @@ impl<A: Action + Display, S: State<A>> Explorator<A, S> {
         match self.simulation_factor {
             1 => self.mcts.state_mut().simulation(policy),
             _ => {
-                todo!()
-                // let mut res = SimResult::new();
-                // let node = self.mcts.get_node().clone();
-                // for _i in 0..self.simulation_factor {
-                //     let the_node = node.clone();
-                //     self.mcts.setup_node(the_node);
-                //     res.merge(&self.mcts.state_mut().simulation(policy));
-                // }
-                // res
+                let mut result = SimResult::new();
+                for _i in 0..self.simulation_factor {
+                    let res = self.mcts.state().clone().simulation(policy);
+                    result.merge(&res);
+                }
+                result
             }
         }
     }

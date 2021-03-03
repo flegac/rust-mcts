@@ -24,11 +24,11 @@ pub trait State<A: Action> where Self: Clone {
     fn reset(&mut self);
     fn result(&self) -> Option<GameResult>;
     fn actions(&self) -> Vec<A>;
-    fn apply(&mut self, action: A);
+    fn apply_action(&mut self, action: A);
     fn simulation<P: Policy<A, Self>>(&mut self, policy: &P) -> SimResult {
         while !self.result().is_some() {
             let action = policy.select(self);
-            self.apply(action);
+            self.apply_action(action);
         }
         SimResult::from_game(self.result().unwrap())
     }

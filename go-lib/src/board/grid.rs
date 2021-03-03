@@ -81,3 +81,34 @@ impl Topology for Grid {
         &self.links[v]
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use std::ops::Deref;
+    use std::sync::Arc;
+
+    use bit_set::BitSet;
+
+    use board::go_state::GoState;
+    use board::grid::Grid;
+    use graph_lib::algo::flood::Flood;
+    use graph_lib::graph::GFlood;
+    use graph_lib::topology::Topology;
+
+    #[test]
+    fn grid_id_conversion() {
+        let goban = Grid::new(7);
+
+
+        goban.apply(|c| {
+            let (x, y) = goban.xy(c);
+            let c2 = goban.cell(x, y);
+            let (x2, y2) = goban.xy(c2);
+
+            assert_eq!(c, c2);
+            assert_eq!(x, x2);
+            assert_eq!(y, y2);
+        });
+    }
+}

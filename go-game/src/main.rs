@@ -9,10 +9,6 @@ use std::{env, fs};
 use std::io::Write;
 use std::path::Path;
 
-use chrono::Local;
-use env_logger::Builder;
-use log::LevelFilter;
-
 use constants::{BENCH, GOBAN_SIZE, LOG_LEVEL, SEED, SIM_FACTOR};
 use go_lib::board::go_state::GoState;
 use go_lib::board::group_access::GroupAccess;
@@ -23,6 +19,7 @@ use mcts_lib::mcts::Mcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
 use mcts_lib::policy::win_score::WinScore;
 use rust_tools::bench::Bench;
+use rust_tools::loggers::init_logs;
 
 mod editor;
 mod constants;
@@ -63,26 +60,10 @@ pub fn main() {
     };
 
     explorator.mcts_mut().state_mut().update_score();
-    let mut mcts = explorator.mcts();
-    log::info!("Board:\n{}", mcts.state());
+    let board = explorator.mcts().state();
+    SGF::save(board.goban().size, Stone::Black, board.history.as_slice());
+    log::info!("Board:\n{}", board);
     log::info!("results: {}", cursor);
     log::info!("{}", bench);
-
-    let board = mcts.state();
-    SGF::save(board.goban().size, Stone::Black, board.history.as_slice())
 }
 
-
-fn init_logs(level: LevelFilter) {
-    Builder::new()
-        .format(|buf, record| {
-            writeln!(buf,
-                     "{} [{}] - {}",
-                     Local::now().format("%Y-%m-%dT%H:%M:%S"),
-                     record.level(),
-                     record.args()
-            )
-        })
-        .filter(None, level)
-        .init();
-}
