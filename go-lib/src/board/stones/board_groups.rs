@@ -1,6 +1,7 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::collections::hash_map::RandomState;
-use std::ops::Deref;
+use std::collections::HashMap;
+use std::ops::{Deref, DerefMut};
 
 use bit_set::BitSet;
 use indexmap::set::IndexSet;
@@ -26,6 +27,40 @@ pub struct BoardGroups {
     pub(crate) empty_cells: BitSet,
 
 }
+
+// impl Clone for BoardGroups {
+//     fn clone(&self) -> Self {
+//         let mut res = BoardGroups {
+//             id_gen: self.id_gen,
+//             goban: self.goban.clone(),
+//             groups: vec![],
+//             blacks: IndexSet::new(),
+//             whites: IndexSet::new(),
+//             nones: IndexSet::new(),
+//             empty_cells: self.empty_cells.clone(),
+//         };
+//         for g in self.groups.iter() {
+//             let gg = g.borrow();
+//             let rc = GoGroupRc::from(gg.clone());
+//             res.groups.push(rc.clone());
+//             match gg.stone {
+//                 Stone::None => {
+//                     res.nones.insert(rc.clone());
+//                 }
+//                 Stone::Black => {
+//                     res.blacks.insert(rc.clone());
+//                 }
+//                 Stone::White => {
+//                     res.whites.insert(rc.clone());
+//                 }
+//             }
+//
+//         }
+//
+//         res
+//     }
+// }
+
 
 impl BoardGroups {
     pub fn new(goban: Grid) -> BoardGroups {

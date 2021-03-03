@@ -399,7 +399,7 @@ mod tests {
 
     #[test]
     fn go_state_clone() {
-        init_logs(LevelFilter::Trace);
+        init_logs(LevelFilter::Debug);
 
         let mut state = GoState::new(5);
 
@@ -413,9 +413,11 @@ mod tests {
         let copy = state.clone();
         let mut stats = vec![state, copy];
         for a in vec![
-            GoAction::Cell(3, 3),
-            GoAction::Cell(1, 3),
-            GoAction::Cell(3, 3),
+            GoAction::Cell(2, 1),
+            GoAction::Cell(1, 2),
+            GoAction::Cell(2, 2),
+            GoAction::Cell(1, 1),
+
         ] {
             L::hori(vec![
                 GoDisplay::board(&stats[0]),
@@ -426,5 +428,11 @@ mod tests {
                 go.apply_action(a)
             }
         }
+
+        L::hori(vec![
+            GoDisplay::board(&stats[0]),
+            L::str(" - padding - "),
+            GoDisplay::board(&stats[1]),
+        ]).show();
     }
 }
