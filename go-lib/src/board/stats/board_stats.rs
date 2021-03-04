@@ -2,7 +2,7 @@ use board::go_state::GoState;
 use board::grid::Grid;
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
-use board::stones::groups::GoGroup;
+use board::stones::group::GoGroup;
 use board::stones::stone::Stone;
 use graph_lib::topology::Topology;
 
@@ -13,7 +13,7 @@ pub trait FullStats {
     fn set_territory(&mut self, stone: Stone, n: usize);
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug,Copy, Clone)]
 pub struct BoardStats {
     black: StoneStats,
     white: StoneStats,

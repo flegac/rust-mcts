@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
@@ -9,26 +10,33 @@ use crate::safe_tree::NodeRc;
 
 type NodeWeak<K, V> = Weak<Node<K, V>>;
 
+#[derive(Debug)]
 pub struct Node<K, V> {
     pub value: RefCell<V>,
     pub parent: RefCell<Option<(K, NodeWeak<K, V>)>>,
     pub children: RefCell<HashMap<K, NodeRc<K, V>>>,
-    pub depth: RefCell<usize>
+    pub depth: RefCell<usize>,
 }
 
 impl<K, V> Node<K, V>
-where
-    K: Copy,
-    K: Eq,
-    K: Hash,
+    where
+        K: Copy,
+        K: Eq,
+        K: Hash,
 {
     pub fn new(value: V) -> Node<K, V> {
         Node {
             value: RefCell::new(value),
             parent: RefCell::new(None),
             children: RefCell::new(HashMap::new()),
-            depth:RefCell::new(0)
+            depth: RefCell::new(0),
         }
+    }
+
+    pub fn max_depth(&self) -> usize {
+        1 + self.children.borrow().values()
+            .map(|c| c.as_ref().max_depth())
+            .max().unwrap_or(0)
     }
 
     pub fn parent_value(&self) -> Option<(K, NodeRc<K, V>)> {
@@ -48,8 +56,8 @@ where
 }
 
 impl<K, V> fmt::Display for Node<K, V>
-where
-    V: Display,
+    where
+        V: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(

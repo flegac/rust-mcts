@@ -10,13 +10,13 @@ use itertools::Itertools;
 use board::go::Go;
 use board::grid::{GoCell, Grid};
 use board::group_access::GroupAccess;
+use board::stones::group::GoGroup;
 use board::stones::grouprc::GoGroupRc;
-use board::stones::groups::GoGroup;
 use board::stones::stone::Stone;
 use display::range::Range2;
 use graph_lib::topology::Topology;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BoardGroups {
     id_gen: usize,
     goban: Grid,
@@ -25,42 +25,7 @@ pub struct BoardGroups {
     whites: IndexSet<GoGroupRc>,
     nones: IndexSet<GoGroupRc>,
     pub(crate) empty_cells: BitSet,
-
 }
-
-// impl Clone for BoardGroups {
-//     fn clone(&self) -> Self {
-//         let mut res = BoardGroups {
-//             id_gen: self.id_gen,
-//             goban: self.goban.clone(),
-//             groups: vec![],
-//             blacks: IndexSet::new(),
-//             whites: IndexSet::new(),
-//             nones: IndexSet::new(),
-//             empty_cells: self.empty_cells.clone(),
-//         };
-//         for g in self.groups.iter() {
-//             let gg = g.borrow();
-//             let rc = GoGroupRc::from(gg.clone());
-//             res.groups.push(rc.clone());
-//             match gg.stone {
-//                 Stone::None => {
-//                     res.nones.insert(rc.clone());
-//                 }
-//                 Stone::Black => {
-//                     res.blacks.insert(rc.clone());
-//                 }
-//                 Stone::White => {
-//                     res.whites.insert(rc.clone());
-//                 }
-//             }
-//
-//         }
-//
-//         res
-//     }
-// }
-
 
 impl BoardGroups {
     pub fn new(goban: Grid) -> BoardGroups {

@@ -3,3 +3,5 @@ pub mod stones;
 pub mod goshow;
 pub mod range;
 pub mod templates;
+pub mod stats;
+pub mod board_map;

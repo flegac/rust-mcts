@@ -3,7 +3,7 @@ use board::go_state::GoState;
 use board::stats::board_stats::FullStats;
 use board::stones::stone::Stone;
 
-#[derive(Copy, Clone)]
+#[derive(Debug,Copy, Clone)]
 pub struct StoneStats {
     pub stone: Stone,
     pub groups: usize,

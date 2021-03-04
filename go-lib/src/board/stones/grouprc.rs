@@ -4,11 +4,11 @@ use std::fmt::Formatter;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
-use board::stones::groups::GoGroup;
+use board::stones::group::GoGroup;
 
 
 //FIXME: remove Clone ?
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug,Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {

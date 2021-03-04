@@ -10,6 +10,7 @@ use crate::algo::trees::Trees;
 use crate::node::Node;
 use crate::tree::TheTree;
 
+#[derive(Debug)]
 pub struct Tree<K, V>(NodeRc<K, V>)
     where
         K: Eq,
@@ -91,7 +92,8 @@ impl<K, V> TheTree<K, V> for Tree<K, V>
             .insert(index, Rc::clone(&value.0));
         let data = Rc::downgrade(&self.0);
         value.0.parent.replace(Some((index, data)));
-        value.depth.replace(self.depth.take() + 1);
+        let child_depth = self.depth.take() + 1;
+        value.depth.replace(child_depth);
     }
 
     fn get_child(&self, index: K) -> Option<Self> {

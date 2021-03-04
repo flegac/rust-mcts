@@ -1,4 +1,5 @@
 use std::fmt;
+use std::fmt::Display;
 use std::iter::FromIterator;
 
 use bit_set::BitSet;
@@ -6,16 +7,21 @@ use itertools::Itertools;
 
 use board::action::GoAction;
 use board::go_state::GoState;
+use board::grid::Grid;
+use board::group_access::GroupAccess;
 use board::stats::board_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
-use board::group_access::GroupAccess;
-use board::stones::groups::GoGroup;
+use board::stones::group::GoGroup;
+use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
 use display::goshow::GoShow;
 use display::range::Range2;
+use graph_lib::topology::Topology;
 use rust_tools::screen::layout::layout::{L, LayoutRc};
 use sgf::sgf_export::{Sequence, SGF};
+
+use crate::display::board_map::BoardMap;
 
 pub struct GoDisplay {}
 
@@ -25,41 +31,9 @@ const SMALL_A: usize = 'a' as usize;
 
 impl fmt::Display for GoState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}\nhistory({}):\n{}\n",
+        write!(f, "{}\n{}\n",
                GoDisplay::board(&self).to_string(),
-               self.stats.round,
-               GoDisplay::game(&self)
-        )
-    }
-}
-
-impl fmt::Display for StoneScore {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: territories={}, captured={}",
-               self.stone,
-               self.territory,
-               self.captures)
-    }
-}
-
-
-impl fmt::Display for StoneStats {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {} stones, {} stones, {} captured",
-               &self.stone,
-               &self.stones,
-               &self.groups,
-               &self.captured
-        )
-    }
-}
-
-impl fmt::Display for BoardStats {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}\n{}\n{}",
-               self.stats(Stone::Black),
-               self.stats(Stone::White),
-               self.stats(Stone::None),
+               self.stats.round
         )
     }
 }
@@ -79,52 +53,65 @@ impl GoState {
     }
 }
 
+fn empty_group_id(g: GoGroupRc) -> Option<String> {
+    Some(match g.borrow().stone {
+        // Stone::None => {
+        //     format!(" [{:3}]", g.borrow().id)
+        // }
+        s => {
+            format!("    {} ", GoDisplay::stone(s))
+        }
+    })
+}
 
 impl GoDisplay {
-    pub fn board_str(board: &GoState, range: Range2) -> String {
-        let mut res = String::new();
-        let columns = String::from_iter(
-            range.x.iter()
-                .map(Self::column)
-                .map(|x| format!(" {} ", x))
-        );
-        let separator = String::from_iter(range.x.iter().map(|x| "---"));
-        res.push_str(&format!("  +{}+\n", separator));
-        for y in range.y.iter().rev() {
-            res.push_str(&format!("{} |", GoDisplay::line(y)));
-            for x in range.x.iter() {
-                let stone = Self::stone(board.stone_at(board.goban().cell(x, y)));
-                res.push_str(&format!(" {} ", stone));
+    pub fn history_str(board: &GoState, range: Range2) -> String {
+        let mut hist = BoardMap {
+            width: board.goban().size,
+            height: board.goban().size,
+            map: vec![None; board.vertex_number()],
+        };
+        for (i, a) in board.history.iter().enumerate() {
+            match a {
+                GoAction::Pass => {}
+                GoAction::Cell(x, y) => {
+                    let cell = board.goban().cell(*x, *y);
+                    hist.map[cell] = Some(i);
+                }
             }
-            res.push_str(&format!("|\n"));
         }
-        res.push_str(&format!("  +{}+\n", separator));
-        res.push_str(&format!("   {}\n", columns));
-
-        res
+        hist.map_str(range, 3)
     }
 }
 
 
 impl GoShow for GoDisplay {
-    fn game(board: &GoState) -> Sequence {
+    fn sgf(board: &GoState) -> Sequence {
         SGF::game(board.goban().size, Stone::Black, board.history.as_slice())
+    }
+
+    fn history(board: &GoState) -> LayoutRc {
+        let range = Range2::board(board.goban().size);
+        L::str(&Self::history_str(board, range))
     }
 
     fn board(board: &GoState) -> LayoutRc {
         let range = Range2::board(board.goban().size);
-        L::str(&format!("{}\n{}\n{}",
-                        Self::board_str(board, range),
-                        board.score_str(),
-                        board.stats
-        ))
+        L::vert(vec![
+            Self::board_range(board, range),
+            L::str(&board.score_str()),
+            L::str(&board.stats.to_string())
+        ])
     }
 
     fn board_range(board: &GoState, range: Range2) -> LayoutRc {
-        L::str(&Self::board_str(board, range))
+        let map = BoardMap::new(board)
+            .map(|g| empty_group_id(g.clone()));
+        L::str(&map.map_str(range, 6))
     }
-    fn group_layout(board: &GoState, group: &GoGroup) -> LayoutRc {
-        let range = group.cells.iter()
+
+    fn group_layout(board: &GoState, group: &GoGroupRc) -> LayoutRc {
+        let range = group.borrow().cells.iter()
             .map(|c| board.goban().xy(c))
             .fold(Range2::empty(), |c, v| c.merge(v));
         Self::board_range(board, range)
@@ -133,7 +120,7 @@ impl GoShow for GoDisplay {
     fn group(board: &GoState, group: &GoGroup) -> String {
         let mut res = String::new();
         res.push_str("{");
-        res.push_str(&format!("{} #{}:", group.stone, group.stones()));
+        res.push_str(&format!("{}: {} [{}]", group.id, group.stones(), group.stone, ));
         for cell in group.cells.iter() {
             res.push_str(" ");
             res.push_str(&GoDisplay::cell(board.goban().xy(cell)));
@@ -148,8 +135,7 @@ impl GoShow for GoDisplay {
 
     fn cells(board: &GoState, stone: Stone, cells: &BitSet) -> String {
         let mut res = String::new();
-        res.push_str("{");
-        res.push_str(&format!("{} #{}:", stone, cells.len()));
+        res.push_str(&format!("{{{} [{}]", cells.len(), stone));
         for cell in cells.iter() {
             res.push_str(" ");
             res.push_str(&GoDisplay::cell(board.goban().xy(cell)));

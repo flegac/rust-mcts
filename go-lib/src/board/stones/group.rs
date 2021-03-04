@@ -131,22 +131,40 @@ mod tests {
 
     use board::go_state::GoState;
     use board::grid::Grid;
-    use board::stones::groups::GoGroup;
+    use board::stones::group::GoGroup;
     use board::stones::stone::Stone;
 
     #[test]
-    fn group_hash() {
+    fn group_clone() {
+        let mut g1 = GoGroup::from_cells(Stone::None, &[33, 36, 44]);
+        let mut g2 = GoGroup::from_cells(Stone::None, &[33, 36, 44]);
+        let mut g3 = g1.clone();
+
+        g1.id = 1;
+        g2.id = 1;
+        assert_eq!(g1, g2);
+
+        g2.id = 2;
+        assert_ne!(g1, g2);
+
+        assert_ne!(g1, g3);
+        g3.id = g1.id;
+        assert_eq!(g1, g3);
+        println!("{}", g1);
+        println!("{}", g3);
+
+    }
+
+
+    #[test]
+    fn group_eq() {
         let g1 = GoGroup::from_cells(Stone::None, &[33, 36, 44]);
-        let g1_bis = GoGroup::from_cells(Stone::None, &[33, 36, 44]);
-        let g2 = GoGroup::from_cells(Stone::None, &[33, 128, 3000]);
+        let g2 = GoGroup::from_cells(Stone::None, &[33, 36, 44]);
         let g3 = GoGroup::from_cells(Stone::None, &[33, 36, 10]);
 
-        assert_eq!(g1, g1_bis);
-        assert_ne!(g1, g2);
+        assert_eq!(g1, g2);
         assert_ne!(g1, g3);
 
-        assert_eq!(hash(&g1), hash(&g2));
-        assert_ne!(hash(&g1), hash(&g3));
     }
 
     fn hash(x: &GoGroup) -> u64 {

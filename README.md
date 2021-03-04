@@ -43,8 +43,6 @@ Hum... Do not expect wonders !
 
 # Issues
 
-- Screen.mirror() & call it .transpose()
-
 - Correct end game (pass/pass)
 
 # Exemples

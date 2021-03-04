@@ -7,6 +7,7 @@ use state::{Action, GameResult};
 
 use crate::mcts::MctsNode;
 
+#[derive(Debug)]
 pub struct SimResult {
     pub tries: usize,
     pub wins: usize,

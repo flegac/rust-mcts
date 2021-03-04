@@ -11,6 +11,7 @@ extern crate rust_tools;
 pub mod board;
 pub mod sgf;
 pub mod display;
+pub mod mcts;
 
 #[cfg(test)]
 mod tests {

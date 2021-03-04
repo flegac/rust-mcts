@@ -14,3 +14,7 @@ ordered-float = "2.1.1"
 
 [dependencies.graph-lib]
 path = "../graph-lib"
+
+
+[dependencies.rust-tools]
+path = "../rust-tools"

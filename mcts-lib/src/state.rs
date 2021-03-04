@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::hash::Hash;
 
 use policy::policy::Policy;
@@ -16,11 +17,13 @@ impl GameResult {
     }
 }
 
-pub trait Action: Copy + Eq + Hash {}
+pub trait Action: Copy + Eq + Hash + Debug {}
 
-impl<T: Copy + Eq + Hash> Action for T {}
+impl<T: Copy + Eq + Hash + Debug> Action for T {}
 
 pub trait State<A: Action> where Self: Clone {
+    fn fork(&self) -> Self;
+
     fn reset(&mut self);
     fn result(&self) -> Option<GameResult>;
     fn actions(&self) -> Vec<A>;

@@ -17,8 +17,8 @@ use board::stats::board_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
 use board::stones::board_groups::BoardGroups;
+use board::stones::group::GoGroup;
 use board::stones::grouprc::GoGroupRc;
-use board::stones::groups::GoGroup;
 use board::stones::stone::Stone;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
@@ -26,9 +26,9 @@ use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 use mcts_lib::state::{GameResult, State};
-use rust_tools::screen::layout::layout::{L, LayoutRc};
+use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GoState {
     pub stone: Stone,
     pass_sequence: usize,
@@ -56,13 +56,6 @@ impl GoState {
 
         board
     }
-
-    pub fn end_game(&self) -> bool {
-        let limit = self.vertex_number();
-        let double_pass = self.pass_sequence >= 2;
-        self.stats.round > limit || self.stats(Stone::None).groups == 0  // || double_pass
-    }
-
 
     pub fn play(&mut self, action: GoAction) {
         let backup = self.play_start(action);
@@ -120,7 +113,7 @@ impl GoState {
         old_connections.remove(cell); // TODO: useless ?
 
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("handle_old_empty_group: {}",
+            log::trace!("SPLIT EMPTY GROUP: {}",
                         GoDisplay::cells(self,
                                          Stone::None,
                                          &old_connections));
@@ -163,7 +156,7 @@ impl GoState {
 
                     for g in new_groups.iter() {
                         if log::max_level() <= LevelFilter::Trace {
-                            log::trace!("-{}", GoDisplay::group(self, &g.borrow()));
+                            log::trace!("-{}", GoDisplay::grouprc(self, g));
                         }
                         self.update_group(&g);
                     }
@@ -198,6 +191,7 @@ impl GoState {
     }
 
     fn kill_ennemy_groups(&mut self, cell: usize, stone: Stone) {
+        log::trace!("KILLING GROUPS:");
         self.adjacent_groups(cell).into_iter()
             .filter(|g| g.borrow().stone == stone.switch())
             .for_each(|g| {
@@ -209,7 +203,9 @@ impl GoState {
     fn try_capture(&mut self, group: GoGroupRc) {
         self.update_liberties(&group);
         if group.borrow().is_dead() {
+            log::trace!("{}", GoDisplay::grouprc(self, &group));
             self.capture(&group);
+            log::trace!("{}", GoDisplay::grouprc(self, &group));
         }
     }
 
@@ -223,7 +219,10 @@ impl GoState {
     }
 
     fn play_start(&mut self, action: GoAction) -> LayoutRc {
-        log::trace!("NEW PLAY: {} @ {}", self.stone, action);
+        log::trace!("NEW PLAY: {} @ {}\n{}",
+                    self.stone, action,
+                    GoDisplay::board(self).to_string());
+
         if log::max_level() <= LevelFilter::Trace {
             GoDisplay::board(self)
         } else {
@@ -242,7 +241,21 @@ impl GoState {
         self.check_correctness();
     }
 
+    fn count_stones(&self, stone: Stone) -> usize {
+        self.gg.goban().vertices().iter()
+            .map(|c| self.gg.stone_at(c))
+            .filter(|&s| s == stone)
+            .count()
+    }
+
+
     fn check_correctness(&self) {
+        for &s in [Stone::Black, Stone::White, Stone::None].iter() {
+            let n1 = self.count_stones(s);
+            let n2 = self.stats.stats(s).stones;
+            assert_eq!(n1, n2)
+        }
+
         assert_eq!(self.gg.empty_cells.len(), self.stats(Stone::None).stones);
         assert_eq!(
             self.stats(Stone::Black).stones
@@ -257,6 +270,19 @@ impl GoState {
 
 
 impl State<GoAction> for GoState {
+    fn fork(&self) -> Self {
+        let copy = self.clone();
+        copy.check_correctness();
+
+        let show = L::hori(vec![
+            GoDisplay::board(self),
+            GoDisplay::board(&copy),
+        ]);
+
+        log::trace!("FORKING STATE:\n{}", show.to_string());
+        copy
+    }
+
     fn reset(&mut self) {
         self.stone = Stone::Black;
         self.pass_sequence = 0;
@@ -267,7 +293,12 @@ impl State<GoAction> for GoState {
     }
 
     fn result(&self) -> Option<GameResult> {
-        if self.end_game() {
+        let limit = self.vertex_number();
+        let double_pass = self.pass_sequence >= 2;
+        let end_game = self.stats.round > limit || self.stats(Stone::None).groups == 0
+            || double_pass;
+
+        if end_game {
             let player = self.score(self.stone).score();
             let opponent = self.score(self.stone.switch()).score();
             let res = match player.cmp(&opponent) {
@@ -329,24 +360,24 @@ impl GroupAccess for GoState {
     }
 
     fn capture(&mut self, group: &GoGroupRc) {
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("DEAD GROUP : {}\n{}\n{}",
+                        GoDisplay::grouprc(&self, group),
+                        self.stats.to_string(),
+                        GoDisplay::group_layout(&self, group).to_string(),
+            );
+        }
         self.stats.add_prisoners(group.borrow().stone, group.borrow().stones());
         self.stats.rem_group(group.borrow().deref());
         self.stats.for_stone_mut(Stone::None).groups += 1;
-
         self.gg.capture(group);
-        if log::max_level() <= LevelFilter::Trace {
-            log::trace!("DEAD GROUP : {}\n {}",
-                        GoDisplay::group(&self, group.borrow().deref()),
-                        GoDisplay::group_layout(&self, group.borrow().deref()).to_string(),
-            );
-        }
     }
 
     fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
         let group = self.gg.fusion(groups);
         self.stats.for_stone_mut(group.borrow().stone).groups -= groups.len() - 1;
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("FUSION {}:\n{}", group.borrow(), self.stats);
+            log::trace!("FUSION {}:\n{}", GoDisplay::grouprc(self, &group), self.stats);
         }
         group
     }
@@ -383,6 +414,7 @@ mod tests {
     use std::sync::Arc;
 
     use bit_set::BitSet;
+    use log::LevelFilter;
 
     use board::action::GoAction;
     use board::go_state::GoState;
@@ -393,9 +425,8 @@ mod tests {
     use graph_lib::graph::GFlood;
     use graph_lib::topology::Topology;
     use mcts_lib::state::State;
-    use rust_tools::screen::layout::layout::L;
-    use log::LevelFilter;
     use rust_tools::loggers::init_logs;
+    use rust_tools::screen::layout::layout::L;
 
     #[test]
     fn go_state_clone() {
@@ -411,13 +442,19 @@ mod tests {
         }
 
         let copy = state.clone();
+
+
+        L::vert(vec![
+            L::str(&format!("{:?}", state)),
+            L::str(&format!("{:?}", copy)),
+        ]).show();
+
         let mut stats = vec![state, copy];
         for a in vec![
             GoAction::Cell(2, 1),
             GoAction::Cell(1, 2),
             GoAction::Cell(2, 2),
             GoAction::Cell(1, 1),
-
         ] {
             L::hori(vec![
                 GoDisplay::board(&stats[0]),
@@ -427,6 +464,7 @@ mod tests {
             for go in stats.iter_mut() {
                 go.apply_action(a)
             }
+            assert_eq!(format!("{:?}", stats[0]), format!("{:?}", stats[1]))
         }
 
         L::hori(vec![

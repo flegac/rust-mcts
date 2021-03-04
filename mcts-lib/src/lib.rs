@@ -4,6 +4,7 @@ extern crate ordered_float;
 extern crate rand;
 extern crate rand_pcg;
 extern crate core;
+extern crate rust_tools;
 
 pub mod mcts;
 pub mod explorator;

@@ -9,6 +9,7 @@ use mymcts::MyMcts;
 use policy::policy::Policy;
 use policy::score::Score;
 use policy::win_score::ExploreScore;
+use rust_tools::screen::layout::layout::L;
 use sim_result::SimResult;
 use state::Action;
 
@@ -21,7 +22,7 @@ pub struct Explorator<A: Action, S: State<A>> {
     _foo: Option<(S)>,
 }
 
-impl<A: Action + Display, S: State<A>> Explorator<A, S> {
+impl<A: Action, S: State<A>> Explorator<A, S> {
     pub fn new(simulation_factor: usize, state: S) -> Explorator<A, S> {
         Explorator {
             mcts: MyMcts::new(state),
@@ -29,6 +30,7 @@ impl<A: Action + Display, S: State<A>> Explorator<A, S> {
             _foo: None,
         }
     }
+
 
     pub fn mcts(&self) -> &MyMcts<A, S> {
         &self.mcts
@@ -38,37 +40,35 @@ impl<A: Action + Display, S: State<A>> Explorator<A, S> {
         &mut self.mcts
     }
 
-    pub fn explore<Sim: Policy<A, S>, Select: Score>(&mut self,
-                                                     sim_policy: &Sim,
-                                                     select_policy: &Select) -> MctsNode<A> {
+    pub fn explore<Sim: Policy<A, S>, Select: Score>(
+        &mut self,
+        sim_policy: &Sim,
+        select_policy: &Select)
+        -> MctsNode<A>
+    {
         log::debug!("* Exploration:");
-        let selected = self.mcts.selection( select_policy);
-        log::debug!("Selection: depth={:?}", &selected.depth);
-
+        let selected = self.mcts.selection(select_policy);
         let (action, expansion) = self.mcts.expansion(&selected, sim_policy);
-        log::debug!("Expansion: {}", action);
-
         let res = self.simulation(sim_policy);
-        log::debug!("Simulation: {}", res);
-
-        log::debug!("Backpropagation: ({} parents)", expansion.parents().len());
         self.mcts.backpropagation(&expansion, res);
 
         expansion
     }
 
     fn simulation<Sim: Policy<A, S>>(&mut self, policy: &Sim) -> SimResult {
-        match self.simulation_factor {
+        let res = match self.simulation_factor {
             1 => self.mcts.state_mut().simulation(policy),
             _ => {
                 let mut result = SimResult::new();
+                let mut state = self.mcts.state().fork();
                 for _i in 0..self.simulation_factor {
-                    let res = self.mcts.state().clone().simulation(policy);
-                    result.merge(&res);
+                    result.merge(&state.fork().simulation(policy));
                 }
                 result
             }
-        }
+        };
+        log::debug!("Simulation: {}", res);
+        res
     }
 }
 
