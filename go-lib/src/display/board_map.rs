@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::iter::FromIterator;
 
-use board::go_state::GoState;
+use crate::board::go_state::GoState;
 use board::group_access::GroupAccess;
 use board::stones::grouprc::GoGroupRc;
 use display::display::GoDisplay;

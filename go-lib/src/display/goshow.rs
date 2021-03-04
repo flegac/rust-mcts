@@ -3,14 +3,14 @@ use std::ops::Deref;
 
 use bit_set::BitSet;
 
-use board::action::GoAction;
-use board::go_state::GoState;
+use crate::board::go_state::GoState;
 use board::stones::group::GoGroup;
 use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
 use display::range::Range2;
 use rust_tools::screen::layout::layout::LayoutRc;
 use sgf::sgf_export::Sequence;
+use go_rules::go_action::GoAction;
 
 pub trait GoShow {
     fn sgf(board: &GoState) -> Sequence;

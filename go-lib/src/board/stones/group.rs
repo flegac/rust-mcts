@@ -4,7 +4,7 @@ use std::ops::Deref;
 
 use bit_set::BitSet;
 
-use board::go_state::GoState;
+use crate::board::go_state::GoState;
 use board::grid::{GoCell, Grid};
 use board::stones::stone::Stone;
 use graph_lib::algo::flood::Flood;
@@ -129,7 +129,7 @@ mod tests {
     use std::convert::TryFrom;
     use std::hash::{Hash, Hasher};
 
-    use board::go_state::GoState;
+    use crate::board::go_state::GoState;
     use board::grid::Grid;
     use board::stones::group::GoGroup;
     use board::stones::stone::Stone;

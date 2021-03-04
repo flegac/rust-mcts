@@ -15,16 +15,16 @@ use policy::policy::Policy;
 use policy::score::Score;
 use policy::win_score::ExploreScore;
 use sim_result::SimResult;
-use state::{Action, State};
+use rules::{Action, Rules};
 
 use crate::mcts::MctsNode;
 
-pub struct MyMcts<A: Action, S: State<A>> {
+pub struct MyMcts<A: Action, S: Rules<A>> {
     the_state: S,
     root: MctsNode<A>,
 }
 
-impl<A: Action, S: State<A>> MyMcts<A, S> {
+impl<A: Action, S: Rules<A>> MyMcts<A, S> {
     pub fn new(state: S) -> MyMcts<A, S> {
         MyMcts {
             the_state: state,
@@ -67,7 +67,7 @@ fn selection_score<'a, A: 'a + Action, Sc: Score>(
     }
 }
 
-impl<A: Action, S: State<A>> Mcts<A, S> for MyMcts<A, S> {
+impl<A: Action, S: Rules<A>> Mcts<A, S> for MyMcts<A, S> {
     fn root(&self) -> MctsNode<A> {
         self.root.clone()
     }

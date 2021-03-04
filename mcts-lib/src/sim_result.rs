@@ -3,7 +3,7 @@ use std::fmt::Formatter;
 use std::hash::Hash;
 
 use graph_lib::safe_tree::Tree;
-use state::{Action, GameResult};
+use rules::{Action, GameResult};
 
 use crate::mcts::MctsNode;
 

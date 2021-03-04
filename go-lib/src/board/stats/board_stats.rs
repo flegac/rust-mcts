@@ -1,4 +1,4 @@
-use board::go_state::GoState;
+use crate::board::go_state::GoState;
 use board::grid::Grid;
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;

@@ -1,11 +1,11 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use board::action::GoAction;
 use board::stones::group::GoGroup;
 use board::stones::stone::Stone;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
+use go_rules::go_action::GoAction;
 
 impl fmt::Display for Stone {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

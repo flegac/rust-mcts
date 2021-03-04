@@ -21,7 +21,7 @@ pub trait Action: Copy + Eq + Hash + Debug {}
 
 impl<T: Copy + Eq + Hash + Debug> Action for T {}
 
-pub trait State<A: Action> where Self: Clone {
+pub trait Rules<A: Action> where Self: Clone {
     fn fork(&self) -> Self;
 
     fn reset(&mut self);

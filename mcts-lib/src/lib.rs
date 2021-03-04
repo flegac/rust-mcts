@@ -11,7 +11,7 @@ pub mod explorator;
 mod mymcts;
 pub mod policy;
 pub mod sim_result;
-pub mod state;
+pub mod rules;
 
 #[cfg(test)]
 mod tests {

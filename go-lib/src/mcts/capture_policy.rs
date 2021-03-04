@@ -1,10 +1,10 @@
-use board::action::GoAction;
-use board::go_state::GoState;
+use crate::board::go_state::GoState;
 use board::group_access::GroupAccess;
 use board::stats::board_stats::FullStats;
 use graph_lib::topology::Topology;
 use mcts_lib::policy::policy::Policy;
-use mcts_lib::state::State;
+use mcts_lib::rules::Rules;
+use go_rules::go_action::GoAction;
 
 pub struct CapturePolicy<'a, A, S> {
     pub other: &'a Policy<A, S>

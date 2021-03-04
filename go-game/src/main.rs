@@ -13,20 +13,21 @@ use std::ops::Deref;
 use std::path::Path;
 
 use constants::{BENCH, GOBAN_SIZE, LOG_LEVEL, SEED, SIM_FACTOR};
-use go_lib::board::action::GoAction;
 use go_lib::board::go_state::GoState;
 use go_lib::board::group_access::GroupAccess;
 use go_lib::board::stones::stone::Stone;
 use go_lib::display::display::GoDisplay;
 use go_lib::display::goshow::GoShow;
+use go_lib::go_rules::go_action::GoAction;
+use go_lib::go_rules::go_rules::GoRules;
 use go_lib::mcts::capture_policy::CapturePolicy;
 use go_lib::sgf::sgf_export::SGF;
 use mcts_lib::explorator::Explorator;
 use mcts_lib::mcts::Mcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
 use mcts_lib::policy::win_score::WinScore;
+use mcts_lib::rules::{Action, Rules};
 use mcts_lib::sim_result::SimResult;
-use mcts_lib::state::{Action, State};
 use rust_tools::bench::Bench;
 use rust_tools::loggers::init_logs;
 use rust_tools::screen::layout::layout::L;
@@ -72,9 +73,11 @@ pub fn main() {
         stats.merge(res.value.borrow().deref());
         i += 1;
         if i % 1000 == 0 {
+            explorator.mcts_mut().selection(&selection_score);
             show_best_variant(&mut explorator);
         }
     }
+    // explorator.mcts_mut().selection(&selection_score);
     show_best_variant(&mut explorator);
     log::info!("results: {}", stats);
     log::info!("{}", bench);
@@ -89,8 +92,6 @@ pub fn main() {
 
 
 pub fn show_best_variant(explorator: &mut Explorator<GoAction, GoState>) {
-    let selection_score = WinScore::new();
-    explorator.mcts_mut().selection(&selection_score);
     explorator.mcts_mut().state_mut().update_score();
     let board = explorator.mcts().state();
     L::hori(vec![

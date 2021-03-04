@@ -3,8 +3,8 @@ use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::Write;
 
-use board::action::GoAction;
 use board::stones::stone::Stone;
+use go_rules::go_action::GoAction;
 
 pub struct Prop {
     key: String,

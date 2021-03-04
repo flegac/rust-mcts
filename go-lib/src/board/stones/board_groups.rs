@@ -7,7 +7,6 @@ use bit_set::BitSet;
 use indexmap::set::IndexSet;
 use itertools::Itertools;
 
-use board::go::Go;
 use board::grid::{GoCell, Grid};
 use board::group_access::GroupAccess;
 use board::stones::group::GoGroup;
@@ -15,6 +14,9 @@ use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
 use display::range::Range2;
 use graph_lib::topology::Topology;
+use go_rules::go::Go;
+use graph_lib::graph::GFlood;
+use graph_lib::algo::flood::Flood;
 
 #[derive(Debug, Clone)]
 pub struct BoardGroups {
@@ -173,4 +175,16 @@ impl GroupAccess for BoardGroups {
             .map(|g| g.clone())
             .collect_vec()
     }
+
+    fn fast_split_check(&self, old: &GoGroupRc, old_connections: &BitSet) -> bool {
+        let to_visit = old.borrow().cells.clone();
+        let topology = |c: GoCell| to_visit.contains(c);
+        let old_cell = to_visit.iter().next().unwrap();
+        let check_connection = |visited: &BitSet| old_connections.is_subset(visited);
+        let visited = GFlood::new().flood_check(
+            self.goban(), old_cell, &topology, &check_connection,
+        );
+        !check_connection(&visited)
+    }
+
 }

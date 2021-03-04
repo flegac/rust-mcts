@@ -1,7 +1,7 @@
-use board::go::Go;
-use board::go_state::GoState;
 use board::stats::board_stats::FullStats;
 use board::stones::stone::Stone;
+use board::go_state::GoState;
+use go_rules::go::Go;
 
 #[derive(Debug,Copy, Clone)]
 pub struct StoneStats {

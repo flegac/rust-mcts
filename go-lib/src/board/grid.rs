@@ -90,7 +90,7 @@ mod tests {
 
     use bit_set::BitSet;
 
-    use board::go_state::GoState;
+    use crate::board::go_state::GoState;
     use board::grid::Grid;
     use graph_lib::algo::flood::Flood;
     use graph_lib::graph::GFlood;

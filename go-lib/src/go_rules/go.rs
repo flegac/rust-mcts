@@ -35,6 +35,13 @@ impl<'a, T: GroupAccess> Go<'a, T> {
             .sum()
     }
 
+    fn count_stones2(&self, stone: Stone) -> usize {
+        self.state.goban().vertices().iter()
+            .map(|c| self.state.stone_at(c))
+            .filter(|&s| s == stone)
+            .count()
+    }
+
     pub fn count_groups(&self, stone: Stone) -> usize {
         self.state.groups_by_stone(stone).len()
     }

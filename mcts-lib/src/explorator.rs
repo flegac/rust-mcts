@@ -11,18 +11,18 @@ use policy::score::Score;
 use policy::win_score::ExploreScore;
 use rust_tools::screen::layout::layout::L;
 use sim_result::SimResult;
-use state::Action;
+use rules::Action;
 
 use crate::mcts::{Mcts, MctsNode};
-use crate::state::State;
+use crate::rules::Rules;
 
-pub struct Explorator<A: Action, S: State<A>> {
+pub struct Explorator<A: Action, S: Rules<A>> {
     mcts: MyMcts<A, S>,
     simulation_factor: usize,
     _foo: Option<(S)>,
 }
 
-impl<A: Action, S: State<A>> Explorator<A, S> {
+impl<A: Action, S: Rules<A>> Explorator<A, S> {
     pub fn new(simulation_factor: usize, state: S) -> Explorator<A, S> {
         Explorator {
             mcts: MyMcts::new(state),

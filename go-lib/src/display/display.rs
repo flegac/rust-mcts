@@ -5,8 +5,7 @@ use std::iter::FromIterator;
 use bit_set::BitSet;
 use itertools::Itertools;
 
-use board::action::GoAction;
-use board::go_state::GoState;
+use crate::board::go_state::GoState;
 use board::grid::Grid;
 use board::group_access::GroupAccess;
 use board::stats::board_stats::{BoardStats, FullStats};
@@ -22,6 +21,7 @@ use rust_tools::screen::layout::layout::{L, LayoutRc};
 use sgf::sgf_export::{Sequence, SGF};
 
 use crate::display::board_map::BoardMap;
+use go_rules::go_action::GoAction;
 
 pub struct GoDisplay {}
 

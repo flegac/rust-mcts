@@ -12,6 +12,7 @@ pub mod board;
 pub mod sgf;
 pub mod display;
 pub mod mcts;
+pub mod go_rules;
 
 #[cfg(test)]
 mod tests {
@@ -19,7 +20,7 @@ mod tests {
 
     use bit_set::BitSet;
 
-    use board::go_state::GoState;
+    use crate::board::go_state::GoState;
     use board::grid::Grid;
     use graph_lib::topology::Topology;
 
