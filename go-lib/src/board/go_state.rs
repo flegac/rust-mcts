@@ -292,10 +292,43 @@ impl State<GoAction> for GoState {
         self.stats = BoardStats::new(self.goban());
     }
 
+    // fn result(&self) -> Option<GameResult> {
+    //     let double_pass = self.pass_sequence >= 2;
+    //     let end_game = self.stats(Stone::None).groups == 0 || double_pass;
+    //     if end_game {
+    //         return Some(GameResult::Draw);
+    //     }
+    //
+    //     match self.history.last() {
+    //         None => None,
+    //         Some(action) => {
+    //             match action {
+    //                 GoAction::Pass => {
+    //                     None
+    //                 }
+    //                 GoAction::Cell(x, y) => {
+    //                     let cell = self.goban().cell(*x, *y);
+    //                     let stones = self.group_at(cell).borrow().stones();
+    //                     if stones >= 3 {
+    //                         if self.stone == self.stone_at(cell) {
+    //                             Some(GameResult::Win)
+    //                         } else {
+    //                             Some(GameResult::Lose)
+    //                         }
+    //                     } else {
+    //                         None
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
     fn result(&self) -> Option<GameResult> {
         let limit = self.vertex_number();
         let double_pass = self.pass_sequence >= 2;
-        let end_game = self.stats.round > limit || self.stats(Stone::None).groups == 0
+        let end_game = self.stats.round > limit
+            || self.stats(Stone::None).groups == 0
             || double_pass;
 
         if end_game {

@@ -1,11 +1,12 @@
+use std::fmt::Display;
+use std::iter::FromIterator;
+
 use board::go_state::GoState;
 use board::group_access::GroupAccess;
 use board::stones::grouprc::GoGroupRc;
-use std::fmt::Display;
-use display::range::Range2;
-use std::iter::FromIterator;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
+use display::range::Range2;
 
 pub struct BoardMap<T> {
     pub(crate) width: usize,
@@ -59,19 +60,21 @@ impl<T> BoardMap<T> {
 impl<T: Display> BoardMap<T> {
     pub(crate) fn map_str(&self, range: Range2, cell_size: usize) -> String {
         //TODO: clean up this trash !
+
+        let mut empty = vec![' '; cell_size - 1];
+        let spacer = String::from_iter(&empty);
+        empty.push('.');
+        let empty_cell = String::from_iter(empty);
         let columns = String::from_iter(
             range.x.iter()
                 .map(GoDisplay::column)
-                .map(|x| format!(" {} ", x))
+                .map(|x| format!("{}{}", spacer, x))
         );
-        let mut empty = vec![' '; cell_size - 1];
-        empty.push('.');
-        let empty_cell = String::from_iter(empty);
         let separator = String::from_iter(
             vec!['-'; (range.x.size() + 1) * cell_size]);
 
         let mut res = String::new();
-        res.push_str(&format!("  +{}+\n", separator));
+        res.push_str(&format!("  +{}-+\n", separator));
         for y in range.y.iter().rev() {
             res.push_str(&format!("{} |", GoDisplay::line(y)));
             for x in range.x.iter() {
@@ -97,9 +100,9 @@ impl<T: Display> BoardMap<T> {
                     }
                 }
             }
-            res.push_str(&format!("|\n"));
+            res.push_str(&format!(" |\n"));
         }
-        res.push_str(&format!("  +{}+\n", separator));
+        res.push_str(&format!("  +{}-+\n", separator));
         res.push_str(&format!("   {}\n", columns));
         res
     }

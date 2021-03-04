@@ -67,7 +67,7 @@ pub fn main() {
     let mut stats = SimResult::new();
     let mut bench = Bench::with_speed(SIM_FACTOR as f32);
     let mut i = 0;
-    while bench.for_duration(BENCH.full_time) || true {
+    while bench.for_duration(BENCH.full_time) {
         let res = explorator.explore(&random_policy, &selection_score);
         stats.merge(res.value.borrow().deref());
         i += 1;

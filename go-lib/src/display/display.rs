@@ -59,7 +59,7 @@ fn empty_group_id(g: GoGroupRc) -> Option<String> {
         //     format!(" [{:3}]", g.borrow().id)
         // }
         s => {
-            format!("    {} ", GoDisplay::stone(s))
+            format!(" {}", GoDisplay::stone(s))
         }
     })
 }
@@ -107,7 +107,7 @@ impl GoShow for GoDisplay {
     fn board_range(board: &GoState, range: Range2) -> LayoutRc {
         let map = BoardMap::new(board)
             .map(|g| empty_group_id(g.clone()));
-        L::str(&map.map_str(range, 6))
+        L::str(&map.map_str(range, 3))
     }
 
     fn group_layout(board: &GoState, group: &GoGroupRc) -> LayoutRc {
