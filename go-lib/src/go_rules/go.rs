@@ -42,6 +42,7 @@ impl<'a, T: GroupAccess> Go<'a, T> {
             .count()
     }
 
+
     pub fn count_groups(&self, stone: Stone) -> usize {
         self.state.groups_by_stone(stone).len()
     }

@@ -6,9 +6,8 @@ use std::rc::Rc;
 
 use board::stones::group::GoGroup;
 
-
 //FIXME: remove Clone ?
-#[derive(Debug,Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {

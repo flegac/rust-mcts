@@ -5,7 +5,6 @@ use std::iter::FromIterator;
 use bit_set::BitSet;
 use itertools::Itertools;
 
-use crate::board::go_state::GoState;
 use board::grid::Grid;
 use board::group_access::GroupAccess;
 use board::stats::board_stats::{BoardStats, FullStats};
@@ -16,12 +15,13 @@ use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
 use display::goshow::GoShow;
 use display::range::Range2;
+use go_rules::go_action::GoAction;
 use graph_lib::topology::Topology;
 use rust_tools::screen::layout::layout::{L, LayoutRc};
 use sgf::sgf_export::{Sequence, SGF};
 
+use crate::board::go_state::GoState;
 use crate::display::board_map::BoardMap;
-use go_rules::go_action::GoAction;
 
 pub struct GoDisplay {}
 
@@ -53,19 +53,21 @@ impl GoState {
     }
 }
 
-fn empty_group_id(g: GoGroupRc) -> Option<String> {
+fn stone_str(g: GoGroupRc) -> Option<String> {
+    let stone = g.borrow().stone;
+    Some(format!(" {}", GoDisplay::stone(stone)))
+}
+
+fn group_id(g: GoGroupRc) -> Option<String> {
     Some(match g.borrow().stone {
-        // Stone::None => {
-        //     format!(" [{:3}]", g.borrow().id)
-        // }
         s => {
-            format!(" {}", GoDisplay::stone(s))
+            format!(" [{:3}]", g.borrow().id)
         }
     })
 }
 
 impl GoDisplay {
-    pub fn history_str(board: &GoState, range: Range2) -> String {
+    pub fn history_str(board: &GoState, range: &Range2) -> String {
         let mut hist = BoardMap {
             width: board.goban().size,
             height: board.goban().size,
@@ -92,7 +94,7 @@ impl GoShow for GoDisplay {
 
     fn history(board: &GoState) -> LayoutRc {
         let range = Range2::board(board.goban().size);
-        L::str(&Self::history_str(board, range))
+        L::str(&Self::history_str(board, &range))
     }
 
     fn board(board: &GoState) -> LayoutRc {
@@ -105,9 +107,17 @@ impl GoShow for GoDisplay {
     }
 
     fn board_range(board: &GoState, range: Range2) -> LayoutRc {
-        let map = BoardMap::new(board)
-            .map(|g| empty_group_id(g.clone()));
-        L::str(&map.map_str(range, 3))
+        let classic = BoardMap::new(board)
+            .map(|g| stone_str(g.clone()));
+
+
+        let group_ids = BoardMap::new(board)
+            .map(|g| group_id(g.clone()));
+
+        L::vert(vec![
+            L::str(&classic.map_str(&range, 3)),
+            L::str(&group_ids.map_str(&range, 6))
+        ])
     }
 
     fn group_layout(board: &GoState, group: &GoGroupRc) -> LayoutRc {

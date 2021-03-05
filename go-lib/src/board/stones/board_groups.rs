@@ -13,10 +13,10 @@ use board::stones::group::GoGroup;
 use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
 use display::range::Range2;
-use graph_lib::topology::Topology;
 use go_rules::go::Go;
-use graph_lib::graph::GFlood;
 use graph_lib::algo::flood::Flood;
+use graph_lib::graph::GFlood;
+use graph_lib::topology::Topology;
 
 #[derive(Debug, Clone)]
 pub struct BoardGroups {
@@ -95,7 +95,20 @@ impl BoardGroups {
         self.nones.remove(group);
         self.groups_by_stone_mut(group.borrow().stone).insert(group.clone());
     }
+
+
+    fn fast_split_check(&self, old: &GoGroupRc, old_connections: &BitSet) -> bool {
+        let to_visit = old.borrow().cells.clone();
+        let topology = |c: GoCell| to_visit.contains(c);
+        let old_cell = to_visit.iter().next().unwrap();
+        let check_connection = |visited: &BitSet| old_connections.is_subset(visited);
+        let visited = GFlood::new().flood_check(
+            self.goban(), old_cell, &topology, &check_connection,
+        );
+        !check_connection(&visited)
+    }
 }
+
 
 impl GroupAccess for BoardGroups {
     fn goban(&self) -> &Grid {
@@ -113,12 +126,13 @@ impl GroupAccess for BoardGroups {
         self.empty_cells.union_with(&group.borrow().cells);
     }
 
-    fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
-        assert!(!groups.is_empty());
-        //forget all stones
-        for g in groups {
-            self.clear_group_color(g);
-        }
+    fn fusion_with(&mut self, cell: GoCell) -> (GoGroupRc, usize) {
+        let old_cell_group = self.group_at(cell);
+        assert_eq!(old_cell_group.borrow().stones(), 1);
+
+        let stone = old_cell_group.borrow().stone;
+        let mut groups = self.adjacent_allies_groups(cell, stone);
+        groups.push(old_cell_group.clone());
 
         //create one unique group
         let group = groups
@@ -130,9 +144,13 @@ impl GroupAccess for BoardGroups {
             })
             .unwrap();
 
+        //forget all stones
+        for g in groups.iter() {
+            self.clear_group_color(g);
+        }
         // add the final group
         self.update_group(&group);
-        group
+        (group, groups.len())
     }
 
     fn group_at(&self, cell: GoCell) -> &GoGroupRc {
@@ -176,15 +194,22 @@ impl GroupAccess for BoardGroups {
             .collect_vec()
     }
 
-    fn fast_split_check(&self, old: &GoGroupRc, old_connections: &BitSet) -> bool {
-        let to_visit = old.borrow().cells.clone();
-        let topology = |c: GoCell| to_visit.contains(c);
-        let old_cell = to_visit.iter().next().unwrap();
-        let check_connection = |visited: &BitSet| old_connections.is_subset(visited);
-        let visited = GFlood::new().flood_check(
-            self.goban(), old_cell, &topology, &check_connection,
-        );
-        !check_connection(&visited)
+    fn adjacent_allies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc> {
+        self.adjacent_groups(cell).into_iter()
+            .filter(|g| g.borrow().stone == stone)
+            .collect_vec()
     }
 
+
+    fn adjacent_ennemies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc> {
+        self.adjacent_groups(cell).into_iter()
+            .filter(|g| g.borrow().stone == stone.switch())
+            .collect_vec()
+    }
+
+    fn adjacent_empty_groups(&self, cell: GoCell) -> Vec<GoGroupRc> {
+        self.adjacent_groups(cell).into_iter()
+            .filter(|g| g.borrow().stone == Stone::None)
+            .collect_vec()
+    }
 }

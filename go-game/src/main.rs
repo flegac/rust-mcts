@@ -76,6 +76,9 @@ pub fn main() {
             explorator.mcts_mut().selection(&selection_score);
             show_best_variant(&mut explorator);
         }
+        if i == 100 {
+            break;
+        }
     }
     // explorator.mcts_mut().selection(&selection_score);
     show_best_variant(&mut explorator);

@@ -103,13 +103,8 @@ impl GroupAccess for GoState {
         self.gg.capture(group);
     }
 
-    fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc {
-        let group = self.gg.fusion(groups);
-        self.stats.for_stone_mut(group.borrow().stone).groups -= groups.len() - 1;
-        if log::max_level() <= LevelFilter::Trace {
-            log::trace!("FUSION {}:\n{}", GoDisplay::grouprc(self, &group), self.stats);
-        }
-        group
+    fn fusion_with(&mut self, cell:GoCell) -> (GoGroupRc, usize) {
+        self.gg.fusion_with(cell)
     }
 
     fn group_at(&self, cell: usize) -> &GoGroupRc {
@@ -137,8 +132,16 @@ impl GroupAccess for GoState {
         self.gg.adjacent_groups(cell)
     }
 
-    fn fast_split_check(&self, old: &GoGroupRc, old_connections: &BitSet<u32>) -> bool {
-        self.gg.fast_split_check(old, old_connections)
+    fn adjacent_allies_groups(&self, cell: usize, stone: Stone) -> Vec<GoGroupRc> {
+        self.gg.adjacent_allies_groups(cell,stone)
+    }
+
+    fn adjacent_ennemies_groups(&self, cell: usize, stone: Stone) -> Vec<GoGroupRc> {
+        self.gg.adjacent_ennemies_groups(cell,stone)
+    }
+
+    fn adjacent_empty_groups(&self, cell: usize) -> Vec<GoGroupRc> {
+        self.gg.adjacent_empty_groups(cell)
     }
 }
 

@@ -58,7 +58,7 @@ impl<T> BoardMap<T> {
 }
 
 impl<T: Display> BoardMap<T> {
-    pub(crate) fn map_str(&self, range: Range2, cell_size: usize) -> String {
+    pub(crate) fn map_str(&self, range: &Range2, cell_size: usize) -> String {
         //TODO: clean up this trash !
 
         let mut empty = vec![' '; cell_size - 1];

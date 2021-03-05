@@ -1,12 +1,12 @@
+use bit_set::BitSet;
 use indexmap::set::IndexSet;
 
 use board::grid::{GoCell, Grid};
 use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
-use bit_set::BitSet;
 
 pub trait GroupAccess {
-    fn fusion(&mut self, groups: &[GoGroupRc]) -> GoGroupRc;
+    fn fusion_with(&mut self, cell: GoCell) -> (GoGroupRc, usize);
     fn group_at(&self, cell: GoCell) -> &GoGroupRc;
 
     fn goban(&self) -> &Grid;
@@ -18,6 +18,7 @@ pub trait GroupAccess {
     fn update_liberties(&self, group: &GoGroupRc);
     fn adjacent_groups(&self, cell: GoCell) -> Vec<GoGroupRc>;
 
-    fn fast_split_check(&self, old: &GoGroupRc, old_connections: &BitSet) -> bool;
-
+    fn adjacent_allies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc>;
+    fn adjacent_ennemies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc>;
+    fn adjacent_empty_groups(&self, cell: GoCell) -> Vec<GoGroupRc>;
 }

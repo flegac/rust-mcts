@@ -4,12 +4,13 @@ use std::ops::Deref;
 
 use bit_set::BitSet;
 
-use crate::board::go_state::GoState;
 use board::grid::{GoCell, Grid};
 use board::stones::stone::Stone;
 use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
+
+use crate::board::go_state::GoState;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
@@ -93,23 +94,28 @@ impl GoGroup {
     }
 
 
-    pub fn split(&mut self, board: &GoState) -> Vec<GoGroup> {
+    pub fn split_with(&mut self, cell: GoCell, board: &GoState) -> Vec<GoGroup> {
         let mut res = vec![];
+
+        //remove spliting cell
+        let cells = BitSet::from_iter([cell].iter().map(|&x| x as usize));
+        res.push(self.split_remove(cells));
+
         while !self.is_empty() {
-            res.push(self.next_split(board));
+            let test = |x| self.cells.contains(x);
+            let from = self.cells.iter().next().unwrap();
+            let extracted_cells = GFlood::new().flood(board, from, &test);
+            res.push(self.split_remove(extracted_cells));
         }
+        assert_eq!(self.stones(), 0);
         res
     }
 
-    fn next_split(&mut self, board: &GoState) -> GoGroup {
-        let to_visit = self.cells.clone();
-        let cell = to_visit.iter().next().unwrap();
-
-        let test = |x| self.cells.contains(x);
+    fn split_remove(&mut self, cells: BitSet) -> GoGroup {
         let res = GoGroup {
             id: 0,
             stone: self.stone,
-            cells: GFlood::new().flood(board, cell, &test),
+            cells,
             liberties: 0,
         };
         self.remove_group(&res);
@@ -129,10 +135,11 @@ mod tests {
     use std::convert::TryFrom;
     use std::hash::{Hash, Hasher};
 
-    use crate::board::go_state::GoState;
     use board::grid::Grid;
     use board::stones::group::GoGroup;
     use board::stones::stone::Stone;
+
+    use crate::board::go_state::GoState;
 
     #[test]
     fn group_clone() {
@@ -152,7 +159,6 @@ mod tests {
         assert_eq!(g1, g3);
         println!("{}", g1);
         println!("{}", g3);
-
     }
 
 
@@ -164,7 +170,6 @@ mod tests {
 
         assert_eq!(g1, g2);
         assert_ne!(g1, g3);
-
     }
 
     fn hash(x: &GoGroup) -> u64 {

@@ -14,8 +14,8 @@ use mcts::Mcts;
 use policy::policy::Policy;
 use policy::score::Score;
 use policy::win_score::ExploreScore;
-use sim_result::SimResult;
 use rules::{Action, Rules};
+use sim_result::SimResult;
 
 use crate::mcts::MctsNode;
 
@@ -58,8 +58,9 @@ impl<A: Action, S: Rules<A>> MyMcts<A, S> {
 
 fn selection_score<'a, A: 'a + Action, Sc: Score>(
     cursor: &MctsNode<A>,
-    exploitation: &'a Sc)
-    -> impl Fn(&SimResult) -> OrderedFloat<f32> + 'a {
+    exploitation: &'a Sc,
+) -> impl Fn(&SimResult) -> OrderedFloat<f32> + 'a
+{
     let copy = cursor.clone();
     move |child: &SimResult| {
         let parent = copy.value.borrow();
@@ -94,15 +95,19 @@ impl<A: Action, S: Rules<A>> Mcts<A, S> for MyMcts<A, S> {
     }
 
     fn expansion<P: Policy<A, S>>(&mut self, selected: &MctsNode<A>, policy: &P) -> (A, MctsNode<A>) {
+        let action = policy.select(self.state());
+        self.state_mut().apply_action(action);
+
+        let mut next_node = selected.clone();
         for a in self.state().actions() {
             let new_node = SimResult::node();
             selected.set_child(a, &new_node);
+            if a == action {
+                next_node = new_node;
+            }
         }
-        let action = policy.select(self.state());
-        let new_node = selected.get_child(action).unwrap();
-        self.state_mut().apply_action(action);
-        log::debug!("Expansion: {:?}\n{}", action, new_node);
-        (action, new_node)
+        log::debug!("Expansion: {:?}\n{}", action, next_node);
+        (action, next_node)
     }
 
 
