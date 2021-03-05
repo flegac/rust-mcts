@@ -20,3 +20,6 @@ path = "../rust-tools"
 path = "../mcts-lib"
 [dependencies.graph-lib]
 path = "../graph-lib"
+
+[build]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]

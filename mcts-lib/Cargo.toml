@@ -18,3 +18,7 @@ path = "../graph-lib"
 
 [dependencies.rust-tools]
 path = "../rust-tools"
+
+
+[build]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
