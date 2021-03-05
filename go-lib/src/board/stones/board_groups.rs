@@ -37,6 +37,7 @@ pub struct BoardGroups {
 }
 
 impl BoardGroups {
+
     pub fn new(goban: Grid) -> BoardGroups {
         let ggg = GoGroup::from_goban(&goban);
         let empty_cells = goban.vertices().clone();
@@ -134,7 +135,6 @@ impl BoardGroups {
 }
 
 impl GroupManipulation for BoardGroups {
-
     fn place_stone(&mut self, cell: GoCell, stone: Stone) -> GoGroupRc {
         assert_eq!(self.stone_at(cell), Stone::None);
         let new_stone = self.new_group(GoGroup::from_cells(stone, &[cell]));

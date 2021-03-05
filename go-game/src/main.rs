@@ -31,35 +31,22 @@ use mcts_lib::sim_result::SimResult;
 use rust_tools::bench::Bench;
 use rust_tools::loggers::init_logs;
 use rust_tools::screen::layout::layout::L;
+use simulator::show_best_variant;
 
 mod editor;
 mod constants;
-
-
-fn load_sgf(filename: &Path) -> Result<String, String> {
-    match fs::read_to_string(filename) {
-        Ok(content) => {
-            Ok(content)
-        }
-        Err(_) => Err(String::from("File not found !"))
-    }
-}
+mod simulator;
 
 pub fn main() {
     init_logs(LOG_LEVEL);
-    if let Ok(mut path) = env::current_dir() {
-        path.push("output.sgf");
-        println!("path: {:?}", path.as_path());
-        if let Ok(game) = load_sgf(&path) {
-            println!("game: {}", game);
-        }
-    }
+    simulator::reload_sgf();
 
     let selection_score = WinScore::new();
     let random_policy = RandomPolicy::new(SEED);
     // let capture_policy = CapturePolicy {
     //     other:&RandomPolicy::new(SEED)
     // };
+
     let mut explorator = Explorator::new(
         SIM_FACTOR,
         GoState::new(GOBAN_SIZE),
@@ -85,18 +72,5 @@ pub fn main() {
     log::info!("results: {}", stats);
     log::info!("{}", bench);
 
-    if let Ok(mut file) = File::create("full_game.sgf") {
-        file.write_all(
-            GoDisplay::sgf(explorator.mcts().state())
-                .to_string().as_bytes()
-        );
-    }
-}
-
-
-pub fn show_best_variant(explorator: &mut Explorator<GoAction, GoState>) {
-    explorator.mcts_mut().state_mut().update_score();
-    let board = explorator.mcts().state();
-    GoDisplay::board(board).show();
-    log::info!("root max depth: {}", explorator.mcts().borrow().root().max_depth());
+    simulator::save_sgf(explorator.mcts().state())
 }
