@@ -16,8 +16,8 @@ pub struct BoardMap<T> {
 
 impl BoardMap<GoGroupRc> {
     pub fn new(board: &GoState) -> BoardMap<GoGroupRc> {
-        let width = board.goban().size;
-        let height = board.goban().size;
+        let width = board.gg.goban().size;
+        let height = board.gg.goban().size;
         let size = width * height;
         let mut res = BoardMap {
             width,
@@ -25,7 +25,7 @@ impl BoardMap<GoGroupRc> {
             map: Vec::with_capacity(size),
         };
         for i in 0..size {
-            res.map.push(Some(board.group_at(i).clone()));
+            res.map.push(Some(board.gg.group_at(i).clone()));
         }
         res
     }

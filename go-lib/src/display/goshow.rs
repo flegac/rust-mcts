@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::ops::Deref;
 
 use bit_set::BitSet;

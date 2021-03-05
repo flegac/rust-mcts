@@ -40,8 +40,8 @@ impl fmt::Display for GoState {
 
 impl GoState {
     pub(crate) fn score_str(&self) -> String {
-        let mut blacks = self.score(Stone::Black).to_string();
-        let mut whites = self.score(Stone::White).to_string();
+        let mut blacks = self.stats.score(Stone::Black).to_string();
+        let mut whites = self.stats.score(Stone::White).to_string();
 
         match self.stone {
             Stone::None => {}
@@ -68,16 +68,17 @@ fn group_id(g: GoGroupRc) -> Option<String> {
 
 impl GoDisplay {
     pub fn history_str(board: &GoState, range: &Range2) -> String {
+        let goban = board.gg.goban();
         let mut hist = BoardMap {
-            width: board.goban().size,
-            height: board.goban().size,
-            map: vec![None; board.vertex_number()],
+            width: goban.size,
+            height: goban.size,
+            map: vec![None; goban.vertex_number()],
         };
         for (i, a) in board.history.iter().enumerate() {
             match a {
                 GoAction::Pass => {}
                 GoAction::Cell(x, y) => {
-                    let cell = board.goban().cell(*x, *y);
+                    let cell = board.gg.goban().cell(*x, *y);
                     hist.map[cell] = Some(i);
                 }
             }
@@ -89,16 +90,16 @@ impl GoDisplay {
 
 impl GoShow for GoDisplay {
     fn sgf(board: &GoState) -> Sequence {
-        SGF::game(board.goban().size, Stone::Black, board.history.as_slice())
+        SGF::game(board.gg.goban().size, Stone::Black, board.history.as_slice())
     }
 
     fn history(board: &GoState) -> LayoutRc {
-        let range = Range2::board(board.goban().size);
+        let range = Range2::board(board.gg.goban().size);
         L::str(&Self::history_str(board, &range))
     }
 
     fn board(board: &GoState) -> LayoutRc {
-        let range = Range2::board(board.goban().size);
+        let range = Range2::board(board.gg.goban().size);
         L::vert(vec![
             Self::board_range(board, range),
             L::str(&board.score_str()),
@@ -115,14 +116,17 @@ impl GoShow for GoDisplay {
             .map(|g| group_id(g.clone()));
 
         L::vert(vec![
-            L::str(&classic.map_str(&range, 3)),
+            L::hori(vec![
+                L::str(&classic.map_str(&range, 3)),
+                L::str(&Self::history_str(board, &range))
+            ]),
             L::str(&group_ids.map_str(&range, 6))
         ])
     }
 
     fn group_layout(board: &GoState, group: &GoGroupRc) -> LayoutRc {
         let range = group.borrow().cells.iter()
-            .map(|c| board.goban().xy(c))
+            .map(|c| board.gg.goban().xy(c))
             .fold(Range2::empty(), |c, v| c.merge(v));
         Self::board_range(board, range)
     }
@@ -133,7 +137,7 @@ impl GoShow for GoDisplay {
         res.push_str(&format!("{}: {} [{}]", group.id, group.stones(), group.stone, ));
         for cell in group.cells.iter() {
             res.push_str(" ");
-            res.push_str(&GoDisplay::cell(board.goban().xy(cell)));
+            res.push_str(&GoDisplay::cell(board.gg.goban().xy(cell)));
         }
         res.push_str("}");
         res
@@ -148,7 +152,7 @@ impl GoShow for GoDisplay {
         res.push_str(&format!("{{{} [{}]", cells.len(), stone));
         for cell in cells.iter() {
             res.push_str(" ");
-            res.push_str(&GoDisplay::cell(board.goban().xy(cell)));
+            res.push_str(&GoDisplay::cell(board.gg.goban().xy(cell)));
         }
         res.push_str("}");
         res

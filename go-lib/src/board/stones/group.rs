@@ -11,6 +11,8 @@ use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 
 use crate::board::go_state::GoState;
+use board::stats::board_stats::BoardStats;
+use board::group_access::GroupAccess;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
@@ -94,24 +96,8 @@ impl GoGroup {
     }
 
 
-    pub fn split_with(&mut self, cell: GoCell, board: &GoState) -> Vec<GoGroup> {
-        let mut res = vec![];
 
-        //remove spliting cell
-        let cells = BitSet::from_iter([cell].iter().map(|&x| x as usize));
-        res.push(self.split_remove(cells));
-
-        while !self.is_empty() {
-            let test = |x| self.cells.contains(x);
-            let from = self.cells.iter().next().unwrap();
-            let extracted_cells = GFlood::new().flood(board, from, &test);
-            res.push(self.split_remove(extracted_cells));
-        }
-        assert_eq!(self.stones(), 0);
-        res
-    }
-
-    fn split_remove(&mut self, cells: BitSet) -> GoGroup {
+    pub(crate) fn split_remove(&mut self, cells: BitSet) -> GoGroup {
         let res = GoGroup {
             id: 0,
             stone: self.stone,

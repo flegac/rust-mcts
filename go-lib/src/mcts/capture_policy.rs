@@ -1,7 +1,6 @@
 use crate::board::go_state::GoState;
 use board::group_access::GroupAccess;
 use board::stats::board_stats::FullStats;
-use graph_lib::topology::Topology;
 use mcts_lib::policy::policy::Policy;
 use mcts_lib::rules::Rules;
 use go_rules::go_action::GoAction;
@@ -21,14 +20,14 @@ impl<'a> Policy<GoAction, GoState> for CapturePolicy<'a, GoAction, GoState> {
                 match a {
                     GoAction::Pass => 0,
                     GoAction::Cell(x, y) => {
-                        let cell = state.goban().cell(*x, *y);
-                        let captures: usize = state.adjacent_groups(cell)
+                        let cell = state.gg.goban().cell(*x, *y);
+                        let captures: usize = state.gg.adjacent_groups(cell)
                             .iter()
                             .filter(|g| g.borrow().stone == stone.switch())
                             .filter(|g| g.borrow().liberties == 1)
                             .map(|g| g.borrow().stones())
                             .sum();
-                        let max_size: usize = state.adjacent_groups(cell)
+                        let max_size: usize = state.gg.adjacent_groups(cell)
                             .iter()
                             .filter(|g| g.borrow().stone == stone)
                             // .filter(|g| g.borrow().liberties > 1)

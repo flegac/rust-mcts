@@ -1,4 +1,3 @@
-use board::stats::board_stats::FullStats;
 use board::stones::stone::Stone;
 use board::go_state::GoState;
 use go_rules::go::Go;
@@ -24,7 +23,7 @@ impl StoneStats {
     }
 
     pub fn new(stone: Stone, board: &GoState) -> StoneStats {
-        let go = Go::new(board);
+        let go = Go::new(&board.gg);
         StoneStats {
             stone,
             stones: go.count_stones(stone),

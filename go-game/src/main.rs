@@ -97,9 +97,6 @@ pub fn main() {
 pub fn show_best_variant(explorator: &mut Explorator<GoAction, GoState>) {
     explorator.mcts_mut().state_mut().update_score();
     let board = explorator.mcts().state();
-    L::hori(vec![
-        GoDisplay::board(board),
-        GoDisplay::history(board),
-    ]).show();
+    GoDisplay::board(board).show();
     log::info!("root max depth: {}", explorator.mcts().borrow().root().max_depth());
 }

@@ -1,22 +1,29 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
+use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 
 use bit_set::BitSet;
 use indexmap::set::IndexSet;
 use itertools::Itertools;
+use log::LevelFilter;
 
 use board::grid::{GoCell, Grid};
 use board::group_access::GroupAccess;
 use board::stones::group::GoGroup;
 use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
+use display::display::GoDisplay;
+use display::goshow::GoShow;
 use display::range::Range2;
 use go_rules::go::Go;
 use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
+use rust_tools::screen::layout::layout::L;
+
+use crate::board::group_manipulation::GroupManipulation;
 
 #[derive(Debug, Clone)]
 pub struct BoardGroups {
@@ -107,25 +114,26 @@ impl BoardGroups {
         );
         !check_connection(&visited)
     }
+
+    fn split_group_with(&mut self, cell: GoCell, group: &GoGroupRc) -> Vec<GoGroup> {
+        let mut res = vec![];
+
+        //remove spliting cell
+        let cells = BitSet::from_iter([cell].iter().map(|&x| x as usize));
+        res.push(group.borrow_mut().split_remove(cells));
+
+        while !group.borrow().is_empty() {
+            let test = |x| group.borrow().cells.contains(x);
+            let from = group.borrow().cells.iter().next().unwrap();
+            let extracted_cells = GFlood::new().flood(self.goban(), from, &test);
+            res.push(group.borrow_mut().split_remove(extracted_cells));
+        }
+        assert_eq!(group.borrow().stones(), 0);
+        res
+    }
 }
 
-
-impl GroupAccess for BoardGroups {
-    fn goban(&self) -> &Grid {
-        &self.goban
-    }
-
-    fn capture(&mut self, group: &GoGroupRc) {
-        assert!(!group.borrow().is_empty());
-        group.borrow_mut().set_stone(Stone::None);
-
-        self.blacks.remove(group);
-        self.whites.remove(group);
-        self.nones.insert(group.clone());
-
-        self.empty_cells.union_with(&group.borrow().cells);
-    }
-
+impl GroupManipulation for BoardGroups {
     fn fusion_with(&mut self, cell: GoCell) -> (GoGroupRc, usize) {
         let old_cell_group = self.group_at(cell);
         assert_eq!(old_cell_group.borrow().stones(), 1);
@@ -153,14 +161,50 @@ impl GroupAccess for BoardGroups {
         (group, groups.len())
     }
 
+    fn split_with(&mut self, cell: GoCell) -> (GoGroupRc, Vec<GoGroupRc>) {
+        let old = self.group_at(cell).clone();
+        let res = self
+            .split_group_with(cell, &old)
+            .into_iter()
+            .map(|g| self.new_group(g))
+            .collect_vec();
+
+        self.clear_group_color(&old);
+        for g in res.iter() {
+            //TODO: useless remove !
+            old.borrow_mut().remove_group(g.borrow().deref());
+            self.update_group(g);
+        }
+
+        (old, res)
+    }
+
+    fn capture(&mut self, group: &GoGroupRc) {
+        assert!(!group.borrow().is_empty());
+        group.borrow_mut().set_stone(Stone::None);
+
+        self.blacks.remove(group);
+        self.whites.remove(group);
+        self.nones.insert(group.clone());
+
+        self.empty_cells.union_with(&group.borrow().cells);
+    }
+}
+
+impl GroupAccess for BoardGroups {
     fn group_at(&self, cell: GoCell) -> &GoGroupRc {
         &self.groups[cell]
     }
 
+
+    fn goban(&self) -> &Grid {
+        &self.goban
+    }
+
+
     fn stone_at(&self, cell: GoCell) -> Stone {
         self.group_at(cell).borrow().stone
     }
-
 
     fn groups_by_stone_mut(&mut self, stone: Stone) -> &mut IndexSet<GoGroupRc, RandomState> {
         match stone {
