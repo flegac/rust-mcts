@@ -1,19 +1,23 @@
-use crate::board::go_state::GoState;
+use std::ops::Deref;
+
 use board::grid::Grid;
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
 use board::stones::group::GoGroup;
+use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
 use graph_lib::topology::Topology;
+
+use crate::board::go_state::GoState;
 
 pub trait FullStats {
     fn score(&self, stone: Stone) -> StoneScore;
     fn stats(&self, stone: Stone) -> StoneStats;
-    fn add_prisoners(&mut self, stone: Stone, n: usize);
+    fn capture(&mut self, group: &GoGroupRc);
     fn set_territory(&mut self, stone: Stone, n: usize);
 }
 
-#[derive(Debug,Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct BoardStats {
     black: StoneStats,
     white: StoneStats,
@@ -43,10 +47,14 @@ impl FullStats for BoardStats {
         }
     }
 
-    fn add_prisoners(&mut self, stone: Stone, n: usize) {
-        if stone != Stone::None {
-            self.for_stone_mut(stone).captured += n;
-        }
+    fn capture(&mut self, group: &GoGroupRc) {
+        let stone_argument = group.borrow().stone;
+        let n = group.borrow().stones();
+        if stone_argument != Stone::None {
+            self.for_stone_mut(stone_argument).captured += n;
+        };
+        self.rem_group(group.borrow().deref());
+        self.for_stone_mut(Stone::None).groups += 1;
     }
 
     fn set_territory(&mut self, stone: Stone, n: usize) {

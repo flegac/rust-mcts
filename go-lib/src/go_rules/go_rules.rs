@@ -9,7 +9,7 @@ use log::LevelFilter;
 
 use board::grid::{GoCell, Grid};
 use board::group_access::GroupAccess;
-use board::stats::board_stats::{BoardStats, FullStats};
+use board::stats::full_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
 use board::stones::board_groups::BoardGroups;
@@ -92,7 +92,7 @@ impl Rules<GoAction> for GoState {
             GoAction::Cell(x, y) => {
                 self.pass_sequence = 0;
                 let cell = self.gg.goban().cell(x, y);
-                self.place_stone_and_update(cell, self.stone);
+                self.play_at(cell, self.stone);
             }
         }
         self.stone = self.stone.switch();
@@ -104,34 +104,29 @@ impl Rules<GoAction> for GoState {
 }
 
 pub trait GoRules {
-    fn place_stone_and_update(&mut self, cell: GoCell, stone: Stone);
-
-    fn place_stone(&mut self, cell: GoCell, stone: Stone) -> GoGroupRc;
-    fn kill_ennemy_groups(&mut self, cell: usize, stone: Stone);
-
-    fn group_self_connected_cells(&self, cell: GoCell) -> BitSet;
-
-    fn try_capture(&mut self, group: GoGroupRc);
-    fn update_group(&mut self, group: &GoGroupRc);
-    fn play_start(&mut self, action: GoAction) -> LayoutRc;
-    fn play_end(&mut self, backup: LayoutRc);
-
     fn update_score(&mut self);
-    fn check_correctness(&self);
+
+    fn play_at(&mut self, cell: GoCell, stone: Stone);
+    fn try_capture(&mut self, group: GoGroupRc);
+    fn add_group(&mut self, group: &GoGroupRc);
 }
 
 impl GoRules for GoState {
-    fn place_stone_and_update(&mut self, cell: GoCell, stone: Stone) {
+    fn update_score(&mut self) {
+        let go = Go::new(&self.gg);
+        self.stats.set_territory(Stone::Black, go.count_territory(Stone::Black));
+        self.stats.set_territory(Stone::White, go.count_territory(Stone::White));
+    }
+
+    fn play_at(&mut self, cell: GoCell, stone: Stone) {
         log::trace!("PLACE STONE:\n{}", self.stats);
 
         //split old empty group
         let (old, new_empty_groups) = self.gg.split_with(cell);
         self.stats.for_stone_mut(Stone::None).groups += new_empty_groups.len();
         self.stats.for_stone_mut(Stone::None).groups -= 1;
-        log::trace!("AFTER SPLIT_GROUP:\n{}", self.stats);
-
-
         if log::max_level() <= LevelFilter::Trace {
+            log::trace!("AFTER SPLIT_GROUP:\n{}", self.stats);
             if !new_empty_groups.is_empty() {
                 log::trace!("SPLITS:\n{}", L::hori(new_empty_groups.iter()
                     .map(|g| self.gg.group_range(g))
@@ -140,131 +135,54 @@ impl GoRules for GoState {
             }
         }
 
-
         // place new stone
-        let new_stone = self.place_stone(cell, stone);
-        // because we split old group
+        let new_stone = self.gg.place_stone(cell, stone);
+        self.stats.add_group(new_stone.clone().borrow().deref());
         self.stats.for_stone_mut(Stone::None).groups -= 1;
-        self.update_group(&new_stone);
-
-
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("AFTER PLACE_STONE: {}\n{}", new_stone, self.stats);
+        }
 
         //fusion allies groups
         let (fusion_group, old_groups) = self.gg.fusion_with(cell);
         self.stats.for_stone_mut(stone).groups += 1;
         self.stats.for_stone_mut(stone).groups -= old_groups;
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("AFTER FUSION {}:\n{}", GoDisplay::grouprc(self, &fusion_group), self.stats);
+            log::trace!("AFTER FUSION:\n{}", self.stats);
         }
 
-        self.kill_ennemy_groups(cell, stone);
-        log::trace!("AFTER KILL_ENNEMY_GROUPS:\n{}", self.stats);
+        for g in self.gg.adjacent_enemies_groups(cell, stone) {
+            self.try_capture(g);
+        }
+        log::trace!("AFTER ENEMY_KILL:\n{}", self.stats);
 
         self.try_capture(fusion_group.clone());
         log::trace!("AFTER AUTO_KILL:\n{}", self.stats);
     }
 
-    fn place_stone(&mut self, cell: GoCell, stone: Stone) -> GoGroupRc {
-        assert_eq!(self.gg.stone_at(cell), Stone::None);
-        let new_stone = self.gg.new_group(GoGroup::from_cells(stone, &[cell]));
-
-
-        let rc = self.gg.group_at(cell).clone();
-        let groups = self.gg.groups_by_stone_mut(Stone::None).borrow_mut();
-        groups.remove(&rc);
-
-        self.gg.update_group(&new_stone);
-        self.gg.empty_cells.remove(cell);
-        new_stone
-    }
-
-    fn kill_ennemy_groups(&mut self, cell: usize, stone: Stone) {
-        log::trace!("KILLING GROUPS:");
-
-        for g in self.gg.adjacent_ennemies_groups(cell, stone) {
-            self.try_capture(g);
-        }
-    }
-
-    fn group_self_connected_cells(&self, cell: GoCell) -> BitSet {
-        let mut cells = self.gg.goban().edges(cell).clone();
-        cells.intersect_with(&self.gg.group_at(cell).borrow().cells);
-        cells
-    }
-
     fn try_capture(&mut self, group: GoGroupRc) {
         self.gg.update_liberties(&group);
         if group.borrow().is_dead() {
-            log::trace!("{}", GoDisplay::grouprc(self, &group));
             if log::max_level() <= LevelFilter::Trace {
-                log::trace!("DEAD GROUP : {}\n{}\n{}",
+                log::trace!("DEAD GROUP : {}\n{}",
                             GoDisplay::grouprc(&self, &group),
-                            self.stats.to_string(),
                             GoDisplay::group_layout(&self, &group).to_string(),
                 );
             }
-            self.stats.add_prisoners(group.borrow().stone, group.borrow().stones());
-            self.stats.rem_group(group.borrow().deref());
-            self.stats.for_stone_mut(Stone::None).groups += 1;
+            self.stats.capture(&group);
             self.gg.capture(&group);
-            log::trace!("{}", GoDisplay::grouprc(self, &group));
         }
     }
-    fn update_group(&mut self, group: &GoGroupRc) {
-        assert!(!group.borrow().cells.is_empty());
-        self.gg.update_group(&group);
-        self.stats.add_group(group.clone().borrow().deref());
+
+    fn add_group(&mut self, new_stone: &GoGroupRc) {
+        assert!(!new_stone.borrow().cells.is_empty());
+        self.gg.add_group(&new_stone);
+        self.stats.add_group(new_stone.clone().borrow().deref());
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("add: {}\n{}", group, self.stats);
-        }
-    }
-
-    fn play_start(&mut self, action: GoAction) -> LayoutRc {
-        log::trace!("NEW PLAY: {} @ {}\n{}",
-                    self.stone, action,
-                    GoDisplay::board(self).to_string());
-
-        if log::max_level() <= LevelFilter::Trace {
-            GoDisplay::board(self)
-        } else {
-            L::str("")
+            log::trace!("add: {}\n{}", new_stone, self.stats);
         }
     }
 
 
-    fn play_end(&mut self, backup: LayoutRc) {
-        if log::max_level() <= LevelFilter::Trace {
-            log::trace!("\n{}", L::hori(vec![
-                backup,
-                L::str(" - padding - "),
-                GoDisplay::board(self)
-            ]).to_string());
-        }
-        self.check_correctness();
-    }
 
-    fn update_score(&mut self) {
-        let go = Go::new(&self.gg);
-        self.stats.set_territory(Stone::Black, go.count_territory(Stone::Black));
-        self.stats.set_territory(Stone::White, go.count_territory(Stone::White));
-    }
-
-
-    fn check_correctness(&self) {
-        for &s in [Stone::Black, Stone::White, Stone::None].iter() {
-            let n1 = Go::new(&self.gg).count_stones(s);
-            let n2 = self.stats.stats(s).stones;
-            assert_eq!(n1, n2, "{:?} stones", s)
-        }
-
-        assert_eq!(self.gg.empty_cells.len(), self.stats(Stone::None).stones);
-        assert_eq!(
-            self.stats(Stone::Black).stones
-                + self.stats(Stone::White).stones
-                + self.stats(Stone::None).stones,
-            self.gg.goban().vertex_number()
-        );
-        //FIXME: remove this (costly) check !
-        // self.stats.assert_eq(&BoardStats::from_board(self));
-    }
 }

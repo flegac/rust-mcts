@@ -1,6 +1,6 @@
 use std::fmt;
 
-use board::stats::board_stats::{BoardStats, FullStats};
+use board::stats::full_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
 use board::stones::stone::Stone;

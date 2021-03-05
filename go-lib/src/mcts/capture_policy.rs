@@ -1,6 +1,6 @@
 use crate::board::go_state::GoState;
 use board::group_access::GroupAccess;
-use board::stats::board_stats::FullStats;
+use board::stats::full_stats::FullStats;
 use mcts_lib::policy::policy::Policy;
 use mcts_lib::rules::Rules;
 use go_rules::go_action::GoAction;

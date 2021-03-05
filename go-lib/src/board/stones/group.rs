@@ -11,7 +11,7 @@ use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 
 use crate::board::go_state::GoState;
-use board::stats::board_stats::BoardStats;
+use board::stats::full_stats::BoardStats;
 use board::group_access::GroupAccess;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]

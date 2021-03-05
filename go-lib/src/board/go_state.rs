@@ -11,7 +11,7 @@ use log::LevelFilter;
 
 use board::grid::{GoCell, Grid};
 use board::group_access::GroupAccess;
-use board::stats::board_stats::{BoardStats, FullStats};
+use board::stats::full_stats::{BoardStats, FullStats};
 use board::stats::stone_score::StoneScore;
 use board::stats::stone_stats::StoneStats;
 use board::stones::board_groups::BoardGroups;
@@ -26,6 +26,7 @@ use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 use mcts_lib::rules::{GameResult, Rules};
 use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
+use go_rules::go::Go;
 
 #[derive(Debug, Clone)]
 pub struct GoState {
@@ -57,6 +58,48 @@ impl GoState {
     }
     pub fn stats(&self, stone: Stone) -> StoneStats {
         self.stats.stats(stone)
+    }
+
+
+    pub(crate) fn play_start(&mut self, action: GoAction) -> LayoutRc {
+        log::trace!("NEW PLAY: {} @ {}\n{}",
+                    self.stone, action,
+                    GoDisplay::board(self).to_string());
+
+        if log::max_level() <= LevelFilter::Trace {
+            GoDisplay::board(self)
+        } else {
+            L::str("")
+        }
+    }
+
+    pub(crate) fn play_end(&mut self, backup: LayoutRc) {
+        if log::max_level() <= LevelFilter::Trace {
+            log::trace!("\n{}", L::hori(vec![
+                backup,
+                L::str(" - padding - "),
+                GoDisplay::board(self)
+            ]).to_string());
+        }
+        self.check_correctness();
+    }
+
+    pub(crate) fn check_correctness(&self) {
+        for &s in [Stone::Black, Stone::White, Stone::None].iter() {
+            let n1 = Go::new(&self.gg).count_stones(s);
+            let n2 = self.stats.stats(s).stones;
+            assert_eq!(n1, n2, "{:?} stones", s)
+        }
+
+        assert_eq!(self.gg.empty_cells.len(), self.stats(Stone::None).stones);
+        assert_eq!(
+            self.stats(Stone::Black).stones
+                + self.stats(Stone::White).stones
+                + self.stats(Stone::None).stones,
+            self.gg.goban().vertex_number()
+        );
+        //FIXME: remove this (costly) check !
+        // self.stats.assert_eq(&BoardStats::from_board(self));
     }
 }
 

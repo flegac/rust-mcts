@@ -80,7 +80,7 @@ impl BoardGroups {
         GoGroupRc::from(group)
     }
 
-    pub(crate) fn update_group(&mut self, group: &GoGroupRc) {
+    pub(crate) fn add_group(&mut self, group: &GoGroupRc) {
         assert!(!group.borrow().cells.is_empty());
         for c in group.borrow().cells.iter() {
             self.groups[c] = group.clone();
@@ -134,6 +134,19 @@ impl BoardGroups {
 }
 
 impl GroupManipulation for BoardGroups {
+
+    fn place_stone(&mut self, cell: GoCell, stone: Stone) -> GoGroupRc {
+        assert_eq!(self.stone_at(cell), Stone::None);
+        let new_stone = self.new_group(GoGroup::from_cells(stone, &[cell]));
+        let rc = self.group_at(cell).clone();
+        let groups = self.groups_by_stone_mut(Stone::None).borrow_mut();
+        groups.remove(&rc);
+
+        self.add_group(&new_stone);
+        self.empty_cells.remove(cell);
+        new_stone
+    }
+
     fn fusion_with(&mut self, cell: GoCell) -> (GoGroupRc, usize) {
         let old_cell_group = self.group_at(cell);
         assert_eq!(old_cell_group.borrow().stones(), 1);
@@ -157,7 +170,7 @@ impl GroupManipulation for BoardGroups {
             self.clear_group_color(g);
         }
         // add the final group
-        self.update_group(&group);
+        self.add_group(&group);
         (group, groups.len())
     }
 
@@ -173,7 +186,7 @@ impl GroupManipulation for BoardGroups {
         for g in res.iter() {
             //TODO: useless remove !
             old.borrow_mut().remove_group(g.borrow().deref());
-            self.update_group(g);
+            self.add_group(g);
         }
 
         (old, res)
@@ -245,7 +258,7 @@ impl GroupAccess for BoardGroups {
     }
 
 
-    fn adjacent_ennemies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc> {
+    fn adjacent_enemies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc> {
         self.adjacent_groups(cell).into_iter()
             .filter(|g| g.borrow().stone == stone.switch())
             .collect_vec()

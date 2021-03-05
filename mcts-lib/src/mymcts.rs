@@ -43,15 +43,12 @@ impl<A: Action, S: Rules<A>> MyMcts<A, S> {
         node.value.borrow().is_leaf()
     }
 
-    pub(crate) fn setup_node(&mut self, current: MctsNode<A>) {
+    pub(crate) fn reset(&mut self) {
+        let current = self.root.clone();
         self.the_state.reset();
         for (action, _) in current.parents().iter().rev() {
             self.state_mut().apply_action(action.clone())
         }
-    }
-
-    pub(crate) fn reset(&mut self) {
-        self.setup_node(self.root.clone());
     }
 }
 

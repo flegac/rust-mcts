@@ -17,7 +17,7 @@ pub trait GroupAccess {
 
     fn adjacent_groups(&self, cell: GoCell) -> Vec<GoGroupRc>;
     fn adjacent_allies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc>;
-    fn adjacent_ennemies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc>;
+    fn adjacent_enemies_groups(&self, cell: GoCell, stone: Stone) -> Vec<GoGroupRc>;
     fn adjacent_empty_groups(&self, cell: GoCell) -> Vec<GoGroupRc>;
 
     fn update_liberties(&self, group: &GoGroupRc);
