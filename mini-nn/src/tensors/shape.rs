@@ -1,11 +1,5 @@
-use std::fmt::{Display, Formatter};
-use std::fmt;
-use std::iter::Product;
-use std::ops::{Div, Mul};
-
-use crate::dim::Dim;
-use crate::dim::Dim::Size;
-use crate::shape4::{NDIMS, Shape4};
+use crate::tensors::dim::Dim;
+use crate::tensors::shape4::NDIMS;
 
 pub trait Shape {
     fn shape(&self) -> &[Dim; NDIMS];
@@ -37,8 +31,8 @@ pub trait ShapeIndex where Self: Shape {
         let s1 = self.y().unwrap();
         let s2 = self.z().unwrap();
 
-        let v1 = (s0 * s1);
-        let v2 = (v1 * s2);
+        let v1 = s0 * s1;
+        let v2 = v1 * s2;
 
 
         let mut id = id;
@@ -58,7 +52,7 @@ pub trait ShapeIndex where Self: Shape {
         for (i, &v) in [x, y, z, t].iter().enumerate() {
             // println!("res:{} k:{}", res, k);
             res = res + (v * k);
-            k = (k * self.shape()[i].unwrap())
+            k = k * self.shape()[i].unwrap()
         }
         // println!("res:{} k:{}", res, k);
         res

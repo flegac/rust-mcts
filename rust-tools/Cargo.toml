@@ -12,5 +12,5 @@ env_logger = "0.8.3"
 chrono = "0.4.19"
 
 
-[build]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+#[build]
+#rustflags = ["-C", "link-arg=-fuse-ld=lld"]

@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
-use std::{fmt, mem};
+use std::{fmt, };
 
-use screen::dimension::{Dim, Dimension};
+use screen::dimension::{ Dimension};
 use screen::smart_index::SmartIndex;
 
 use crate::screen::drawer::Drawer;
@@ -70,9 +70,9 @@ impl Display for Screen {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         for i in 0..self.height() {
             for j in 0..self.width() {
-                write!(f, "{}", self.get(self.index(j, i)));
+                write!(f, "{}", self.get(self.index(j, i)))?;
             }
-            write!(f, "\n");
+            write!(f, "\n")?;
         }
         write!(f, "",)
     }

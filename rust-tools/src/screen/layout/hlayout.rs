@@ -1,4 +1,3 @@
-use std::iter::FromIterator;
 
 use screen::dimension::Dimension;
 use screen::layout::layout::{Layout, LayoutRc};

@@ -1,11 +1,8 @@
-use std::borrow::Borrow;
-
-use crate::buffer::Buffer;
-use crate::dim::Dim;
 use crate::layer::Layer;
-use crate::shape::{Shape, ShapeIndex};
-use crate::shape4::{NDIMS, Shape4};
-use crate::tensor::Tensor;
+use crate::tensors::dim::Dim;
+use crate::tensors::shape::{Shape, ShapeIndex};
+use crate::tensors::shape4::{NDIMS, Shape4};
+use crate::tensors::tensor::Tensor;
 
 struct Conv2 {
     filter: Tensor,
@@ -22,11 +19,11 @@ impl Shape for Conv2 {
 impl Conv2 {
     pub fn new(kernel_size: usize, in_features: usize, out_features: usize) -> Self {
         Conv2 {
-            filter: Tensor::from_shape(
+            filter: Tensor::new(
                 Shape4::vec4(kernel_size, kernel_size, in_features, out_features),
                 1_f32,
             ),
-            bias: Tensor::from_shape(
+            bias: Tensor::new(
                 Shape4::vec4(kernel_size, kernel_size, in_features, out_features),
                 1_f32,
             ),
@@ -39,7 +36,7 @@ impl Conv2 {
             input_shape.y().unwrap() - self.y().unwrap() + 1,
             self.t().unwrap(),
         );
-        Tensor::from_shape(output_shape, 0_f32)
+        Tensor::new(output_shape, 0_f32)
     }
 
 
@@ -97,19 +94,16 @@ impl Layer for Conv2 {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Borrow;
-
-    use crate::buffer::Buffer;
     use crate::conv2::Conv2;
     use crate::layer::Layer;
-    use crate::shape::{Shape, ShapeIndex};
-    use crate::shape4::Shape4;
-    use crate::tensor::Tensor;
+    use crate::tensors::shape::Shape;
+    use crate::tensors::shape4::Shape4;
+    use crate::tensors::tensor::Tensor;
 
     #[test]
     fn test_conv2() {
         let input_shape = Shape4::vec3(10, 10, 4);
-        let input = Tensor::from_shape(input_shape, 1_f32);
+        let input = Tensor::new(input_shape, 1_f32);
 
         let conv = Conv2::new(5, input_shape.z().unwrap(), 3);
 

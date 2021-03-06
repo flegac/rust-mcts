@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
 
-use crate::dim::Dim;
-use crate::dim::Dim::Size;
-use crate::shape::{Shape, ShapeIndex};
+use crate::tensors::dim::Dim;
+use crate::tensors::dim::Dim::Size;
+use crate::tensors::shape::{Shape, ShapeIndex};
 
 pub const NDIMS: usize = 4;
 
@@ -48,8 +48,8 @@ impl Shape4 {
 
 #[cfg(test)]
 mod tests {
-    use crate::shape::{Shape, ShapeIndex};
-    use crate::shape4::Shape4;
+    use crate::tensors::shape::{Shape, ShapeIndex};
+    use crate::tensors::shape4::Shape4;
 
     #[test]
     fn test_new() {

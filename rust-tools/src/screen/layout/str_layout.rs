@@ -1,9 +1,6 @@
-use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
-use std::ops::Deref;
 use std::rc::Rc;
 
-use itertools::Itertools;
 
 use screen::dimension::Dimension;
 use screen::drawer::Drawer;

@@ -1,13 +1,7 @@
-use std::iter::FromIterator;
 
 use screen::dimension::Dimension;
 use screen::layout::layout::{Layout, LayoutRc};
 use screen::screen::Screen;
-
-enum LayoutPolicy {
-    Vertical,
-    Horizontal,
-}
 
 pub struct VLayout {
     data: Vec<LayoutRc>,

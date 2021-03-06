@@ -20,5 +20,5 @@ path = "../graph-lib"
 path = "../rust-tools"
 
 
-[build]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+#[build]
+#rustflags = ["-C", "link-arg=-fuse-ld=lld"]

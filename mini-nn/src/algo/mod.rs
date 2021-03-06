@@ -1,6 +1,5 @@
-mod trainer;
-mod adn;
-mod score;
-mod environment;
-mod agent;
-mod mutation;
+pub mod trainer;
+pub mod adn;
+pub mod population;
+pub mod mutations;
+pub mod tensor_trainer;

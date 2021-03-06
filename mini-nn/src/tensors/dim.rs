@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::iter::Product;
-use std::ops::{Add, Div, Mul, Sub, SubAssign};
+use std::ops::{Add, Div, Mul, Sub};
 
-use crate::dim::Dim::Size;
+use crate::tensors::dim::Dim::Size;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Dim {

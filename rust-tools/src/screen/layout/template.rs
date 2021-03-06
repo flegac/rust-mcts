@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use screen::layout::layout::{LayoutRc, L};
-use screen::layout::str_layout::{StrLayout, StrPtr};
+use screen::layout::str_layout::{ StrPtr};
 
 pub struct Template {
     pub template: LayoutRc,

@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 use std::time::{Duration, Instant};
 
 pub struct Bench {
-    iterations: usize,
+    pub iterations: usize,
     start: Instant,
     duration: Duration,
     speed_factor: Option<f32>,

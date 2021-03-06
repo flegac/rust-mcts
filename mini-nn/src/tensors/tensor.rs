@@ -1,25 +1,28 @@
-use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use std::ops::{Add, AddAssign, Deref, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::rc::Rc;
 
-use crate::buffer::Buffer;
-use crate::dim::Dim;
-use crate::shape::{Shape, ShapeIndex};
-use crate::shape4::{NDIMS, Shape4};
+use rand::distributions::Distribution;
+use rand_distr::Normal;
 
-#[derive(Debug, Clone)]
-pub struct View {
-    offset: (usize, usize, usize, usize),
-    pub shape: Shape4,
-}
+use crate::tensors::buffer::Buffer;
+use crate::tensors::dim::Dim;
+use crate::tensors::shape::{Shape, ShapeIndex};
+use crate::tensors::shape4::{NDIMS, Shape4};
+use crate::tensors::view::View;
 
 #[derive(Debug, Clone)]
 pub struct Tensor {
     pub buffer: Rc<RefCell<Buffer>>,
     pub view: View,
+}
+
+impl Display for Tensor {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.buffer.as_ref().borrow().data)
+    }
 }
 
 impl Shape for Tensor {
@@ -50,10 +53,26 @@ impl ShapeIndex for Tensor {
 
 
 impl Tensor {
-    pub fn new(buffer: Buffer, view: View) -> Self {
+    pub fn from_distrib<D: Distribution<f32>>(shape: Shape4, dist: D) -> Tensor {
+        let mut rng = rand::thread_rng();
+        let mut buffer = Buffer::new(shape, 0_f32);
+        for i in 0..buffer.volume().unwrap() {
+            buffer.data[i] = dist.sample(&mut rng);
+        }
+        Self::from_buffer(buffer)
+    }
+
+    pub fn new(shape: Shape4, value: f32) -> Tensor {
+        Self::from_buffer(Buffer::new(shape, value))
+    }
+    pub fn from_buffer(buffer: Buffer) -> Self {
+        let shape = buffer.shape;
         Tensor {
             buffer: Rc::new(RefCell::new(buffer)),
-            view,
+            view: View {
+                offset: (0, 0, 0, 0),
+                shape,
+            },
         }
     }
 
@@ -67,13 +86,29 @@ impl Tensor {
         }
     }
 
-    pub fn from_shape(shape: Shape4, value: f32) -> Tensor {
-        Self::new(
-            Buffer::new(shape, value),
-            View {
-                offset: (0, 0, 0, 0),
-                shape,
-            })
+    pub fn get(&self, offset: usize) -> f32 {
+        self.buffer.as_ref().borrow_mut().data[offset]
+    }
+
+    pub fn insert(&mut self, offset: usize, value: f32) {
+        self.buffer.as_ref().borrow_mut().data[offset] = value;
+    }
+
+    pub fn copy_from(&mut self, other: &Tensor) {
+        self.buffer.as_ref().borrow_mut().data.as_mut_slice().copy_from_slice(
+            other.buffer.as_ref().borrow().data.as_slice()
+        )
+    }
+
+    pub fn deep_clone(&self) -> Tensor {
+        let copy = self.buffer.as_ref().borrow().data.clone();
+
+        Tensor::from_buffer(
+            Buffer::from_data(
+                copy,
+                self.view.shape.clone(),
+            )
+        )
     }
 }
 
@@ -170,15 +205,14 @@ mod tests {
 
     use rust_tools::bench::Bench;
 
-    use crate::buffer::Buffer;
-    use crate::shape4::Shape4;
-    use crate::tensor::Tensor;
+    use crate::tensors::shape4::Shape4;
+    use crate::tensors::tensor::Tensor;
 
     #[test]
     fn test_tensor() {
         let shape = Shape4::vec4(32, 32, 128, 1);
-        let mut x = Tensor::from_shape(shape, 3_f32);
-        let y = Tensor::from_shape(shape, 1_f32);
+        let mut x = Tensor::new(shape, 3_f32);
+        let y = Tensor::new(shape, 1_f32);
 
 
         let mut bench = Bench::new();

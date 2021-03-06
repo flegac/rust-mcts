@@ -1,18 +1,12 @@
-use std::borrow::{Borrow, BorrowMut};
-use std::cell::RefCell;
-use std::fmt;
-use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
 
 use screen::dimension::Dimension;
-use screen::drawer::Drawer;
 use screen::layout::hlayout::HLayout;
 use screen::layout::str_layout::{StrLayout, StrPtr, StrPtr2};
 use screen::layout::vlayout::VLayout;
 use screen::screen::Screen;
 
-pub type LayoutRc = Rc<Layout>;
+pub type LayoutRc = Rc<dyn Layout>;
 
 pub trait Layout
 where
