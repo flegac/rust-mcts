@@ -10,6 +10,7 @@ mod layer;
 mod shape4;
 mod dim;
 mod buffer;
+mod algo;
 
 
 #[cfg(test)]
