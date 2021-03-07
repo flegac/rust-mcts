@@ -1,6 +1,8 @@
 use std::fmt::Display;
 use std::iter::FromIterator;
 
+use itertools::{Itertools, zip};
+
 use board::group_access::GroupAccess;
 use board::stones::grouprc::GoGroupRc;
 use display::display::GoDisplay;
@@ -11,15 +13,17 @@ use rust_tools::screen::drawer::Drawer;
 use rust_tools::screen::screen::Screen;
 
 use crate::board::go_state::GoState;
+use graph_lib::topology::Topology;
 
 pub struct BoardMap<T> {
     pub(crate) width: usize,
     pub(crate) height: usize,
     pub(crate) map: Vec<Option<T>>,
+    pub(crate) cell_size: usize,
 }
 
 impl BoardMap<GoGroupRc> {
-    pub fn new(board: &GoState) -> BoardMap<GoGroupRc> {
+    pub fn from_board<T>(board: &GoState, cell_size: usize) -> BoardMap<T> {
         let width = board.gg.goban().size;
         let height = board.gg.goban().size;
         let size = width * height;
@@ -27,9 +31,18 @@ impl BoardMap<GoGroupRc> {
             width,
             height,
             map: Vec::with_capacity(size),
+            cell_size,
         };
-        for i in 0..size {
-            res.map.push(Some(board.gg.group_at(i).clone()));
+        for offset in 0..size {
+            res.map.push(None);
+        }
+        res
+    }
+
+    pub fn new(board: &GoState, cell_size: usize) -> BoardMap<GoGroupRc> {
+        let mut res = BoardMap::from_board(board, cell_size);
+        for i in 0..board.gg.goban().vertex_number() {
+            res.map.insert(i,Some(board.gg.group_at(i).clone()));
         }
         res
     }
@@ -50,6 +63,7 @@ impl<T> BoardMap<T> {
             width: self.width,
             height: self.height,
             map: Vec::with_capacity(size),
+            cell_size: self.cell_size,
         };
         for i in 0..size {
             res.map.push(match &self.map[i] {
@@ -62,115 +76,53 @@ impl<T> BoardMap<T> {
 }
 
 impl<T: Display> BoardMap<T> {
-    pub(crate) fn map_str(&self, range: &Range2, cell_size: usize) -> String {
-        //TODO: clean up this trash !
-
-        let mut empty = vec![' '; cell_size - 1];
-        let spacer = String::from_iter(&empty);
-        empty.push('.');
-        let empty_cell = String::from_iter(empty);
-        let columns = String::from_iter(
-            range.x()
-                .map(GoDisplay::column)
-                .map(|x| format!("{}{}", spacer, x))
-        );
-        let separator = String::from_iter(
-            vec!['-'; range.x().len() * cell_size]);
-
-        let mut res = String::new();
-        res.push_str(&format!("  +{}-+\n", separator));
-        for y in range.y().rev() {
-            res.push_str(&format!("{} |", GoDisplay::line(y)));
-            for x in range.x() {
-                match self.get(x, y) {
-                    None => {
-                        res.push_str(&empty_cell);
-                    }
-                    Some(data) => {
-                        let text = data.to_string();
-                        if text.len() > cell_size {
-                            let delta = text.len() - cell_size;
-                            for i in 0..delta {
-                                res.push(' ');
-                            }
-                            res.push_str(&text[delta..]);
-                        } else {
-                            let delta = cell_size - text.len();
-                            for i in 0..delta {
-                                res.push(' ');
-                            }
-                            res.push_str(&text);
-                        }
-                    }
-                }
-            }
-            res.push_str(&format!(" |\n"));
+    pub fn init_screen(&self, range: &Range2) -> Screen {
+        let cell_size = self.cell_size;
+        let w = range.x().len() * cell_size + 4;
+        let h = range.y().len() + 3;
+        let mut screen = Screen::new(w, h);
+        let sep = vec!['-'; cell_size];
+        for (x, &y) in iproduct!(range.x(), &[0, h - 2]) {
+            screen.put_slice(screen.at(3 + cell_size * x, y), sep.as_slice());
         }
-        res.push_str(&format!("  +{}-+\n", separator));
-        res.push_str(&format!("   {}\n", columns));
-        res
+        for (&x, y) in iproduct!(&[2, w - 1], range.y()) {
+            screen.put(screen.at(x, y + 1), '|');
+        }
+        for (&x, &y) in iproduct!(&[2, w - 1], &[0, h - 2]) {
+            screen.put(screen.at(x, y), '+');
+        }
+        for y in range.y() {
+            screen.put_str(screen.at(0, y + 1), &GoDisplay::line(y));
+        }
+        for x in range.x() {
+            screen.put_str(screen.at(1 + cell_size + x * cell_size, h - 1), &GoDisplay::column(x));
+        }
+        screen
     }
 
-    pub(crate) fn map_screen(&self, range: &Range2, cell_size: usize) -> Screen {
-        log::trace!("range: {:?}", range);
-        log::trace!("range_x: {} range_y: {}", range.x().len(), range.y().len());
-
-        if range.x().len() <=2 || range.y().len() <= 2 {
-            return Screen::new(1,1);
-        }
-
-        let width = range.x().len() * cell_size + 4;
-        let height = range.y().len() + 3;
-        let mut screen = Screen::new(width, height);
-
-        let mut empty = vec![' '; cell_size - 1];
-        let spacer = String::from_iter(&empty);
-        let columns = String::from_iter(
-            range.x()
-                .map(GoDisplay::column)
-                .map(|x| format!("{}{}", spacer, x))
-        );
-        let separator = String::from_iter(
-            vec!['-'; range.x().len() * cell_size]);
-
-
-        //borders
-        screen.put_str(screen.at(2, 0), &format!("+{}+", separator));
-        screen.put_str(screen.at(2, height - 2), &format!("+{}+", separator));
-        screen.put_str(screen.at(2, height - 1), &format!("{}", columns));
-        for y in range.y() {
-            screen.put_str(screen.at(0, y + 1), &format!("{} |", GoDisplay::line(y)));
-            screen.put_str(screen.at(width - 1, y + 1), &format!("|"));
-        }
-
-
-        for y in range.y() {
+    pub(crate) fn write_screen(&self, range: &Range2) -> Screen {
+        let cell_size = self.cell_size;
+        let mut screen = self.init_screen(range);
+        for (x, y) in iproduct!(range.x(), range.y()) {
             let y_off = y + 1;
-            for x in range.x() {
-                let x_off = x * cell_size + 3;
-                // log::trace!("xy: {},{}", x,y);
-                match self.get(x, y) {
-                    None => {
-                        let delta = cell_size - 1;
-                        screen.put(screen.at(x_off + delta, y_off), '.');
-                    }
-                    Some(data) => {
-                        let text = data.to_string();
-                        // println!("text: [{}] at xy: {},{}", text, x, y);
-                        if text.len() > cell_size {
-                            let delta = text.len() - cell_size ;
-                            screen.put_str(screen.at(x_off + delta, y_off), &text[delta..]);
-                        } else {
-                            let delta = cell_size - text.len() ;
-                            screen.put_str(screen.at(x_off + delta, y_off), &text);
-                        }
+            let x_off = x * cell_size + 3;
+            match self.get(x, y) {
+                None => {
+                    let delta = cell_size - 1;
+                    screen.put(screen.at(x_off + delta, y_off), '.');
+                }
+                Some(data) => {
+                    let text = data.to_string();
+                    if text.len() > cell_size {
+                        let delta = text.len() - cell_size;
+                        screen.put_str(screen.at(x_off + delta, y_off), &text[delta..]);
+                    } else {
+                        let delta = cell_size - text.len();
+                        screen.put_str(screen.at(x_off + delta, y_off), &text);
                     }
                 }
             }
         }
-
-
-
         screen
     }
 }

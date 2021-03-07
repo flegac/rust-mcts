@@ -119,14 +119,14 @@ impl GoRules for GoState {
     }
 
     fn play_at(&mut self, cell: GoCell, stone: Stone) {
-        log::trace!("PLACE STONE:\n{}", self.stats);
+        log::trace!("PLACE STONE:\n{}", self.stats_str());
 
         //split old empty group
         let (old, new_empty_groups) = self.gg.split_with(cell);
         self.stats.for_stone_mut(Stone::None).groups += new_empty_groups.len();
         self.stats.for_stone_mut(Stone::None).groups -= 1;
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("AFTER SPLIT_GROUP:\n{}", self.stats);
+            log::trace!("AFTER SPLIT_GROUP:\n{}", self.stats_str());
             if !new_empty_groups.is_empty() {
                 log::trace!("SPLITS:\n{}", L::hori(new_empty_groups.iter()
                     .map(|g| self.gg.group_range(g))
@@ -140,7 +140,7 @@ impl GoRules for GoState {
         self.stats.add_group(new_stone.clone().borrow().deref());
         self.stats.for_stone_mut(Stone::None).groups -= 1;
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("AFTER PLACE_STONE: {}\n{}", new_stone, self.stats);
+            log::trace!("AFTER PLACE_STONE: {}\n{}", new_stone, self.stats_str());
         }
 
         //fusion allies groups
@@ -148,16 +148,16 @@ impl GoRules for GoState {
         self.stats.for_stone_mut(stone).groups += 1;
         self.stats.for_stone_mut(stone).groups -= old_groups;
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("AFTER FUSION:\n{}", self.stats);
+            log::trace!("AFTER FUSION:\n{}", self.stats_str());
         }
 
         for g in self.gg.adjacent_enemies_groups(cell, stone) {
             self.try_capture(g);
         }
-        log::trace!("AFTER ENEMY_KILL:\n{}", self.stats);
+        log::trace!("AFTER ENEMY_KILL:\n{}", self.stats_str());
 
         self.try_capture(fusion_group.clone());
-        log::trace!("AFTER AUTO_KILL:\n{}", self.stats);
+        log::trace!("AFTER AUTO_KILL:\n{}", self.stats_str());
     }
 
     fn try_capture(&mut self, group: GoGroupRc) {
@@ -179,7 +179,7 @@ impl GoRules for GoState {
         self.gg.add_group(&new_stone);
         self.stats.add_group(new_stone.clone().borrow().deref());
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("add: {}\n{}", new_stone, self.stats);
+            log::trace!("add: {}\n{}", new_stone, self.stats_str());
         }
     }
 

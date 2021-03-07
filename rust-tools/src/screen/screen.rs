@@ -21,6 +21,7 @@ impl Screen {
     }
 
     pub fn new(width: usize, height: usize) -> Self {
+        log::debug!("SCREEN::NEW {}x{}", width, height);
         Screen {
             width,
             height,

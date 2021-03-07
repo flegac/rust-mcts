@@ -1,8 +1,9 @@
+#[macro_use] extern crate itertools;
+
 extern crate bit_set;
 extern crate core;
 extern crate graph_lib;
 extern crate indexmap;
-extern crate itertools;
 extern crate log;
 extern crate mcts_lib;
 extern crate proc_macro;

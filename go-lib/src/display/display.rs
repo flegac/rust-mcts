@@ -18,11 +18,11 @@ use display::range::Range2;
 use go_rules::go_action::GoAction;
 use graph_lib::topology::Topology;
 use rust_tools::screen::layout::layout::{L, LayoutRc};
+use rust_tools::screen::screen::Screen;
 use sgf::sgf_export::{Sequence, SGF};
 
 use crate::board::go_state::GoState;
 use crate::display::board_map::BoardMap;
-use rust_tools::screen::screen::Screen;
 
 pub struct GoDisplay {}
 
@@ -40,7 +40,6 @@ impl GoState {
             Stone::Black => blacks = format!("[{}]", blacks),
             Stone::White => whites = format!("[{}]", whites)
         }
-
         format!("{}\n{}", blacks, whites)
     }
 }
@@ -60,12 +59,7 @@ fn group_id(g: GoGroupRc) -> Option<String> {
 
 impl GoDisplay {
     pub fn history_screen(board: &GoState, range: &Range2) -> Screen {
-        let goban = board.gg.goban();
-        let mut hist = BoardMap {
-            width: goban.size,
-            height: goban.size,
-            map: vec![None; goban.vertex_number()],
-        };
+        let mut hist = BoardMap::from_board(board, 4);
         for (i, a) in board.history.iter().enumerate() {
             match a {
                 GoAction::Pass => {}
@@ -75,7 +69,9 @@ impl GoDisplay {
                 }
             }
         }
-        hist.map_screen(range, 4)
+        log::trace!("range: {:?}", range);
+        log::trace!("hist board: cell_size={}", hist.cell_size);
+        hist.write_screen(range)
     }
 }
 
@@ -89,29 +85,27 @@ impl GoShow for GoDisplay {
         let range = Range2::board(board.gg.goban().size);
         L::vert(vec![
             Self::board_range(board, range),
-            L::str(&board.score_str()),
-            L::str(&board.stats.to_string())
+            L::str(&board.stats_str())
         ])
     }
 
     fn board_range(board: &GoState, range: Range2) -> LayoutRc {
-        let classic = BoardMap::new(board)
+        let classic = BoardMap::new(board, 3)
             .map(|g| stone_str(g.clone()))
-            .map_screen(&range, 3);
+            .write_screen(&range);
 
-        let group_ids = BoardMap::new(board)
+        let group_ids = BoardMap::new(board, 6)
             .map(|g| group_id(g.clone()))
-            .map_screen(&range, 6);
+            .write_screen(&range);
 
         let history = Self::history_screen(board, &range);
-
 
 
         L::hori(vec![
             L::str(&classic.to_string()),
             L::str(&history.to_string()),
             L::str(&group_ids.to_string())
-            ])
+        ])
     }
 
     fn group_layout(board: &GoState, group: &GoGroupRc) -> LayoutRc {
