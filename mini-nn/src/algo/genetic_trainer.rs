@@ -37,7 +37,6 @@ impl<X, M, MM> Trainer<X, Tensor, GeneticModel<M>> for GeneticTrainer<MM>
         let scores = MSE::score_zip(&pred, y);
         model.best.score = MSE::score_vec(&scores);
         // println!("{}", model.best.score);
-        // println!("actual  : {}\nexpected: {}", pred[0], y[0]);
         for m in model.population.population.iter_mut() {
             m.adn.predict_map(x, &mut pred);
             let scores = MSE::score_zip(&pred, y);
@@ -51,11 +50,12 @@ impl<X, M, MM> Trainer<X, Tensor, GeneticModel<M>> for GeneticTrainer<MM>
         }
 
         // update population to the fittests
+        let old_ppop = model.population.len();
         let population_limit = model.population.len() / 2;
         model.population.population.sort_by_key(|x| OrderedFloat(x.score));
         model.population.population.drain(..population_limit);
 
-        while model.population.len() < model.population.len() {
+        while model.population.len() < old_ppop {
             model.population.population.push(Adn::new(model.best.adn.clone()));
         }
     }

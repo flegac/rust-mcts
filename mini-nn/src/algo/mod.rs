@@ -10,6 +10,7 @@ mod test {
     use log::LevelFilter;
     use rand_distr::NormalError;
 
+    use rust_tools::bench::Bench;
     use rust_tools::loggers::init_logs;
     use tensor_lib::structs::shape4::Shape4;
     use tensor_lib::tensor::Tensor;
@@ -19,15 +20,15 @@ mod test {
     use crate::algo::mutations::add_mut::AddMut;
     use crate::algo::mutations::conv_mut::ConvMut;
     use crate::conv2::Conv2;
-    use rust_tools::bench::Bench;
+    use crate::framework::model::Model;
     use crate::framework::trainer::Trainer;
 
     #[test]
     fn test_trainer() -> Result<(), NormalError> {
         init_logs(LevelFilter::Trace);
         // CONFIG
-        let x_shape = Shape4::vec3(3, 3, 1);
-        let y_shape = Shape4::vec3(1, 1, 1);
+        let x_shape = Shape4::vec3(10, 10, 1);
+        let y_shape = Shape4::vec3(8, 8, 1);
         let dataset_size = 1;
 
         // GENERATE DATASET
@@ -35,21 +36,24 @@ mod test {
             (0..dataset_size).map(|_| Tensor::normal(x_shape.clone(), 0.0, 1000.0))
         );
         let yy = Vec::from_iter(
-            (0..dataset_size).map(|_| Tensor::normal(y_shape.clone(), 0.0, 1.0))
+            (0..dataset_size).map(|_| Tensor::normal(y_shape.clone(), 0.0, 1000.0))
         );
 
 
         //framework
         let population_size = 10;
-        let init = || Conv2::new(3, 1, 1);
+        let init = || Conv2::new(
+            3,
+            x_shape.z().unwrap(),
+            y_shape.z().unwrap(),
+        );
         let mut model = GeneticModel::new(init, population_size);
 
         //trainer
         let mutations = Vec::from_iter(
-            [0.01, 0.02].iter().flat_map(|&power| vec![
-                // ConvMut::filter(AddMut::new(power)),
-                // ConvMut::filter(AddMut::new(-power)),
-                ConvMut::bias(AddMut::new(power)),
+            [ 0.0001].iter().flat_map(|&power| vec![
+                ConvMut::filter(AddMut::new(power)),
+                ConvMut::filter(AddMut::new(-power)),
                 ConvMut::bias(AddMut::new(power)),
                 ConvMut::bias(AddMut::new(-power)),
             ].into_iter()
@@ -57,11 +61,16 @@ mod test {
         );
         let trainer = GeneticTrainer::new(mutations);
 
+
+        let mut pred = yy[0].clone();
         let mut bench = Bench::new("Genetic algorithm");
-        while bench.for_iterations(10_000) {
+        while bench.for_iterations(100_000) {
             trainer.fit(&mut model, &xx, &yy);
-            if bench.loops % 1000 == 0 {
-                log::info!("best: {}", model.best, );
+            if bench.loops % 500 == 0 {
+                log::info!("best: {}", model.best.score);
+                // model.predict(&xx[0], &mut pred);
+                // log::info!("expected: {}", &yy[0]);
+                // log::info!("actual  : {}\n", &pred);
             }
         }
 

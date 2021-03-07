@@ -20,16 +20,15 @@ impl<M: Mutation<Tensor>> ConvMut<M> {
 
 impl<M: Mutation<Tensor>> Mutation<Conv2> for ConvMut<M> {
     fn mutate(&self, adn: &mut Conv2) {
-        println!("mutate Conv2");
         match &self.bias {
             Some(mutation) => {
-                mutation.mutate(&mut adn.bias)
+                mutation.mutate(&mut adn.bias);
             }
             _ => {}
         }
         match &self.filter {
             Some(mutation) => {
-                mutation.mutate(&mut adn.filter)
+                mutation.mutate(&mut adn.filter);
             }
             _ => {}
         }
