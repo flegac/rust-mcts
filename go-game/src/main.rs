@@ -56,7 +56,7 @@ pub fn main() {
     let mut bench = Bench::with_speed(SIM_FACTOR as f32);
     let mut i = 0;
     // while bench.for_duration(BENCH.full_time) {
-    while bench.for_iterations(5) {
+    while bench.for_iterations(2) {
         let res = explorer.explore(&random_policy, &selection_score);
         stats.merge(res.value.borrow().deref());
         i += 1;
