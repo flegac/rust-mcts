@@ -12,9 +12,13 @@ The project is composed of the followings crates :
 
 - go-game: playing go with Monte-Carlo Tree Search
 - go-lib: Go game library & data structures
+- go-engine: (TODO) Go playing engine
 
 - graph-lib: tree & graph structures
 - mcts-lib: MCTS API & implementation
+
+- mini-nn: CNN & genetic algorithm (WIP)
+- tensor-lib: Tensor library
 
 - rust-tools: logging & benchmark helpers
 
@@ -27,6 +31,8 @@ Hum... Do not expect wonders !
 # TODO
 
 ***** CONTINUE graph-lib/src/tree2/mod.rs !! (the new MCTS) *****
+
+- Improve genetic algorithm by learning Mutations
 
 - State copy
 - multi-threading : simulations
