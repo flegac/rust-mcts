@@ -11,19 +11,19 @@ use board::stones::group::GoGroup;
 pub struct GoGroupRc(Rc<RefCell<GoGroup>>);
 
 impl GoGroupRc {
-    pub(crate) fn from(group: GoGroup) -> GoGroupRc {
+    pub fn from(group: GoGroup) -> GoGroupRc {
         GoGroupRc(Rc::new(RefCell::new(group)))
     }
 
-    pub(crate) fn clone(&self) -> Self {
+    pub fn clone(&self) -> Self {
         GoGroupRc(Rc::clone(&self.0))
     }
 
-    pub(crate) fn borrow(&self) -> Ref<GoGroup> {
+    pub fn borrow(&self) -> Ref<GoGroup> {
         self.0.borrow()
     }
 
-    pub(crate) fn borrow_mut(&self) -> RefMut<GoGroup> {
+    pub fn borrow_mut(&self) -> RefMut<GoGroup> {
         self.0.borrow_mut()
     }
 }

@@ -1,5 +1,7 @@
 use std::iter::FromIterator;
 
+use itertools::zip;
+
 pub trait Metric<T> {
     fn score(lhs: &T, rhs: &T) -> f32;
 
@@ -14,8 +16,8 @@ pub trait Metric<T> {
 
     fn score_zip(lhs: &[T], rhs: &[T]) -> Vec<f32> {
         Vec::from_iter(
-            (0..lhs.len())
-                .map(|i| Self::score(&lhs[i], &rhs[i]))
+            zip(lhs.iter(), rhs.iter())
+                .map(|(a, b)| Self::score(a, b))
         )
     }
 }

@@ -3,7 +3,7 @@ use std::fmt;
 
 use ordered_float::OrderedFloat;
 
-use crate::algo::adn::Adn;
+use crate::algo::population::adn::Adn;
 
 pub struct Population<T> {
     pub population: Vec<Adn<T>>,
@@ -35,10 +35,6 @@ impl<T> Population<T> {
             }
         }
         best
-        // self.population
-        //     .iter()
-        //     .min_by_key(|x| OrderedFloat(x.score))
-        //     .unwrap()
     }
 }
 

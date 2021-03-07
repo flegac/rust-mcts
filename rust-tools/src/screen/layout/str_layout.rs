@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use screen::dimension::Dimension;
 use screen::drawer::Drawer;
 use screen::layout::layout::Layout;

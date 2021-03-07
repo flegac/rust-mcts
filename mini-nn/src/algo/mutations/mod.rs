@@ -1,15 +1,15 @@
 pub mod mutation;
 pub mod add_mut;
 pub mod mult_mut;
-pub mod tensor_mutation;
+pub mod conv_mut;
 
 #[cfg(test)]
 mod tests {
     use crate::algo::mutations::add_mut::AddMut;
     use crate::algo::mutations::mutation::Mutation;
-    use crate::algo::population::Population;
-    use crate::tensors::shape4::Shape4;
-    use crate::tensors::tensor::Tensor;
+    use crate::algo::population::population::Population;
+    use tensor_lib::structs::shape4::Shape4;
+    use tensor_lib::tensor::Tensor;
 
     #[test]
     fn test_mutate() {

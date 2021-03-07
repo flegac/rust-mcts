@@ -16,10 +16,10 @@ use board::group_access::GroupAccess;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GoGroup {
-    pub(crate) id: usize,
-    pub(crate) stone: Stone,
-    pub(crate) liberties: usize,
-    pub(crate) cells: BitSet,
+    pub id: usize,
+    pub stone: Stone,
+    pub liberties: usize,
+    pub cells: BitSet,
 }
 
 impl Clone for GoGroup {
@@ -65,29 +65,29 @@ impl GoGroup {
         }
     }
 
-    pub(crate) fn stones(&self) -> usize {
+    pub fn stones(&self) -> usize {
         self.cells.len()
     }
 
 
-    pub(crate) fn add_cells(&mut self, cells: &BitSet) {
+    pub fn add_cells(&mut self, cells: &BitSet) {
         self.cells.union_with(cells);
     }
 
-    pub(crate) fn add_group(&mut self, other: &GoGroup) {
+    pub fn add_group(&mut self, other: &GoGroup) {
         assert_eq!(self.stone, other.stone);
         self.cells.union_with(&other.cells);
     }
 
-    pub(crate) fn remove_group(&mut self, other: &GoGroup) {
+    pub fn remove_group(&mut self, other: &GoGroup) {
         self.cells.difference_with(&other.cells);
     }
 
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.cells.is_empty()
     }
 
-    pub(crate) fn set_stone(&mut self, stone: Stone) {
+    pub fn set_stone(&mut self, stone: Stone) {
         self.stone = stone;
     }
 
@@ -97,7 +97,7 @@ impl GoGroup {
 
 
 
-    pub(crate) fn split_remove(&mut self, cells: BitSet) -> GoGroup {
+    pub fn split_remove(&mut self, cells: BitSet) -> GoGroup {
         let res = GoGroup {
             id: 0,
             stone: self.stone,

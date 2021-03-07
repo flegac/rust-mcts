@@ -2,7 +2,6 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 
 use screen::dimension::Dimension;
-use screen::layout::layout::Layout;
 use screen::smart_index::SmartIndex;
 
 use crate::screen::drawer::Drawer;
@@ -21,7 +20,7 @@ impl Screen {
     }
 
     pub fn new(width: usize, height: usize) -> Self {
-        log::debug!("SCREEN::NEW {}x{}", width, height);
+        // log::info!("SCREEN::NEW {}x{}", width, height);
         Screen {
             width,
             height,

@@ -17,8 +17,6 @@ pub struct M1 {
 
 impl Tree<NodeId> for M1 {
     fn display(&self, node: &NodeId) {
-        log::trace!("display...");
-
         match self.arena.get(node.clone()) {
             None => {}
             Some(nn) => {

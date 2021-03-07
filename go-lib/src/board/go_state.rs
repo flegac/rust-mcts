@@ -20,24 +20,24 @@ use board::stones::grouprc::GoGroupRc;
 use board::stones::stone::Stone;
 use display::display::GoDisplay;
 use display::goshow::GoShow;
+use go_rules::go::Go;
 use go_rules::go_action::GoAction;
 use graph_lib::algo::flood::Flood;
 use graph_lib::graph::GFlood;
 use graph_lib::topology::Topology;
 use mcts_lib::rules::{GameResult, Rules};
 use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
-use go_rules::go::Go;
 
 #[derive(Debug, Clone)]
 pub struct GoState {
     pub stone: Stone,
-    pub(crate) pass_sequence: usize,
-    pub(crate) ko: Option<GoCell>,
-    pub(crate) stats: BoardStats,
+    pub pass_sequence: usize,
+    pub ko: Option<GoCell>,
+    pub stats: BoardStats,
     pub history: Vec<GoAction>,
 
     //stones
-    pub(crate) gg: BoardGroups,
+    pub gg: BoardGroups,
 }
 
 impl GoState {
@@ -62,12 +62,10 @@ impl GoState {
 
 
     pub(crate) fn play_start(&mut self, action: GoAction) -> LayoutRc {
-        log::trace!("NEW PLAY: {} @ {}\n{}",
-                    self.stone, action,
-                    GoDisplay::board(self).to_screen_str());
-
-        if log::max_level() <= LevelFilter::Trace {
-            GoDisplay::board(self)
+        if log::max_level() >= LevelFilter::Trace {
+            let layout = GoDisplay::board(self);
+            log::trace!("NEW PLAY: {} @ {}\n{}", self.stone, action, layout.to_screen_str());
+            layout
         } else {
             L::str("")
         }
@@ -77,7 +75,6 @@ impl GoState {
         if log::max_level() <= LevelFilter::Trace {
             log::trace!("\n{}", L::vert(vec![
                 backup,
-                L::str(" - padding - "),
                 GoDisplay::board(self)
             ]).to_screen_str());
         }
@@ -100,73 +97,5 @@ impl GoState {
         );
         //FIXME: remove this (costly) check !
         // self.stats.assert_eq(&BoardStats::from_board(self));
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::ops::Deref;
-    use std::sync::Arc;
-
-    use bit_set::BitSet;
-    use log::LevelFilter;
-
-    use board::grid::Grid;
-    use display::display::GoDisplay;
-    use display::goshow::GoShow;
-    use go_rules::go_action::GoAction;
-    use graph_lib::algo::flood::Flood;
-    use graph_lib::graph::GFlood;
-    use graph_lib::topology::Topology;
-    use mcts_lib::rules::Rules;
-    use rust_tools::loggers::init_logs;
-    use rust_tools::screen::layout::layout::L;
-
-    use crate::board::go_state::GoState;
-
-    #[test]
-    fn go_state_clone() {
-        init_logs(LevelFilter::Debug);
-
-        let mut state = GoState::new(5);
-
-
-        for i in 0..4 {
-            for j in 3..5 {
-                state.apply_action(GoAction::Cell(i, j));
-            }
-        }
-
-        let copy = state.clone();
-
-
-        L::vert(vec![
-            L::str(&format!("{:?}", state)),
-            L::str(&format!("{:?}", copy)),
-        ]).show();
-
-        let mut stats = vec![state, copy];
-        for a in vec![
-            GoAction::Cell(2, 1),
-            GoAction::Cell(1, 2),
-            GoAction::Cell(2, 2),
-            GoAction::Cell(1, 1),
-        ] {
-            L::hori(vec![
-                GoDisplay::board(&stats[0]),
-                L::str(" - padding - "),
-                GoDisplay::board(&stats[1]),
-            ]).show();
-            for go in stats.iter_mut() {
-                go.apply_action(a)
-            }
-            assert_eq!(format!("{:?}", stats[0]), format!("{:?}", stats[1]))
-        }
-
-        L::hori(vec![
-            GoDisplay::board(&stats[0]),
-            L::str(" - padding - "),
-            GoDisplay::board(&stats[1]),
-        ]).show();
     }
 }

@@ -54,6 +54,7 @@ pub fn save_sgf(state: &GoState) {
 pub fn show_best_variant(explorator: &mut Explorer<GoAction, GoState>) {
     explorator.mcts_mut().state_mut().update_score();
     let board = explorator.mcts().state();
+
     GoDisplay::board(board).show();
     log::info!("root max depth: {}", explorator.mcts().borrow().root().max_depth());
 }

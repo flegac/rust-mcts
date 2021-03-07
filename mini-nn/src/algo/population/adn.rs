@@ -15,6 +15,6 @@ impl<T> Adn<T> {
 
 impl<T: Display> Display for Adn<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", format!("{}: {}", self.score, self.adn))
+        write!(f, "{}", format!("score: {}\n{}", self.score, self.adn))
     }
 }

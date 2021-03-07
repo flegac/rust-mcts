@@ -8,7 +8,7 @@ extern crate rust_tools;
 
 pub mod mcts;
 pub mod explorator;
-mod mymcts;
+pub mod mymcts;
 pub mod policy;
 pub mod sim_result;
 pub mod rules;

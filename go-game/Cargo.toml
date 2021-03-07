@@ -13,6 +13,9 @@ chrono = "0.4.19"
 [dependencies.go-lib]
 path = "../go-lib"
 
+[dependencies.go-engine]
+path = "../go-engine"
+
 [dependencies.mcts-lib]
 path = "../mcts-lib"
 

@@ -1,5 +1,5 @@
 [package]
-name = "mini-nn"
+name = "tensor-lib"
 version = "0.1.0"
 authors = ["Florent"]
 edition = "2018"
@@ -14,10 +14,6 @@ rand = "0.8.3"
 rand-distributions = "0.1.2"
 ordered-float = "2.1.1"
 rand_distr = "0.4.0"
-itertools = "0.10.0"
 
 [dependencies.rust-tools]
 path = "../rust-tools"
-
-[dependencies.tensor-lib]
-path = "../tensor-lib"

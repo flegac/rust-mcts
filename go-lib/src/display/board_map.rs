@@ -24,6 +24,7 @@ pub struct BoardMap<T> {
 
 impl BoardMap<GoGroupRc> {
     pub fn from_board<T>(board: &GoState, cell_size: usize) -> BoardMap<T> {
+        // log::info!("BOARDMAP::FROM_BOARD");
         let width = board.gg.goban().size;
         let height = board.gg.goban().size;
         let size = width * height;

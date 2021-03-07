@@ -39,7 +39,7 @@ impl Rules<GoAction> for GoState {
             GoDisplay::board(&copy),
         ]);
 
-        log::trace!("FORKING STATE:\n{}", show.to_screen_str());
+        log::info!("FORKING STATE:\n{}", show.to_screen_str());
         copy
     }
 

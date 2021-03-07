@@ -1,8 +1,9 @@
+#[macro_use] extern crate itertools;
+
 pub mod conv2;
-pub mod layer;
 pub mod algo;
-pub mod tensors;
-pub mod metrics;
+pub mod relu;
+pub mod framework;
 
 
 #[cfg(test)]

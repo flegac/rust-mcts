@@ -80,14 +80,14 @@ impl<A: Action, S: Rules<A>> Mcts<A, S> for MyMcts<A, S> {
                 None => break,
                 Some((action, node)) => {
                     final_score = score(node.value.borrow().deref());
-                    log::debug!("depth={}, score={}", node.depth.borrow(), final_score);
+                    // log::debug!("depth={}, score={}", node.depth.borrow(), final_score);
                     cursor.set_child(action, &node);
                     self.state_mut().apply_action(action);
                     cursor = node.clone();
                 }
             }
         }
-        log::debug!("Selection: depth={:?} score={}", cursor.depth.borrow(), final_score);
+        // log::debug!("Selection: depth={:?} score={}", cursor.depth.borrow(), final_score);
         cursor
     }
 
@@ -103,13 +103,13 @@ impl<A: Action, S: Rules<A>> Mcts<A, S> for MyMcts<A, S> {
                 next_node = new_node;
             }
         }
-        log::debug!("Expansion: {:?}\n{}", action, next_node);
+        // log::debug!("Expansion: {:?}\n{}", action, next_node);
         (action, next_node)
     }
 
 
     fn backpropagation(&mut self, cursor: &MctsNode<A>, mut res: SimResult) {
-        log::debug!("Backpropagation: ({} parents)", cursor.parents().len());
+        // log::debug!("Backpropagation: ({} parents)", cursor.parents().len());
         cursor.value.borrow_mut().merge(&res);
         let parents = cursor.parents();
         for (_key, value) in parents {

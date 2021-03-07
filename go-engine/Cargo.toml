@@ -1,5 +1,5 @@
 [package]
-name = "mini-nn"
+name = "go-engine"
 version = "0.1.0"
 authors = ["Florent"]
 edition = "2018"
@@ -10,14 +10,13 @@ edition = "2018"
 log = "0.4.14"
 env_logger = "0.8.3"
 chrono = "0.4.19"
-rand = "0.8.3"
-rand-distributions = "0.1.2"
-ordered-float = "2.1.1"
-rand_distr = "0.4.0"
-itertools = "0.10.0"
+
+[dependencies.mini-nn]
+path = "../mini-nn"
+[dependencies.mcts-lib]
+path = "../mcts-lib"
+[dependencies.go-lib]
+path = "../go-lib"
 
 [dependencies.rust-tools]
 path = "../rust-tools"
-
-[dependencies.tensor-lib]
-path = "../tensor-lib"

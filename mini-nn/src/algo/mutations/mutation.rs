@@ -1,4 +1,4 @@
-use crate::algo::population::Population;
+use crate::algo::population::population::Population;
 
 pub trait Mutation<T> {
     fn mutate(&self, adn: &mut T);

@@ -46,7 +46,7 @@ impl<A: Action, S: Rules<A>> Explorer<A, S> {
         select_policy: &Select)
         -> MctsNode<A>
     {
-        log::debug!("* Exploration:");
+        // log::debug!("* Exploration:");
         let selected = self.mcts.selection(select_policy);
         let (_action, expansion) = self.mcts.expansion(&selected, sim_policy);
         let res = self.simulation(sim_policy);
@@ -67,7 +67,7 @@ impl<A: Action, S: Rules<A>> Explorer<A, S> {
                 result
             }
         };
-        log::debug!("Simulation: {}", res);
+        // log::debug!("Simulation: {}", res);
         res
     }
 }

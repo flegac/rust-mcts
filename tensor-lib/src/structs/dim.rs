@@ -2,10 +2,9 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::iter::Product;
 use std::ops::{Add, Div, Mul, Sub};
+use crate::structs::dim::Dim::Size;
 
-use crate::tensors::dim::Dim::Size;
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Dim {
     Any,
     Size(usize),
@@ -15,7 +14,7 @@ impl Display for Dim {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let res = match self {
             Dim::Any => String::from("Any"),
-            Size(v) => format!("{}", v)
+            Dim::Size(v) => format!("{}", v)
         };
         write!(f, "{}", res)
     }
@@ -25,7 +24,13 @@ impl Dim {
     pub fn unwrap(&self) -> usize {
         match self {
             Dim::Any => panic!(),
-            Size(value) => value.clone()
+            Dim::Size(value) => value.clone()
+        }
+    }
+    pub fn check(&self, offset: usize) {
+        match self {
+            Dim::Any => {}
+            Dim::Size(size) => assert!(offset < *size)
         }
     }
 }
