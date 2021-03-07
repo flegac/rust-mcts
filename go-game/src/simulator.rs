@@ -11,7 +11,7 @@ use go_lib::display::display::GoDisplay;
 use go_lib::display::goshow::GoShow;
 use go_lib::go_rules::go_action::GoAction;
 use go_lib::go_rules::go_rules::GoRules;
-use mcts_lib::explorator::Explorator;
+use mcts_lib::explorator::Explorer;
 use mcts_lib::mcts::Mcts;
 use mcts_lib::policy::policy::Policy;
 use mcts_lib::policy::random_policy::RandomPolicy;
@@ -51,7 +51,7 @@ pub fn save_sgf(state: &GoState) {
 }
 
 
-pub fn show_best_variant(explorator: &mut Explorator<GoAction, GoState>) {
+pub fn show_best_variant(explorator: &mut Explorer<GoAction, GoState>) {
     explorator.mcts_mut().state_mut().update_score();
     let board = explorator.mcts().state();
     GoDisplay::board(board).show();

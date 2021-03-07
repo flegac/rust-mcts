@@ -1,57 +1,67 @@
-#[derive(Debug)]
-pub struct Range(usize, usize);
-
-impl Range {
-    fn empty() -> Range {
-        Self(usize::max_value(), usize::min_value())
-    }
-    fn new(a: usize, b: usize) -> Range {
-        Self::empty().merge(a).merge(b)
-    }
-
-    fn merge(&self, value: usize) -> Self {
-        Range(self.0.min(value),
-              self.1.max(value))
-    }
-
-    pub fn size(&self) -> usize {
-        self.1 - self.0
-    }
-
-    pub fn iter(&self) -> std::ops::Range<usize> {
-        self.0..(self.1 + 1)
-    }
-}
+use std::ops::{Range, RangeBounds};
 
 #[derive(Debug)]
 pub struct Range2 {
-    pub x: Range,
-    pub y: Range,
+    pub _x: Range<usize>,
+    pub _y: Range<usize>,
 }
 
 impl Range2 {
     pub fn board(size: usize) -> Range2 {
         Range2 {
-            x: Range(0, size - 1),
-            y: Range(0, size - 1),
+            _x: 0..size,
+            _y: 0..size,
         }
     }
 
     pub fn empty() -> Range2 {
         Range2 {
-            x: Range::empty(),
-            y: Range::empty(),
+            _x: 0..0,
+            _y: 0..0,
         }
     }
-
+    pub fn x(&self) -> Range<usize> {
+        self._x.clone()
+    }
+    pub fn y(&self) -> Range<usize> {
+        self._y.clone()
+    }
     pub fn size(&self) -> usize {
-        self.x.size() * self.y.size()
+        self._x.len() * self._y.len()
     }
 
     pub fn merge(&self, xy: (usize, usize)) -> Self {
         Range2 {
-            x: self.x.merge(xy.0),
-            y: self.y.merge(xy.1),
+            _x: Self::merge_range(&self.x(), xy.0),
+            _y: Self::merge_range(&self.y(), xy.1),
         }
+    }
+
+    fn merge_range(rr: &Range<usize>, value: usize) -> Range<usize> {
+        let a: usize = match rr.clone().min() {
+            None => value,
+            Some(x) => x.min(value)
+        };
+        let b: usize = match rr.clone().max() {
+            None => value,
+            Some(x) => x.max(value)
+        };
+        a..b
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use itertools::Itertools;
+
+    use display::range::Range2;
+
+    #[test]
+    fn test() {
+        let r = Range2::empty();
+
+        assert_eq!(r.size(), 0);
+        assert_eq!(r.x().collect_vec(), vec![]);
+        assert_eq!(r.y().collect_vec(), vec![]);
     }
 }

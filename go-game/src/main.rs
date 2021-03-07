@@ -22,7 +22,7 @@ use go_lib::go_rules::go_action::GoAction;
 use go_lib::go_rules::go_rules::GoRules;
 use go_lib::mcts::capture_policy::CapturePolicy;
 use go_lib::sgf::sgf_export::SGF;
-use mcts_lib::explorator::Explorator;
+use mcts_lib::explorator::Explorer;
 use mcts_lib::mcts::Mcts;
 use mcts_lib::policy::random_policy::RandomPolicy;
 use mcts_lib::policy::win_score::WinScore;
@@ -47,7 +47,7 @@ pub fn main() {
     //     other:&RandomPolicy::new(SEED)
     // };
 
-    let mut explorator = Explorator::new(
+    let mut explorer = Explorer::new(
         SIM_FACTOR,
         GoState::new(GOBAN_SIZE),
     );
@@ -55,22 +55,23 @@ pub fn main() {
     let mut stats = SimResult::new();
     let mut bench = Bench::with_speed(SIM_FACTOR as f32);
     let mut i = 0;
-    while bench.for_duration(BENCH.full_time) {
-        let res = explorator.explore(&random_policy, &selection_score);
+    // while bench.for_duration(BENCH.full_time) {
+    while bench.for_iterations(5) {
+        let res = explorer.explore(&random_policy, &selection_score);
         stats.merge(res.value.borrow().deref());
         i += 1;
         if i % 1000 == 0 {
-            explorator.mcts_mut().selection(&selection_score);
-            show_best_variant(&mut explorator);
+            explorer.mcts_mut().selection(&selection_score);
+            show_best_variant(&mut explorer);
         }
         if i == 100 {
             break;
         }
     }
-    // explorator.mcts_mut().selection(&selection_score);
-    show_best_variant(&mut explorator);
+    // explorer.mcts_mut().selection(&selection_score);
+    show_best_variant(&mut explorer);
     log::info!("results: {}", stats);
     log::info!("{}", bench);
 
-    simulator::save_sgf(explorator.mcts().state())
+    simulator::save_sgf(explorer.mcts().state())
 }

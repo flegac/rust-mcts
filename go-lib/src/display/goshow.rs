@@ -13,7 +13,6 @@ use go_rules::go_action::GoAction;
 
 pub trait GoShow {
     fn sgf(board: &GoState) -> Sequence;
-    fn history(board: &GoState) -> LayoutRc;
     fn board(board: &GoState) -> LayoutRc;
     fn board_range(board: &GoState, range: Range2) -> LayoutRc;
     fn group_layout(board: &GoState, group: &GoGroupRc) -> LayoutRc;

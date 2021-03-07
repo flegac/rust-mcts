@@ -16,15 +16,15 @@ use rules::Action;
 use crate::mcts::{Mcts, MctsNode};
 use crate::rules::Rules;
 
-pub struct Explorator<A: Action, S: Rules<A>> {
+pub struct Explorer<A: Action, S: Rules<A>> {
     mcts: MyMcts<A, S>,
     simulation_factor: usize,
     _foo: Option<(S)>,
 }
 
-impl<A: Action, S: Rules<A>> Explorator<A, S> {
-    pub fn new(simulation_factor: usize, state: S) -> Explorator<A, S> {
-        Explorator {
+impl<A: Action, S: Rules<A>> Explorer<A, S> {
+    pub fn new(simulation_factor: usize, state: S) -> Explorer<A, S> {
+        Explorer {
             mcts: MyMcts::new(state),
             simulation_factor,
             _foo: None,
@@ -48,7 +48,7 @@ impl<A: Action, S: Rules<A>> Explorator<A, S> {
     {
         log::debug!("* Exploration:");
         let selected = self.mcts.selection(select_policy);
-        let (action, expansion) = self.mcts.expansion(&selected, sim_policy);
+        let (_action, expansion) = self.mcts.expansion(&selected, sim_policy);
         let res = self.simulation(sim_policy);
         self.mcts.backpropagation(&expansion, res);
 

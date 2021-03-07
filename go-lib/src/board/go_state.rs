@@ -64,7 +64,7 @@ impl GoState {
     pub(crate) fn play_start(&mut self, action: GoAction) -> LayoutRc {
         log::trace!("NEW PLAY: {} @ {}\n{}",
                     self.stone, action,
-                    GoDisplay::board(self).to_string());
+                    GoDisplay::board(self).to_screen_str());
 
         if log::max_level() <= LevelFilter::Trace {
             GoDisplay::board(self)
@@ -75,11 +75,11 @@ impl GoState {
 
     pub(crate) fn play_end(&mut self, backup: LayoutRc) {
         if log::max_level() <= LevelFilter::Trace {
-            log::trace!("\n{}", L::hori(vec![
+            log::trace!("\n{}", L::vert(vec![
                 backup,
                 L::str(" - padding - "),
                 GoDisplay::board(self)
-            ]).to_string());
+            ]).to_screen_str());
         }
         self.check_correctness();
     }
@@ -111,7 +111,6 @@ mod tests {
     use bit_set::BitSet;
     use log::LevelFilter;
 
-    use board::go_action::GoAction;
     use board::grid::Grid;
     use display::display::GoDisplay;
     use display::goshow::GoShow;

@@ -22,21 +22,13 @@ use sgf::sgf_export::{Sequence, SGF};
 
 use crate::board::go_state::GoState;
 use crate::display::board_map::BoardMap;
+use rust_tools::screen::screen::Screen;
 
 pub struct GoDisplay {}
 
 const BIG_A: usize = 'A' as usize;
 const SMALL_A: usize = 'a' as usize;
 
-
-impl fmt::Display for GoState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}\n{}\n",
-               GoDisplay::board(&self).to_string(),
-               self.stats.round
-        )
-    }
-}
 
 impl GoState {
     pub(crate) fn score_str(&self) -> String {
@@ -55,7 +47,7 @@ impl GoState {
 
 fn stone_str(g: GoGroupRc) -> Option<String> {
     let stone = g.borrow().stone;
-    Some(format!(" {}", GoDisplay::stone(stone)))
+    Some(format!("{} ", GoDisplay::stone(stone)))
 }
 
 fn group_id(g: GoGroupRc) -> Option<String> {
@@ -67,7 +59,7 @@ fn group_id(g: GoGroupRc) -> Option<String> {
 }
 
 impl GoDisplay {
-    pub fn history_str(board: &GoState, range: &Range2) -> String {
+    pub fn history_screen(board: &GoState, range: &Range2) -> Screen {
         let goban = board.gg.goban();
         let mut hist = BoardMap {
             width: goban.size,
@@ -83,7 +75,7 @@ impl GoDisplay {
                 }
             }
         }
-        hist.map_str(range, 3)
+        hist.map_screen(range, 4)
     }
 }
 
@@ -91,11 +83,6 @@ impl GoDisplay {
 impl GoShow for GoDisplay {
     fn sgf(board: &GoState) -> Sequence {
         SGF::game(board.gg.goban().size, Stone::Black, board.history.as_slice())
-    }
-
-    fn history(board: &GoState) -> LayoutRc {
-        let range = Range2::board(board.gg.goban().size);
-        L::str(&Self::history_str(board, &range))
     }
 
     fn board(board: &GoState) -> LayoutRc {
@@ -109,19 +96,22 @@ impl GoShow for GoDisplay {
 
     fn board_range(board: &GoState, range: Range2) -> LayoutRc {
         let classic = BoardMap::new(board)
-            .map(|g| stone_str(g.clone()));
-
+            .map(|g| stone_str(g.clone()))
+            .map_screen(&range, 3);
 
         let group_ids = BoardMap::new(board)
-            .map(|g| group_id(g.clone()));
+            .map(|g| group_id(g.clone()))
+            .map_screen(&range, 6);
 
-        L::vert(vec![
-            L::hori(vec![
-                L::str(&classic.map_str(&range, 3)),
-                L::str(&Self::history_str(board, &range))
-            ]),
-            L::str(&group_ids.map_str(&range, 6))
-        ])
+        let history = Self::history_screen(board, &range);
+
+
+
+        L::hori(vec![
+            L::str(&classic.to_string()),
+            L::str(&history.to_string()),
+            L::str(&group_ids.to_string())
+            ])
     }
 
     fn group_layout(board: &GoState, group: &GoGroupRc) -> LayoutRc {
@@ -175,5 +165,15 @@ impl GoShow for GoDisplay {
 
     fn line(y: usize) -> String {
         format!("{}", char::from((y + SMALL_A) as u8))
+    }
+}
+
+
+impl fmt::Display for GoState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}\n{}\n",
+               GoDisplay::board(&self).to_screen_str(),
+               self.stats.round
+        )
     }
 }

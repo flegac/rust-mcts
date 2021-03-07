@@ -1,7 +1,8 @@
+use std::fmt;
 use std::fmt::{Display, Formatter};
-use std::{fmt, };
 
-use screen::dimension::{ Dimension};
+use screen::dimension::Dimension;
+use screen::layout::layout::Layout;
 use screen::smart_index::SmartIndex;
 
 use crate::screen::drawer::Drawer;
@@ -32,10 +33,17 @@ impl Screen {
         self.width = width;
         self.height = height;
     }
+
     pub fn show(&self) {
         println!("{}", self);
     }
 }
+
+// impl Layout for Screen {
+//     fn to_screen(&self, x: usize, y: usize, target: &mut Screen) {
+//         target.draw_at(target.at(x, y), self);
+//     }
+// }
 
 impl Dimension for Screen {
     fn width(&self) -> usize {
@@ -52,17 +60,18 @@ impl Drawer for Screen {
         self.buffer[offset] = value;
     }
 
-    fn get(&self, offset: usize) -> &char {
-        &self.buffer[offset]
-    }
-
     fn read(&self, offset: usize, size: usize) -> &[char] {
         let end = offset + size;
         &self.buffer[offset..end]
     }
+
     fn read_mut(&mut self, offset: usize, size: usize) -> &mut [char] {
         let end = offset + size;
         &mut self.buffer[offset..end]
+    }
+
+    fn get(&self, offset: usize) -> &char {
+        &self.buffer[offset]
     }
 }
 
@@ -74,6 +83,6 @@ impl Display for Screen {
             }
             write!(f, "\n")?;
         }
-        write!(f, "",)
+        write!(f, "")
     }
 }

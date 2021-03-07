@@ -39,7 +39,7 @@ impl Rules<GoAction> for GoState {
             GoDisplay::board(&copy),
         ]);
 
-        log::trace!("FORKING STATE:\n{}", show.to_string());
+        log::trace!("FORKING STATE:\n{}", show.to_screen_str());
         copy
     }
 
@@ -131,7 +131,7 @@ impl GoRules for GoState {
                 log::trace!("SPLITS:\n{}", L::hori(new_empty_groups.iter()
                     .map(|g| self.gg.group_range(g))
                     .map(|range| GoDisplay::board_range(self, range))
-                    .collect_vec()).to_string());
+                    .collect_vec()).to_screen_str());
             }
         }
 
@@ -166,7 +166,7 @@ impl GoRules for GoState {
             if log::max_level() <= LevelFilter::Trace {
                 log::trace!("DEAD GROUP : {}\n{}",
                             GoDisplay::grouprc(&self, &group),
-                            GoDisplay::group_layout(&self, &group).to_string(),
+                            GoDisplay::group_layout(&self, &group).to_screen_str(),
                 );
             }
             self.stats.capture(&group);
