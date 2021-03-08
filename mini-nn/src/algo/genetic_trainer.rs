@@ -4,32 +4,40 @@ use tensor_lib::tensor::Tensor;
 
 use crate::algo::genetic_model::GeneticModel;
 use crate::algo::mutations::conv_mut::ConvMut;
-use crate::algo::mutations::mutation::Mutation;
+use crate::algo::mutation::Mutation;
 use crate::algo::population::adn::Adn;
 use crate::algo::population::population::Population;
 use crate::framework::metric::Metric;
 use crate::framework::metrics::mse::MSE;
 use crate::framework::model::Model;
 use crate::framework::trainer::Trainer;
+use crate::algo::crossover::CrossOver;
 
-pub struct GeneticTrainer<MM> {
-    pub mutations: Population<MM>,
+pub struct GeneticTrainer<Mut, Cr> {
+    pub mutations: Population<Mut>,
+    pub crossovers: Population<Cr>
 }
 
-impl<MM> GeneticTrainer<MM> {
-    pub fn new(mutations: Vec<MM>) -> Self {
+impl<Mut, Cr> GeneticTrainer<Mut, Cr> {
+    pub fn new(mutations: Vec<Mut>, crossovers: Vec<Cr>) -> Self {
         GeneticTrainer {
             mutations: Population::new(mutations),
+            crossovers: Population::new(crossovers),
         }
     }
 }
 
-impl<X, M, MM> Trainer<X, Tensor, GeneticModel<M>> for GeneticTrainer<MM>
+
+impl<X, Mod, Mut, Cr> Trainer<X, Tensor, GeneticModel<Mod>> for GeneticTrainer<Mut, Cr>
     where
-        M: Model<X, Tensor> + Clone,
-        MM: Mutation<M> {
-    fn fit(&self, model: &mut GeneticModel<M>, x: &Vec<X>, y: &Vec<Tensor>) {
+        Mod: Model<X, Tensor> + Clone,
+        Mut: Mutation<Mod>,
+        Cr: CrossOver<Mod>,
+
+{
+    fn fit(&self, model: &mut GeneticModel<Mod>, x: &Vec<X>, y: &Vec<Tensor>) {
         self.mutations.mutate_pop(&mut model.population);
+        self.crossovers.cross_pop(&mut model.population);
 
         //update scores
         let mut pred = y.clone();
@@ -51,7 +59,7 @@ impl<X, M, MM> Trainer<X, Tensor, GeneticModel<M>> for GeneticTrainer<MM>
 
         // update population to the fittests
         let old_ppop = model.population.len();
-        let population_limit = model.population.len() / 2;
+        let population_limit = model.population.len() -1;
         model.population.population.sort_by_key(|x| OrderedFloat(x.score));
         model.population.population.drain(..population_limit);
 

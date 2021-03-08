@@ -1,34 +1,34 @@
 use tensor_lib::tensor::Tensor;
 
-use crate::algo::mutations::mutation::Mutation;
+use crate::algo::mutation::Mutation;
 use crate::conv2::Conv2;
 
-pub struct ConvMut<M: Mutation<Tensor>> {
-    bias: Option<M>,
-    filter: Option<M>,
+pub struct ConvMut<Mut: Mutation<Tensor>> {
+    pub bias: Option<Mut>,
+    pub filter: Option<Mut>,
 }
 
-impl<M: Mutation<Tensor>> ConvMut<M> {
-    pub fn bias(bias: M) -> Self {
+impl<Mut: Mutation<Tensor>> ConvMut<Mut> {
+    pub fn bias(bias: Mut) -> Self {
         ConvMut { bias: Some(bias), filter: None }
     }
-    pub fn filter(filter: M) -> Self {
+    pub fn filter(filter: Mut) -> Self {
         ConvMut { bias: None, filter: Some(filter) }
     }
 }
 
 
-impl<M: Mutation<Tensor>> Mutation<Conv2> for ConvMut<M> {
-    fn mutate(&self, adn: &mut Conv2) {
+impl<Mut: Mutation<Tensor>> Mutation<Conv2> for ConvMut<Mut> {
+    fn mutate(&self, m: &mut Conv2) {
         match &self.bias {
             Some(mutation) => {
-                mutation.mutate(&mut adn.bias);
+                mutation.mutate(&mut m.bias);
             }
             _ => {}
         }
         match &self.filter {
             Some(mutation) => {
-                mutation.mutate(&mut adn.filter);
+                mutation.mutate(&mut m.filter);
             }
             _ => {}
         }
