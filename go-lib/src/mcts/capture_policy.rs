@@ -18,7 +18,7 @@ impl<'a, A, S> CapturePolicy<'a, A, S> {
 
 impl<'a> Policy<GoAction, GoState> for CapturePolicy<'a, GoAction, GoState> {
     fn select(&self, state: &GoState) -> GoAction {
-        let stone = state.stone;
+        let stone = state.current_side;
         let rand_action = self.random_policy.select(state);
 
         state.actions()

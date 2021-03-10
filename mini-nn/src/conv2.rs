@@ -80,9 +80,6 @@ impl Model<Tensor, Tensor> for Conv2 {
         assert_eq!(output.shape().x().unwrap(), (input.shape().x() - self.shape().x()).unwrap() + 1);
         assert_eq!(output.shape().y().unwrap(), (input.shape().y() - self.shape().y()).unwrap() + 1);
 
-        // let input_shape = Shape4::new(self.x(), self.y(), self.z(), Dim::Size(1));
-        // let output_shape = Shape4::new(self.x(), self.y(), Dim::Size(1), Dim::Size(1));
-
         for feat_o in 0..output.shape().z().unwrap() {
             for x in 0..output.shape().x().unwrap() {
                 for y in 0..output.shape().y().unwrap() {
@@ -90,11 +87,6 @@ impl Model<Tensor, Tensor> for Conv2 {
                     let offset = Offset4(x, y, feat_o, 0);
                     let offset = output.shape().index(&offset);
                     output.insert(offset, res);
-                    // let mut in_ = input.view((x, y, 0, 0), input_shape);
-                    // let mut out_ = output.view((x, y, feat_o, 0), output_shape);
-                    // out_ += input.clone();
-                    // out_ *= self.filter.clone();
-                    // out_ += self.bias.clone();
                 }
             }
         }
@@ -124,16 +116,18 @@ mod tests {
 
     use crate::conv2::Conv2;
     use crate::framework::model::Model;
+    use rust_tools::bench::Bench;
 
     #[test]
     fn test_conv2() {
-        let input = Tensor::new(Shape4::vec3(10, 10, 4), 1_f32);
-        let conv = Conv2::new(5, input.shape().z().unwrap(), 3);
-
+        let input = Tensor::normal(Shape4::vec3(128, 128, 1), 0.0, 1.0);
+        let conv = Conv2::new(3, input.shape().z().unwrap(), 1);
         let mut output = conv.output_tensor(input.shape());
 
-        conv.predict(&input, &mut output);
-
-        println!("{:?}", output)
+        let mut bench = Bench::new("Conv2");
+        while bench.for_iterations(1_000) {
+            conv.predict(&input, &mut output);
+        }
+        // println!("{:?}", output)
     }
 }

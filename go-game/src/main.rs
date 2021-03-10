@@ -53,25 +53,16 @@ pub fn main() {
     );
 
     let mut stats = SimResult::new();
-    let mut bench = Bench::with_speed(SIM_FACTOR as f32);
-    let mut i = 0;
-    // while bench.for_duration(BENCH.full_time) {
+    let mut bench = Bench::with_speed("Go MCTS", SIM_FACTOR as f32);
     while bench.for_iterations(100) {
         let res = explorer.explore(&random_policy, &selection_score);
         stats.merge(res.value.borrow().deref());
-        i += 1;
-        if i % 1000 == 0 {
+        if bench.loops % 1000 == 0 {
             explorer.mcts_mut().selection(&selection_score);
             show_best_variant(&mut explorer);
         }
-        if i == 100 {
-            break;
-        }
     }
-    // explorer.mcts_mut().selection(&selection_score);
-    show_best_variant(&mut explorer);
     log::info!("results: {}", stats);
-    log::info!("{}", bench);
-
+    show_best_variant(&mut explorer);
     simulator::save_sgf(explorer.mcts().state())
 }

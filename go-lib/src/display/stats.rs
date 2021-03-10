@@ -33,7 +33,7 @@ impl GoState {
         let mut black = self.stats(Stone::Black).to_string();
         let mut white = self.stats(Stone::White).to_string();
         let none = self.stats(Stone::None).to_string();
-        match self.stone {
+        match self.current_side {
             Stone::None => {}
             Stone::Black => {
                 black = format!("[{}]", black);

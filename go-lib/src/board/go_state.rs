@@ -30,12 +30,11 @@ use rust_tools::screen::layout::layout::{L, Layout, LayoutRc};
 
 #[derive(Debug, Clone)]
 pub struct GoState {
-    pub stone: Stone,
+    pub current_side: Stone,
     pub pass_sequence: usize,
     pub ko: Option<GoCell>,
     pub stats: BoardStats,
     pub history: Vec<GoAction>,
-
     //stones
     pub gg: BoardGroups,
 }
@@ -45,7 +44,7 @@ impl GoState {
         let goban = Grid::new(size);
         let stats = BoardStats::new(&goban);
         let mut board = GoState {
-            stone: Stone::Black,
+            current_side: Stone::Black,
             pass_sequence: 0,
             ko: None,
             stats,
@@ -64,7 +63,7 @@ impl GoState {
     pub(crate) fn play_start(&mut self, action: GoAction) -> LayoutRc {
         if log::max_level() >= LevelFilter::Trace {
             let layout = GoDisplay::board(self);
-            log::trace!("NEW PLAY: {} @ {}\n{}", self.stone, action, layout.to_screen_str());
+            log::trace!("NEW PLAY: {} @ {}\n{}", self.current_side, action, layout.to_screen_str());
             layout
         } else {
             L::str("")

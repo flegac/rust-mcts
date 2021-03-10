@@ -58,6 +58,7 @@ impl Shape4 {
     }
 
     pub fn index(&self, offset: &Offset4) -> usize {
+        log::trace!("Shape4.index");
         offset.index_from(self)
     }
     pub fn check(&self, offset: &Offset4) {

@@ -16,6 +16,7 @@ impl Offset4 {
     }
 
     pub fn from_shape(shape: &Shape4, offset: usize) -> Offset4 {
+        log::trace!("Offset4.from_shape");
         let s0 = shape.x().unwrap();
         let s1 = shape.y().unwrap();
         let s2 = shape.z().unwrap();

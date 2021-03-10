@@ -35,7 +35,7 @@ impl GoState {
         let mut blacks = self.stats.score(Stone::Black).to_string();
         let mut whites = self.stats.score(Stone::White).to_string();
 
-        match self.stone {
+        match self.current_side {
             Stone::None => {}
             Stone::Black => blacks = format!("[{}]", blacks),
             Stone::White => whites = format!("[{}]", whites)

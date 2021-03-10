@@ -8,12 +8,14 @@ extern crate log;
 extern crate mcts_lib;
 extern crate proc_macro;
 extern crate rust_tools;
+extern crate image;
 
 pub mod board;
 pub mod sgf;
 pub mod display;
 pub mod mcts;
 pub mod go_rules;
+pub mod export;
 
 #[cfg(test)]
 mod tests {

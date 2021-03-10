@@ -30,7 +30,7 @@ fn run_all_mcts() {
 
 fn test_mcts<T, S: MCTS<T> + Tree<T>>(mut mcts: S) {
     let root = mcts.new_node(BRANCH_FACTOR);
-    let mut bench = Bench::new();
+    let mut bench = Bench::new("Mcts");
     while bench.until_condition(mcts.node_count() >= TREE_SIZE) {
         let selected = mcts.select_from(&root);
         mcts.expand(&selected, BRANCH_FACTOR);

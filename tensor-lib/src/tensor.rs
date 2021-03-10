@@ -13,7 +13,7 @@ use crate::traits::view::View;
 
 #[derive(Debug)]
 pub struct Tensor {
-    buffer: Rc<RefCell<Vec<f32>>>,
+    buffer: Vec<f32>,
     view: View4,
 }
 
@@ -40,7 +40,7 @@ impl Tensor {
     pub fn from_buffer(buffer: Vec<f32>, view: View4) -> Self {
         assert_eq!(buffer.len(), view.shape().len());
         Tensor {
-            buffer: Rc::new(RefCell::new(buffer)),
+            buffer,
             view,
         }
     }
@@ -56,31 +56,32 @@ impl Tensor {
     }
 
     pub fn get_at(&self, offset: Offset4) -> f32 {
-        self.get(offset.index_from(self.shape()))
+        log::trace!("Offset4.index_from");
+
+        self.get(self.shape().index(&offset))
     }
 
     pub fn insert_at(&mut self, offset: Offset4, value: f32) {
-        self.insert(offset.index_from(self.shape()), value)
+        self.insert(self.shape().index(&offset), value)
     }
 
     pub fn get(&self, offset: usize) -> f32 {
-        self.buffer.as_ref().borrow()[offset]
+        self.buffer[offset]
     }
 
     pub fn insert(&mut self, offset: usize, value: f32) {
-        self.buffer.as_ref().borrow_mut()[offset] = value;
+        self.buffer[offset] = value;
     }
 
     pub fn copy_from(&mut self, other: &Tensor) {
-        self.buffer.as_ref().borrow_mut().as_mut_slice().copy_from_slice(
-            other.buffer.as_ref().borrow().as_slice()
+        self.buffer.as_mut_slice().copy_from_slice(
+            other.buffer.as_slice()
         )
     }
 
     pub fn deep_clone(&self) -> Tensor {
-        let copy = self.buffer.as_ref().borrow().clone();
         Tensor::from_buffer(
-            copy,
+            self.buffer.clone(),
             self.view.clone(),
         )
     }
@@ -99,7 +100,7 @@ impl View for Tensor {
 
 impl Display for Tensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.buffer.as_ref().borrow())
+        write!(f, "{:?}", self.buffer)
     }
 }
 

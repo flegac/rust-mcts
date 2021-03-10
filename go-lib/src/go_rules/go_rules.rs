@@ -44,7 +44,7 @@ impl Rules<GoAction> for GoState {
     }
 
     fn reset(&mut self) {
-        self.stone = Stone::Black;
+        self.current_side = Stone::Black;
         self.pass_sequence = 0;
         self.ko = None;
         self.history.clear();
@@ -60,8 +60,8 @@ impl Rules<GoAction> for GoState {
             || double_pass;
 
         if end_game {
-            let player = self.stats.score(self.stone).score();
-            let opponent = self.stats.score(self.stone.switch()).score();
+            let player = self.stats.score(self.current_side).score();
+            let opponent = self.stats.score(self.current_side.switch()).score();
             let res = match player.cmp(&opponent) {
                 Ordering::Less => GameResult::Lose,
                 Ordering::Equal => GameResult::Draw,
@@ -92,10 +92,10 @@ impl Rules<GoAction> for GoState {
             GoAction::Cell(x, y) => {
                 self.pass_sequence = 0;
                 let cell = self.gg.goban().cell(x, y);
-                self.play_at(cell, self.stone);
+                self.play_at(cell, self.current_side);
             }
         }
-        self.stone = self.stone.switch();
+        self.current_side = self.current_side.switch();
         self.stats.round += 1;
         self.history.push(action);
 
