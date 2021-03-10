@@ -1,0 +1,30 @@
+@@grammar::CALC
+    start = variation $ ;
+
+    variation
+        =
+        | '(' nodes variation ')'
+        | variation variation
+        | ()
+        ;
+
+    nodes
+        = node nodes
+        | ()
+        ;
+
+    node
+        = ';' properties
+        ;
+
+    properties
+        =
+        | property properties
+        | ()
+        ;
+
+    property = text '[' text ']' ;
+
+    text
+        = /.*/
+        ;

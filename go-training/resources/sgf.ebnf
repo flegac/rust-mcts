@@ -1,0 +1,170 @@
+collection
+    =
+    {game_tree}+
+    ;
+
+
+game_tree
+    =
+    '(' sequence {game_tree} ')'
+    ;
+
+
+sequence
+    =
+    {node}+
+    ;
+
+
+node
+    =
+    ';' {property}
+    ;
+
+
+property
+    =
+    | move
+    | setup
+    | node_annotation
+    | move_annotation
+    | markup
+    | root
+    | game_info
+    | timing
+    | misc
+    | loa
+    | go
+    | private_prop
+    ;
+
+
+move
+    =
+    color ('[]' | TEXT) | 'KO' '[]' | 'MN' TEXT
+    ;
+
+
+setup
+    =
+    'AB' {TEXT}+ | 'AE' {TEXT}+ | 'AW' {TEXT}+ | 'PL' TEXT
+    ;
+
+
+node_annotation
+    =
+    | 'C' TEXT
+    | 'DM' TEXT
+    | 'GB' TEXT
+    | 'GW' TEXT
+    | 'HO' TEXT
+    | 'N' TEXT
+    | 'UC' TEXT
+    | 'V' TEXT
+    ;
+
+
+move_annotation
+    =
+    'BM' TEXT | 'DO' '[]' | 'IT' '[]' | 'TE' TEXT
+    ;
+
+
+markup
+    =
+    | 'AR' {TEXT}+
+    | 'CR' {TEXT}+
+    | 'DD' ('[]' | {TEXT}+)
+    | 'LB' {TEXT}+
+    | 'LN' {TEXT}+
+    | 'MA' {TEXT}+
+    | 'SL' {TEXT}+
+    | 'SQ' {TEXT}+
+    | 'TR' {TEXT}+
+    ;
+
+
+root
+    =
+    'AP' TEXT | 'CA' TEXT | 'FF' TEXT | 'GM' TEXT | 'ST' TEXT | 'SZ' TEXT
+    ;
+
+
+game_info
+    =
+    | 'AN' TEXT
+    | 'BR' TEXT
+    | 'BT' TEXT
+    | 'CP' TEXT
+    | 'DT' TEXT
+    | 'EV' TEXT
+    | 'GN' TEXT
+    | 'GC' TEXT
+    | 'ON' TEXT
+    | 'OT' TEXT
+    | 'PB' TEXT
+    | 'PC' TEXT
+    | 'PW' TEXT
+    | 'RE' TEXT
+    | 'RO' TEXT
+    | 'RU' TEXT
+    | 'SO' TEXT
+    | 'TM' TEXT
+    | 'US' TEXT
+    | 'WR' TEXT
+    | 'WT' TEXT
+    ;
+
+
+timing
+    =
+    'BL' TEXT | 'OB' TEXT | 'OW' TEXT | 'WL' TEXT
+    ;
+
+
+misc
+    =
+    'FG' ('[]' | TEXT) | 'PM' TEXT | 'VW' {TEXT}+
+    ;
+
+
+loa
+    =
+    'AS' TEXT | 'IP' TEXT | 'IY' TEXT | 'SE' TEXT | 'SU' TEXT
+    ;
+
+
+go
+    =
+    'HA' TEXT | 'KM' TEXT | 'TB' ('[]' | {TEXT}+) | 'TW' ('[]' | {TEXT}+)
+    ;
+
+
+private_prop
+    =
+    ucletter ('[]' | {TEXT}+)
+    ;
+
+
+color
+    =
+    /[WB]/
+    ;
+
+
+ucletter
+    =
+    {/[A-Z][A-Z]/}+
+    ;
+
+
+TEXT
+    =
+    '[' { '\\]' | /[\-+.\w|\s#]+/ } ']'
+    ;
+
+
+ws
+    =
+    /[ \n\r\t]+/
+    ;
