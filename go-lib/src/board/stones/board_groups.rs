@@ -138,6 +138,8 @@ impl GroupManipulation for BoardGroups {
     fn place_stone(&mut self, cell: GoCell, stone: Stone) -> GoGroupRc {
         assert_eq!(self.stone_at(cell), Stone::None);
         let new_stone = self.new_group(GoGroup::from_cells(stone, &[cell]));
+        new_stone.borrow_mut().liberties = self.goban.get_liberties(cell);
+
         let rc = self.group_at(cell).clone();
         let groups = self.groups_by_stone_mut(Stone::None).borrow_mut();
         groups.remove(&rc);
@@ -153,6 +155,11 @@ impl GroupManipulation for BoardGroups {
 
         let stone = old_cell_group.borrow().stone;
         let mut groups = self.adjacent_allies_groups(cell, stone);
+        let old_groups_number = groups.len();
+        let old_liberties: usize = groups
+            .iter()
+            .map(|g| g.borrow().liberties)
+            .sum();
         groups.push(old_cell_group.clone());
 
         //create one unique group
@@ -164,6 +171,22 @@ impl GroupManipulation for BoardGroups {
                 g1
             })
             .unwrap();
+
+        // log::trace!("group_libs:{} old_liberties: {} group.len(): {}",
+        //             group.borrow().liberties,
+        //             old_liberties,
+        //             old_groups_number);
+        // group.borrow_mut().liberties += old_liberties;
+        // group.borrow_mut().liberties -= old_groups_number;
+        // if old_groups_number > 0 {
+        //     group.borrow_mut().liberties -= 1;
+        // }
+        // for c in self.goban.edges(cell) {
+        //     if self.stone_at(c) == group.borrow().stone.switch() {
+        //         group.borrow_mut().liberties-=1;
+        //     }
+        // }
+
 
         //forget all stones
         for g in groups.iter() {

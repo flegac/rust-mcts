@@ -27,6 +27,19 @@ impl Grid {
         }
     }
 
+    pub fn get_liberties(&self, cell: GoCell) -> usize {
+        let (x, y) = self.xy(cell);
+        let horizontal_border = x == 0 || x == self.size - 1;
+        let vertical_border = y == 0 || y == self.size - 1;
+        if horizontal_border && vertical_border {
+            2
+        } else if horizontal_border || vertical_border {
+            3
+        } else {
+            4
+        }
+    }
+
     pub fn cell(&self, x: usize, y: usize) -> GoCell {
         x + y * self.size
     }
@@ -90,11 +103,12 @@ mod tests {
 
     use bit_set::BitSet;
 
-    use crate::board::go_state::GoState;
     use board::grid::Grid;
     use graph_lib::algo::flood::Flood;
     use graph_lib::graph::GFlood;
     use graph_lib::topology::Topology;
+
+    use crate::board::go_state::GoState;
 
     #[test]
     fn grid_id_conversion() {

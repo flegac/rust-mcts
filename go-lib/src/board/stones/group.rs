@@ -48,7 +48,7 @@ impl GoGroup {
             id: 0,
             stone: Stone::None,
             cells: BitSet::new(),
-            liberties: 0,
+            liberties: 4,
         }
     }
 

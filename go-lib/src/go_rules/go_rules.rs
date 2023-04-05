@@ -152,6 +152,7 @@ impl GoRules for GoState {
         }
 
         for g in self.gg.adjacent_enemies_groups(cell, stone) {
+            g.borrow_mut().liberties-=1;
             self.try_capture(g);
         }
         log::trace!("AFTER ENEMY_KILL:\n{}", self.stats_str());
@@ -161,7 +162,10 @@ impl GoRules for GoState {
     }
 
     fn try_capture(&mut self, group: GoGroupRc) {
+        let before= group.borrow().liberties;
         self.gg.update_liberties(&group);
+        // assert_eq!(group.borrow().liberties, before);
+
         if group.borrow().is_dead() {
             if log::max_level() <= LevelFilter::Trace {
                 log::trace!("DEAD GROUP : {}\n{}",
